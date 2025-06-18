@@ -89,3 +89,4 @@ lint/tmp/
 
 # Aider files
 .aider*
+!.aider-desk/
