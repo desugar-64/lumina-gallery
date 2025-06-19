@@ -2,82 +2,62 @@ package dev.serhiiyaremych.lumina.ui
 
 import android.graphics.Matrix
 import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.SaverScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.graphicsLayer
 
-private const val MIN_ZOOM = 0.1f
-private const val MAX_ZOOM = 10f
-
-@Stable
-class TransformableState(initialZoom: Float = 1f, initialOffset: Offset = Offset.Zero) {
-    var zoom by mutableFloatStateOf(initialZoom)
-    var offset by mutableStateOf(initialOffset)
-}
-
-@Composable
-fun rememberTransformableState(
-    initialZoom: Float = 1f,
-    initialOffset: Offset = Offset.Zero
-): TransformableState = rememberSaveable(saver = TransformerStateSaver) {
-    TransformableState(initialZoom, initialOffset)
-}
-
-private object TransformerStateSaver : Saver<TransformableState, List<Any>> {
-    override fun restore(value: List<Any>): TransformableState = TransformableState(
-        initialZoom = (value[0] as Float),
-        initialOffset = Offset(value[1] as Float, value[2] as Float)
-    )
-
-    override fun SaverScope.save(state: TransformableState): List<Any> = listOf(
-        state.zoom,
-        state.offset.x,
-        state.offset.y
-    )
-}
+internal const val MIN_ZOOM = 0.1f
+internal const val MAX_ZOOM = 10f
 
 @Composable
 fun TransformableContent(
     modifier: Modifier = Modifier,
-    state: TransformableState = rememberTransformableState(),
+    zoom: Float,
+    offset: Offset,
+    onTransformChanged: (newZoom: Float, newOffset: Offset, newMatrix: Matrix) -> Unit,
     content: @Composable () -> Unit
 ) {
-    val matrix = remember { Matrix() }
-    val cachedValues = remember { FloatArray(9) } // ✅ CACHED ARRAY
+    val currentMatrix = remember { Matrix() }
+    val matrixValues = remember { FloatArray(9) }
+
+    LaunchedEffect(zoom, offset) {
+        currentMatrix.reset()
+        currentMatrix.postScale(zoom, zoom)
+        currentMatrix.postTranslate(offset.x, offset.y)
+        onTransformChanged(zoom, offset, currentMatrix)
+    }
 
     Box(
         modifier = modifier
             .pointerInput(Unit) {
-                detectTransformGestures { centroid, translation, scale, _ ->
-                    matrix.getValues(cachedValues)
-                    val currentZoom = cachedValues[Matrix.MSCALE_X]
-                    val newZoom = currentZoom * scale
+                detectTransformGestures { centroid, pan, gestureZoom, _ ->
+                    currentMatrix.getValues(matrixValues)
+                    val oldZoom = matrixValues[Matrix.MSCALE_X]
+                    val newZoomCalculated = (oldZoom * gestureZoom).coerceIn(MIN_ZOOM, MAX_ZOOM)
 
-                    if (newZoom >= MIN_ZOOM && newZoom <= MAX_ZOOM) {
-                        matrix.postScale(scale, scale, centroid.x, centroid.y)
-                        matrix.postTranslate(translation.x, translation.y)
-                    } else {
-                        matrix.postTranslate(translation.x, translation.y)
-                        if ((currentZoom <= MIN_ZOOM && scale > 1f) ||
-                            (currentZoom >= MAX_ZOOM && scale < 1f)
-                        ) {
-                            matrix.postScale(scale, scale, centroid.x, centroid.y)
-                        }
-                    }
+                    val actualGestureZoom = newZoomCalculated / oldZoom
 
-                    matrix.getValues(cachedValues)
-                    state.offset = Offset(
-                        cachedValues[Matrix.MTRANS_X],
-                        cachedValues[Matrix.MTRANS_Y]
-                    )
-                    state.zoom = cachedValues[Matrix.MSCALE_X]
+                    currentMatrix.postScale(actualGestureZoom, actualGestureZoom, centroid.x, centroid.y)
+                    currentMatrix.postTranslate(pan.x, pan.y)
+
+                    currentMatrix.getValues(matrixValues)
+                    val finalZoom = matrixValues[Matrix.MSCALE_X]
+                    val finalOffset = Offset(matrixValues[Matrix.MTRANS_X], matrixValues[Matrix.MTRANS_Y])
+
+                    onTransformChanged(finalZoom, finalOffset, currentMatrix)
                 }
             }
+            .graphicsLayer(
+                scaleX = zoom,
+                scaleY = zoom,
+                translationX = offset.x,
+                translationY = offset.y
+            )
     ) {
         content()
     }
