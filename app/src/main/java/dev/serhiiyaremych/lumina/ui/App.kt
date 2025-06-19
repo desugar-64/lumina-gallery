@@ -3,11 +3,16 @@ package dev.serhiiyaremych.lumina.ui
 import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.serhiiyaremych.lumina.domain.model.HexGridGenerator
 import dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel
@@ -22,19 +27,31 @@ fun App(modifier: Modifier = Modifier) {
         val media by galleryViewModel.mediaState.collectAsState()
         val groupedMedia by galleryViewModel.groupedMediaState.collectAsState()
 
-        // Calculate hex grid size based on number of groups
+        val currentOffset by galleryViewModel.tsOffset
+        val currentZoom by galleryViewModel.tsZoom
+        val currentDisplayMatrix by galleryViewModel.currentDisplayMatrix
+
+        val configuration = LocalConfiguration.current
+        val density = LocalDensity.current
+        val viewWidthPx = remember(configuration, density) { (configuration.screenWidthDp.dp * density.density).toPx().toInt() }
+        val viewHeightPx = remember(configuration, density) { (configuration.screenHeightDp.dp * density.density).toPx().toInt() }
+
+        LaunchedEffect(galleryViewModel) {
+            galleryViewModel.matrixUpdateEvent.collect { matrixUpdate ->
+                galleryViewModel.updateTransformFromMatrixUpdate(matrixUpdate)
+            }
+        }
+
         val hexGridSize = remember(groupedMedia) {
             if (groupedMedia.isEmpty()) {
                 15
             } else {
                 val groupCount = groupedMedia.size
-                // Calculate grid size to fit all groups (with some padding)
                 val minSize = ceil(sqrt(groupCount.toDouble())).toInt()
                 (minSize + 2).coerceAtLeast(10).coerceAtMost(25)
             }
         }
 
-        // Determine hex cell size based on grid size
         val hexCellSize = remember(hexGridSize) {
             when {
                 hexGridSize <= 10 -> 230.dp
@@ -50,29 +67,38 @@ fun App(modifier: Modifier = Modifier) {
         )
 
         val gridState = rememberGridCanvasState()
-        val transformableState = rememberTransformableState()
         val hexGridRenderer = remember { HexGridRenderer() }
         val hexGridGenerator = remember { HexGridGenerator() }
 
+        val defaultVisibleBounds = remember { Rect.Zero }
+
         TransformableContent(
             modifier = modifier.fillMaxSize(),
-            state = transformableState
+            zoom = currentZoom,
+            offset = currentOffset,
+            onTransformChanged = galleryViewModel::onTransformChanged
         ) {
             GridCanvas(
                 modifier = Modifier.fillMaxSize(),
-                zoom = transformableState.zoom,
-                offset = transformableState.offset,
+                zoom = currentZoom,
+                offset = currentOffset,
                 state = gridState
             ) {
-                // Draw media visualization on hex grid
                 MediaHexVisualization(
+                    modifier = Modifier.fillMaxSize(),
                     hexGridGenerator = hexGridGenerator,
                     hexGridRenderer = hexGridRenderer,
                     groupedMedia = groupedMedia,
                     hexGridSize = hexGridSize,
                     hexCellSize = hexCellSize,
-                    zoom = transformableState.zoom,
-                    offset = transformableState.offset
+                    zoom = currentZoom,
+                    offset = currentOffset,
+                    geometryReader = galleryViewModel.geometryReader,
+                    onHexCellClick = { hexCell, matrix, size ->
+                        galleryViewModel.onHexCellClicked(hexCell, matrix, viewWidthPx, viewHeightPx)
+                    },
+                    currentMatrix = currentDisplayMatrix,
+                    visibleBounds = defaultVisibleBounds
                 )
             }
         }
