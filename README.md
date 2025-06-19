@@ -3,6 +3,13 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/serhiiyaremych/lumina)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+> [!WARNING]
+> This project is currently in its very early stages and is undergoing heavy development.
+>
+> **It serves primarily as a playground for experimenting with various "AI" agentic assistants**. As such, the code quality is not guaranteed and is subject to frequent changes and refactoring.
+> 
+> Therefore, I wouldn't put too much hope into this project. 😄
+
 Lumina is a modern, offline-first Android gallery application designed with a unique and visually rich user experience in mind. It moves beyond traditional grid layouts, leveraging advanced graphics capabilities, custom animations, and a fluid, gesture-based interface. Lumina is built to be a powerful, private, and beautiful home for your local media.
 
 ## ✨ Key Features
