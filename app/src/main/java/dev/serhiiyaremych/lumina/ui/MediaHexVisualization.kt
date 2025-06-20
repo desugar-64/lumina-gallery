@@ -41,7 +41,6 @@ fun MediaHexVisualization(
 ) {
     val density = LocalDensity.current
     val geometryReader = remember { GeometryReader() }
-    // Add state for visual feedback
     var clickedMedia by remember { mutableStateOf<Media?>(null) }
     var clickedHexCell by remember { mutableStateOf<HexCell?>(null) }
     var ripplePosition by remember { mutableStateOf<Offset?>(null) }
@@ -66,36 +65,19 @@ fun MediaHexVisualization(
     Canvas(
         modifier = Modifier
             .fillMaxSize()
-            .pointerInput(Unit, zoom, offset) {  // Add zoom and offset as keys
+            .pointerInput(Unit, zoom, offset) {
                 detectTapGestures { tapOffset ->
                     val clampedZoom = zoom.coerceIn(0.01f, 100f)
-                    val transformedPos = if (clampedZoom != 1f || offset != Offset.Zero) {
-                        Offset(
-                            (tapOffset.x - offset.x) / clampedZoom,
-                            (tapOffset.y - offset.y) / clampedZoom
-                        )
-                    } else {
-                        tapOffset // Use raw coordinates when no transform applied
-                    }
-
-                    println("=== TAP DEBUG ===")
-                    println("Raw tap: $tapOffset")
-                    println("After transform: $transformedPos")
-                    println("Current offset: $offset")
-                    println("Current zoom: $clampedZoom")
+                    val transformedPos = Offset(
+                        (tapOffset.x - offset.x) / clampedZoom,
+                        (tapOffset.y - offset.y) / clampedZoom
+                    )
 
                     ripplePosition = tapOffset
-
-                    // Reset both states first
-                    clickedMedia = null
-                    clickedHexCell = null
-
-                    // Check media first
                     clickedMedia = geometryReader.getMediaAtPosition(transformedPos)?.also {
                         onMediaClicked(it)
                     }
 
-                    // Only check hex cells if no media was clicked
                     if (clickedMedia == null) {
                         clickedHexCell = geometryReader.getHexCellAtPosition(transformedPos)?.also {
                             onHexCellClicked(it)
@@ -109,16 +91,6 @@ fun MediaHexVisualization(
             scale(clampedZoom, clampedZoom, pivot = Offset.Zero)
             translate(offset.x / clampedZoom, offset.y / clampedZoom)
         }) {
-            // Debug draw first cell center
-            grid.cells.firstOrNull()?.let { firstCell ->
-                drawCircle(
-                    color = Color.Red,
-                    radius = 10f,
-                    center = firstCell.center
-                )
-                println("First cell center at: ${firstCell.center}")
-            }
-
             grid.cells.forEach { hexCell ->
                 geometryReader.storeHexCellBounds(hexCell)
             }
@@ -130,7 +102,6 @@ fun MediaHexVisualization(
                 offset = Offset.Zero
             )
 
-            // Add debug visualization
             geometryReader.debugDrawHexCellBounds(this)
 
             sortedGroups.forEachIndexed { index, date ->
@@ -147,7 +118,6 @@ fun MediaHexVisualization(
                 }
             }
 
-            // Add visual feedback for selected items
             clickedMedia?.let { media ->
                 geometryReader.getMediaBounds(media)?.let { bounds ->
                     drawRect(
@@ -166,7 +136,6 @@ fun MediaHexVisualization(
 
             clickedHexCell?.let { hexCell ->
                 geometryReader.getHexCellBounds(hexCell)?.let { bounds ->
-                    // Draw over the entire hex area
                     drawPath(
                         path = Path().apply {
                             hexCell.vertices.firstOrNull()?.let { first ->
@@ -180,7 +149,6 @@ fun MediaHexVisualization(
                         color = Color.Green.copy(alpha = 0.3f),
                         style = Fill
                     )
-                    // Outline the hex cell
                     drawPath(
                         path = Path().apply {
                             hexCell.vertices.firstOrNull()?.let { first ->
@@ -198,7 +166,6 @@ fun MediaHexVisualization(
             }
         }
 
-        // Draw ripple effect
         ripplePosition?.let {
             val color = when {
                 clickedMedia != null -> Color.Yellow
@@ -211,7 +178,7 @@ fun MediaHexVisualization(
                 center = it,
                 style = Stroke(width = 3f)
             )
-            ripplePosition = null // Clear after drawing
+            ripplePosition = null
         }
     }
 }
@@ -251,16 +218,12 @@ private fun DrawScope.drawMediaInHexCell(
     media to bounds
 }
 
-/**
- * Generates a position for the media thumbnail in hex cell relative to hex bounds (without any pan offset)
- */
 private fun generateScaledPositionWithOffset(
     media: Media,
     scaledHexBounds: Rect,
     thumbnailMaxSize: Float,
     seed: Int
 ): Pair<Offset, androidx.compose.ui.geometry.Size> {
-    // Calculate thumbnail dimensions with aspect ratio
     val aspectRatio = if (media.height != 0) media.width.toFloat() / media.height.toFloat() else 1f
     val (width, height) = if (aspectRatio >= 1f) {
         thumbnailMaxSize to thumbnailMaxSize / aspectRatio
@@ -272,14 +235,12 @@ private fun generateScaledPositionWithOffset(
     val availableWidth = scaledHexBounds.width - width
     val availableHeight = scaledHexBounds.height - height
 
-    // Calculate position with scaled hex bounds (which are in hex local zoomed coordinates)
     return if (availableWidth > 0 && availableHeight > 0) {
         Offset(
             x = scaledHexBounds.left + random.nextFloat() * availableWidth,
             y = scaledHexBounds.top + random.nextFloat() * availableHeight
         ) to androidx.compose.ui.geometry.Size(width, height)
     } else {
-        // Fallback position: center of the scaled hex bounds
         Offset(
             scaledHexBounds.left + scaledHexBounds.width / 2 - width / 2,
             scaledHexBounds.top + scaledHexBounds.height / 2 - height / 2

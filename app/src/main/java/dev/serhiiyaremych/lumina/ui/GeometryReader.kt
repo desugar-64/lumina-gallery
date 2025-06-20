@@ -8,14 +8,21 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.Media
 
+enum class DebugMode {
+    NONE,
+    BOUNDS,
+    HIT_TESTING,
+    PERFORMANCE
+}
+
 class GeometryReader {
     private val mediaBounds = mutableMapOf<Media, Rect>()
-    public val hexCellBounds = mutableMapOf<HexCell, Rect>()
-    var debugMode = false
+    private val hexCellBounds = mutableMapOf<HexCell, Rect>()
+    private val visibleCells = mutableSetOf<HexCell>()
+    var debugMode: DebugMode = DebugMode.NONE
 
     fun storeMediaBounds(media: Media, bounds: Rect, hexCell: HexCell) {
         mediaBounds[media] = bounds
-        // Don't store media bounds in hexCellBounds!
     }
 
     fun storeHexCellBounds(hexCell: HexCell) {
@@ -37,19 +44,23 @@ class GeometryReader {
         }?.key
     }
 
-    /**
-     * Gets the bounds Rect for a media item
-     */
     fun getMediaBounds(media: Media): Rect? = mediaBounds[media]
 
-    /**
-     * Gets the bounds Rect for a hex cell
-     */
     fun getHexCellBounds(hexCell: HexCell): Rect? = hexCellBounds[hexCell]
 
     fun clear() {
         mediaBounds.clear()
         hexCellBounds.clear()
+        visibleCells.clear()
+    }
+
+    fun updateVisibleArea(visibleRect: Rect) {
+        visibleCells.clear()
+        hexCellBounds.forEach { (cell, bounds) ->
+            if (bounds.overlaps(visibleRect)) {
+                visibleCells.add(cell)
+            }
+        }
     }
 
     private fun isPointInHexagon(point: Offset, vertices: List<Offset>): Boolean {
@@ -65,25 +76,27 @@ class GeometryReader {
         return inside
     }
 
-    // Add debug drawing function
     fun debugDrawHexCellBounds(drawScope: DrawScope) {
-        if (!debugMode) return
+        if (debugMode == DebugMode.NONE) return
 
         hexCellBounds.forEach { (hexCell, bounds) ->
-            drawScope.drawRect(
-                color = Color.Magenta.copy(alpha = 0.3f),
-                topLeft = bounds.topLeft,
-                size = bounds.size,
-                style = Stroke(width = 2f)
-            )
-
-            // Draw vertices
-            hexCell.vertices.forEach { vertex ->
-                drawScope.drawCircle(
-                    color = Color.Red,
-                    radius = 5f,
-                    center = vertex
+            if (debugMode == DebugMode.BOUNDS || visibleCells.contains(hexCell)) {
+                drawScope.drawRect(
+                    color = Color.Magenta.copy(alpha = 0.3f),
+                    topLeft = bounds.topLeft,
+                    size = bounds.size,
+                    style = Stroke(width = 2f)
                 )
+
+                if (debugMode == DebugMode.HIT_TESTING) {
+                    hexCell.vertices.forEach { vertex ->
+                        drawScope.drawCircle(
+                            color = Color.Red,
+                            radius = 5f,
+                            center = vertex
+                        )
+                    }
+                }
             }
         }
     }
