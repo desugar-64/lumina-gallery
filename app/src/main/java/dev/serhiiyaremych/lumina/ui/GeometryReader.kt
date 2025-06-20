@@ -11,6 +11,7 @@ import dev.serhiiyaremych.lumina.domain.model.Media
 class GeometryReader {
     private val mediaBounds = mutableMapOf<Media, Rect>()
     public val hexCellBounds = mutableMapOf<HexCell, Rect>()
+    var debugMode = false
 
     fun storeMediaBounds(media: Media, bounds: Rect, hexCell: HexCell) {
         mediaBounds[media] = bounds
@@ -66,6 +67,8 @@ class GeometryReader {
 
     // Add debug drawing function
     fun debugDrawHexCellBounds(drawScope: DrawScope) {
+        if (!debugMode) return
+
         hexCellBounds.forEach { (hexCell, bounds) ->
             drawScope.drawRect(
                 color = Color.Magenta.copy(alpha = 0.3f),

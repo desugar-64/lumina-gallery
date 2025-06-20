@@ -180,6 +180,92 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
 
 ***
 
+### New Section: Geometric Interaction Patterns
+
+#### Coordinate Transformation Utility
+
+When working with transformed coordinate systems in Jetpack Compose:
+
+```kotlin
+object CoordinateTransformUtils {
+    fun transformScreenToContent(
+        screenPos: Offset,
+        zoom: Float,
+        offset: Offset
+    ): Offset {
+        val clampedZoom = zoom.coerceIn(0.01f, 100f)
+        return if (clampedZoom != 1f || offset != Offset.Zero) {
+            Offset(
+                (screenPos.x - offset.x) / clampedZoom,
+                (screenPos.y - offset.y) / clampedZoom
+            )
+        } else {
+            screenPos
+        }
+    }
+
+    fun transformContentToScreen(
+        contentPos: Offset,
+        zoom: Float,
+        offset: Offset
+    ): Offset {
+        val clampedZoom = zoom.coerceIn(0.01f, 100f)
+        return Offset(
+            contentPos.x * clampedZoom + offset.x,
+            contentPos.y * clampedZoom + offset.y
+        )
+    }
+}
+```
+
+#### Geometry Reader with Debug Mode
+
+For complex hit testing scenarios:
+
+```kotlin
+class GeometryReader {
+    private val elementBounds = mutableMapOf<Element, Rect>()
+    var debugMode = false
+
+    fun getBoundsFor(element: Element): Rect? = elementBounds[element]
+
+    fun findElementAt(position: Offset): Element? {
+        return elementBounds.entries.firstOrNull { (element, bounds) ->
+            bounds.contains(position) && preciseContains(element, position)
+        }?.key
+    }
+
+    fun clear() { elementBounds.clear() }
+
+    fun debugDrawBounds(drawScope: DrawScope) {
+        if (!debugMode) return
+        elementBounds.forEach { (element, bounds) ->
+            drawScope.drawRect(
+                color = Color.Magenta.copy(alpha = 0.3f),
+                topLeft = bounds.topLeft,
+                size = bounds.size,
+                style = Stroke(width = 2f)
+            )
+        }
+    }
+}
+```
+
+#### Visual Feedback Patterns
+
+For providing clear visual feedback:
+
+```kotlin
+// For rectangular elements:
+drawRect(highlightColor, bounds, style = Stroke(width = 4f))
+
+// For complex shapes:
+drawPath(highlightColor, elementShape, style = Fill)
+drawPath(borderColor, elementShape, style = Stroke(width = 2f))
+```
+
+***
+
 ### Summary
 
 Write Android code that looks and feels like modern Android. The framework and tools have matured significantly—**trust Jetpack Compose, ViewModels, and Coroutines**. Focus on solving user problems, not on implementing complex architectural patterns from other eras.

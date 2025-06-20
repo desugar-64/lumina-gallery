@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Continuous Improvement Guide for Android Development Rules
 
-This guide provides a systematic approach for continuously improving Android development rules based on emerging patterns, best practices, and lessons learned during development. 
+This guide provides a systematic approach for continuously improving Android development rules based on emerging patterns, best practices, and lessons learned during development.
 
 ---
 
@@ -15,17 +15,17 @@ This guide provides a systematic approach for continuously improving Android dev
 ### When to Create or Update Rules
 
 **Create New Rules When:**
-* A new Jetpack library (e.g., Compose, Room), Kotlin feature (e.g., Flows), or architectural pattern is used in 3+ files or modules. 
-* Common bugs like memory leaks, lifecycle issues, or Application Not Responding (ANR) errors could be prevented by a rule. 
-* Code reviews repeatedly mention the same feedback, such as improper `ViewModel` scoping or misuse of `Context`. 
-* New security or performance patterns emerge for Android. 
-* A complex task, like implementing an offline-first feature, requires a consistent approach. 
+* A new Jetpack library (e.g., Compose, Room), Kotlin feature (e.g., Flows), or architectural pattern is used in 3+ files or modules.
+* Common bugs like memory leaks, lifecycle issues, or Application Not Responding (ANR) errors could be prevented by a rule.
+* Code reviews repeatedly mention the same feedback, such as improper `ViewModel` scoping or misuse of `Context`.
+* New security or performance patterns emerge for Android.
+* A complex task, like implementing an offline-first feature, requires a consistent approach.
 
 **Update Existing Rules When:**
-* Better examples exist in the codebase or are published by Google. 
-* Additional edge cases related to different Android versions or device form factors are discovered. 
-* Implementation details, such as a dependency's API, have changed. 
-* User feedback indicates a rule is confusing or hard to follow. 
+* Better examples exist in the codebase or are published by Google.
+* Additional edge cases related to different Android versions or device form factors are discovered.
+* Implementation details, such as a dependency's API, have changed.
+* User feedback indicates a rule is confusing or hard to follow.
 
 ---
 
@@ -33,7 +33,7 @@ This guide provides a systematic approach for continuously improving Android dev
 
 ### 1. Pattern Recognition
 
-Monitor your codebase for repeated patterns specific to Android and Kotlin. 
+Monitor your codebase for repeated patterns specific to Android and Kotlin.
 
 ```kotlin
 // Example: If you see this state declaration pattern repeatedly:
@@ -48,7 +48,7 @@ val uiState: StateFlow<MyScreenState> = _uiState.asStateFlow()
 
 ### 2. Error Pattern Analysis
 
-Track common Android mistakes and their solutions. 
+Track common Android mistakes and their solutions.
 
 ```yaml
 Common Error: "Application Not Responding (ANR)"
@@ -59,7 +59,7 @@ Rule Update: Add guidelines to concurrency rules to always move blocking I/O off
 
 ### 3. Best Practice Evolution
 
-Document emerging best practices in the Android ecosystem. 
+Document emerging best practices in the Android ecosystem.
 
 ```markdown
 ## Before (Old Pattern)
@@ -69,7 +69,7 @@ Document emerging best practices in the Android ecosystem.
 
 ## After (New Pattern)
 - Jetpack Compose for UI
-- Kotlin Coroutines with async/await for asynchronous operations 
+- Kotlin Coroutines with async/await for asynchronous operations
 - Structured concurrency with `viewModelScope` or `lifecycleScope`
 ```
 
@@ -79,17 +79,17 @@ Document emerging best practices in the Android ecosystem.
 
 ### Structure Guidelines
 
-Each rule should follow this structure: 
+Each rule should follow this structure:
 
 ```markdown
 # Rule Name
 
 ## Purpose
-Brief description of what this rule achieves. 
+Brief description of what this rule achieves.
 
 ## When to Apply
-- Specific scenarios (e.g., "When creating a new screen"). 
-- Trigger conditions (e.g., "Any ViewModel holding UI state"). 
+- Specific scenarios (e.g., "When creating a new screen").
+- Trigger conditions (e.g., "Any ViewModel holding UI state").
 
 ## Implementation
 ### Basic Pattern
@@ -122,7 +122,7 @@ class MyViewModel(
 ```
 
 ## Common Pitfalls
-- Known issues (e.g., "Risk of leaking subscriptions if not using `stateIn`"). 
+- Known issues (e.g., "Risk of leaking subscriptions if not using `stateIn`").
 - How to avoid them.
 
 ## References
@@ -131,14 +131,14 @@ class MyViewModel(
 
 ### Quality Checklist
 
-Before publishing a rule, ensure it is: 
+Before publishing a rule, ensure it is:
 
-- [ ] **Actionable**: Provides clear, implementable guidance. 
-- [ ] **Specific**: Avoids vague recommendations. 
-- [ ] **Tested**: Examples come from working code. 
-- [ ] **Complete**: Covers common Android edge cases. 
-- [ ] **Current**: References up-to-date Android and Jetpack libraries. 
-- [ ] **Linked**: Cross-references related rules and documentation. 
+- [ ] **Actionable**: Provides clear, implementable guidance.
+- [ ] **Specific**: Avoids vague recommendations.
+- [ ] **Tested**: Examples come from working code.
+- [ ] **Complete**: Covers common Android edge cases.
+- [ ] **Current**: References up-to-date Android and Jetpack libraries.
+- [ ] **Linked**: Cross-references related rules and documentation.
 
 ---
 
@@ -147,14 +147,14 @@ Before publishing a rule, ensure it is:
 ### 1. Collection Phase
 
 **Daily Development**
-* Note repeated code patterns in ViewModels, Composables, or Repositories. 
-* Document solved problems and their solutions. 
-* Track usage of specific libraries and tools. 
+* Note repeated code patterns in ViewModels, Composables, or Repositories.
+* Document solved problems and their solutions.
+* Track usage of specific libraries and tools.
 
 **Weekly Review**
-* Analyze git commits for patterns. 
-* Review debugging sessions, especially those using the Profiler or Layout Inspector. 
-* Check Google Play Console for error logs and ANRs. 
+* Analyze git commits for patterns.
+* Review debugging sessions, especially those using the Profiler or Layout Inspector.
+* Check Google Play Console for error logs and ANRs.
 
 ### 2. Analysis Phase
 
@@ -168,25 +168,25 @@ for pattern in patterns:
 ```
 
 **Impact Assessment**
-* How many files or modules would benefit? 
-* What errors (crashes, ANRs) would be prevented? 
-* How much development or debugging time would be saved? 
+* How many files or modules would benefit?
+* What errors (crashes, ANRs) would be prevented?
+* How much development or debugging time would be saved?
 
 ### 3. Documentation Phase
 
 **Rule Creation Process**
-1.  Draft the initial rule with Kotlin examples. 
-2.  Test the rule's guidance on existing code. 
-3.  Get feedback from the team. 
-4.  Refine and publish. 
-5.  Monitor the rule's effectiveness and adoption. 
+1.  Draft the initial rule with Kotlin examples.
+2.  Test the rule's guidance on existing code.
+3.  Get feedback from the team.
+4.  Refine and publish.
+5.  Monitor the rule's effectiveness and adoption.
 
 ### 4. Maintenance Phase
 
 **Regular Updates**
-* **Monthly**: Review rule usage and feedback. 
-* **Quarterly**: Major updates for new Android releases or Jetpack libraries. 
-* **Annually**: Review and deprecate outdated rules. 
+* **Monthly**: Review rule usage and feedback.
+* **Quarterly**: Major updates for new Android releases or Jetpack libraries.
+* **Annually**: Review and deprecate outdated rules.
 
 ---
 
@@ -216,14 +216,14 @@ breaking_changes:
 
 ### Rule Metrics
 
-Track rule effectiveness to justify the time spent on maintaining them. 
+Track rule effectiveness to justify the time spent on maintaining them.
 
 ```yaml
 metrics:
   usage_count: 45
-  error_prevention: 12 bugs avoided (based on Play Console data) 
-  time_saved: ~3 hours/week 
-  user_feedback: 4.2/5 
+  error_prevention: 12 bugs avoided (based on Play Console data)
+  time_saved: ~3 hours/week
+  user_feedback: 4.2/5
 ```
 
 ---
@@ -253,12 +253,98 @@ ktlint --reporter=plain?color=true "src/**/*.kt"
 
 ---
 
+## New Section: Geometric Interaction Patterns
+
+### Coordinate Transformation Utility
+
+When working with transformed coordinate systems in Jetpack Compose:
+
+```kotlin
+object CoordinateTransformUtils {
+    fun transformScreenToContent(
+        screenPos: Offset,
+        zoom: Float,
+        offset: Offset
+    ): Offset {
+        val clampedZoom = zoom.coerceIn(0.01f, 100f)
+        return if (clampedZoom != 1f || offset != Offset.Zero) {
+            Offset(
+                (screenPos.x - offset.x) / clampedZoom,
+                (screenPos.y - offset.y) / clampedZoom
+            )
+        } else {
+            screenPos
+        }
+    }
+
+    fun transformContentToScreen(
+        contentPos: Offset,
+        zoom: Float,
+        offset: Offset
+    ): Offset {
+        val clampedZoom = zoom.coerceIn(0.01f, 100f)
+        return Offset(
+            contentPos.x * clampedZoom + offset.x,
+            contentPos.y * clampedZoom + offset.y
+        )
+    }
+}
+```
+
+### Geometry Reader with Debug Mode
+
+For complex hit testing scenarios:
+
+```kotlin
+class GeometryReader {
+    private val elementBounds = mutableMapOf<Element, Rect>()
+    var debugMode = false
+
+    fun getBoundsFor(element: Element): Rect? = elementBounds[element]
+
+    fun findElementAt(position: Offset): Element? {
+        return elementBounds.entries.firstOrNull { (element, bounds) ->
+            bounds.contains(position) && preciseContains(element, position)
+        }?.key
+    }
+
+    fun clear() { elementBounds.clear() }
+
+    fun debugDrawBounds(drawScope: DrawScope) {
+        if (!debugMode) return
+        elementBounds.forEach { (element, bounds) ->
+            drawScope.drawRect(
+                color = Color.Magenta.copy(alpha = 0.3f),
+                topLeft = bounds.topLeft,
+                size = bounds.size,
+                style = Stroke(width = 2f)
+            )
+        }
+    }
+}
+```
+
+### Visual Feedback Patterns
+
+For providing clear visual feedback:
+
+```kotlin
+// For rectangular elements:
+drawRect(highlightColor, bounds, style = Stroke(width = 4f))
+
+// For complex shapes:
+drawPath(highlightColor, elementShape, style = Fill)
+drawPath(borderColor, elementShape, style = Stroke(width = 2f))
+```
+
+---
+
 ## Conclusion
 
-Continuous improvement of Android development rules is an iterative process that requires: 
-* Active monitoring of development patterns. 
-* Regular analysis and documentation. 
-* Community feedback and collaboration. 
-* Systematic maintenance and updates. 
+Continuous improvement of Android development rules is an iterative process that requires:
+* Active monitoring of development patterns.
+* Regular analysis and documentation.
+* Community feedback and collaboration.
+* Systematic maintenance and updates.
 
-By following this guide, teams can build a living knowledge base that evolves with their Android codebase and continuously improves developer productivity. 
+By following this guide, teams can build a living knowledge base that evolves with their Android codebase and continuously improves developer productivity.
