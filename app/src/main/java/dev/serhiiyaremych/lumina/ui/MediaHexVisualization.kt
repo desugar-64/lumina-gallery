@@ -69,8 +69,6 @@ fun MediaHexVisualization(
             .pointerInput(Unit, zoom, offset) {  // Add zoom and offset as keys
                 detectTapGestures { tapOffset ->
                     val clampedZoom = zoom.coerceIn(0.01f, 100f)
-
-                    // No need to transform when zoom=1 and offset=0
                     val transformedPos = if (clampedZoom != 1f || offset != Offset.Zero) {
                         Offset(
                             (tapOffset.x - offset.x) / clampedZoom,
@@ -88,15 +86,20 @@ fun MediaHexVisualization(
 
                     ripplePosition = tapOffset
 
-                    // Check hex cells first since they're larger
-                    clickedHexCell = geometryReader.getHexCellAtPosition(transformedPos)?.also {
-                        println("Found hex cell at $transformedPos (center: ${it.center})")
-                        onHexCellClicked(it)
-                    } ?: run {
-                        clickedMedia = geometryReader.getMediaAtPosition(transformedPos)?.also {
-                            onMediaClicked(it)
+                    // Reset both states first
+                    clickedMedia = null
+                    clickedHexCell = null
+
+                    // Check media first
+                    clickedMedia = geometryReader.getMediaAtPosition(transformedPos)?.also {
+                        onMediaClicked(it)
+                    }
+
+                    // Only check hex cells if no media was clicked
+                    if (clickedMedia == null) {
+                        clickedHexCell = geometryReader.getHexCellAtPosition(transformedPos)?.also {
+                            onHexCellClicked(it)
                         }
-                        null
                     }
                 }
             }
