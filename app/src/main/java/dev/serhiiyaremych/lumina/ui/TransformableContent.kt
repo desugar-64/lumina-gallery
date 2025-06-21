@@ -27,6 +27,21 @@ import kotlin.math.min
 private const val MIN_ZOOM = 0.1f
 private const val MAX_ZOOM = 10f
 
+/**
+ * Handles pan/zoom transformations and programmatic focus.
+ *
+ * Key Features:
+ * - Matrix-based transformation pipeline
+ * - Focus-to-bounds calculation
+ * - Gesture integration
+ *
+ * Usage:
+ * 1. Attach to TransformableContent
+ * 2. Call focusOn(bounds) to programmatically center content
+ * 3. State is preserved across configuration changes
+ *
+ * Note: All transformations respect MIN_ZOOM/MAX_ZOOM constraints
+ */
 @Stable
 class TransformableState(initialZoom: Float = 1f, initialOffset: Offset = Offset.Zero) {
     var zoom by mutableFloatStateOf(initialZoom)

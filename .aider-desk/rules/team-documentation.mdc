@@ -1,0 +1,22 @@
+# Transformable Content Best Practices
+
+## When to Use
+- Any zoomable/pannable content
+- Programmatic focus requirements
+- Complex gesture interactions
+
+## Implementation Notes
+1. Always:
+   - Use `snapshotFlow` for state synchronization
+   - Cache matrix operations
+   - Handle edge cases (empty bounds, extreme zooms)
+
+2. Avoid:
+   - Direct matrix manipulation outside state
+   - Multiple transformation sources
+   - Ignoring content size changes
+
+## Performance
+- Reuse FloatArray for matrix values
+- Minimize allocations in gesture handlers
+- Pre-calculate expensive bounds math
