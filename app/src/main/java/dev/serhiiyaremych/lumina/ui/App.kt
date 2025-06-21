@@ -72,7 +72,8 @@ fun App(modifier: Modifier = Modifier) {
                     hexGridSize = hexGridSize,
                     hexCellSize = hexCellSize,
                     zoom = transformableState.zoom,
-                    offset = transformableState.offset
+                    offset = transformableState.offset,
+                    onFocusRequested = { transformableState.focusOn(it) }
                 )
             }
         }

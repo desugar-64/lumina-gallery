@@ -37,7 +37,8 @@ fun MediaHexVisualization(
     zoom: Float,
     offset: Offset,
     onMediaClicked: (Media) -> Unit = {},
-    onHexCellClicked: (HexCell) -> Unit = {}
+    onHexCellClicked: (HexCell) -> Unit = {},
+    onFocusRequested: (Rect) -> Unit = {} // New callback for focus requests
 ) {
     val density = LocalDensity.current
     val geometryReader = remember { GeometryReader() }
@@ -74,13 +75,24 @@ fun MediaHexVisualization(
                     )
 
                     ripplePosition = tapOffset
-                    clickedMedia = geometryReader.getMediaAtPosition(transformedPos)?.also {
-                        onMediaClicked(it)
-                    }
 
-                    if (clickedMedia == null) {
-                        clickedHexCell = geometryReader.getHexCellAtPosition(transformedPos)?.also {
-                            onHexCellClicked(it)
+                    geometryReader.getMediaAtPosition(transformedPos)?.let { media ->
+                        onMediaClicked(media)
+                        clickedMedia = media
+                        clickedHexCell = null
+                        // Trigger focus request
+                        geometryReader.getMediaBounds(media)?.let { bounds ->
+                            onFocusRequested(bounds)
+                        }
+                    } ?: run {
+                        geometryReader.getHexCellAtPosition(transformedPos)?.let { cell ->
+                            onHexCellClicked(cell)
+                            clickedHexCell = cell
+                            clickedMedia = null
+                            // Trigger focus request
+                            geometryReader.getHexCellBounds(cell)?.let { bounds ->
+                                onFocusRequested(bounds)
+                            }
                         }
                     }
                 }
