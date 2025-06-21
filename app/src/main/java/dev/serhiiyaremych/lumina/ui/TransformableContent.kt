@@ -2,12 +2,22 @@ package dev.serhiiyaremych.lumina.ui
 
 import android.graphics.Matrix
 import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.SaverScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.*
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -84,7 +94,8 @@ fun TransformableContent(
     content: @Composable () -> Unit
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        LaunchedEffect(constraints) {
+        // Update content size when constraints change
+        LaunchedEffect(this.constraints) {
             state.updateContentSize(Size(
                 constraints.maxWidth.toFloat(),
                 constraints.maxHeight.toFloat()
@@ -95,17 +106,24 @@ fun TransformableContent(
         val matrix = remember { Matrix() }
         val cachedValues = remember { FloatArray(9) }
 
-        // Sync state → matrix when zoom/offset changes (including from focusOn())
-        LaunchedEffect(state.zoom, state.offset) {
-            matrix.reset()
-            matrix.postScale(state.zoom, state.zoom)
-            matrix.postTranslate(state.offset.x, state.offset.y)
+        // Improved state synchronization using snapshotFlow
+        LaunchedEffect(state) {
+            snapshotFlow {
+                // Track both zoom and offset in a single flow
+                state.zoom to state.offset
+            }.collect { (zoom, offset) ->
+                // Update matrix atomically
+                matrix.reset()
+                matrix.postScale(zoom, zoom)
+                matrix.postTranslate(offset.x, offset.y)
+            }
         }
 
         Box(
             modifier = Modifier
                 .pointerInput(Unit) {
                     detectTransformGestures { centroid, translation, scale, _ ->
+                        // Original gesture handling
                         matrix.getValues(cachedValues)
                         val currentZoom = cachedValues[Matrix.MSCALE_X]
                         val newZoom = currentZoom * scale
@@ -122,6 +140,7 @@ fun TransformableContent(
                             }
                         }
 
+                        // Update state from matrix
                         matrix.getValues(cachedValues)
                         state.offset = Offset(
                             cachedValues[Matrix.MTRANS_X],
