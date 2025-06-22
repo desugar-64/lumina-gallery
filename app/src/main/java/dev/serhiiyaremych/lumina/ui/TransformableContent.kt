@@ -45,8 +45,11 @@ class MatrixAnimator(
 }
 
 object MatrixVectorConverter : TwoWayConverter<Matrix, AnimationVector4D> {
+    // Shared thread-local storage for matrix values
+    private val matrixValues = ThreadLocal.withInitial { FloatArray(9) }
+
     override val convertToVector: (Matrix) -> AnimationVector4D = { matrix ->
-        val values = FloatArray(9)
+        val values = matrixValues.get()
         matrix.getValues(values)
         AnimationVector4D(
             values[Matrix.MSCALE_X],
@@ -79,12 +82,33 @@ object MatrixVectorConverter : TwoWayConverter<Matrix, AnimationVector4D> {
  *
  * Note: All transformations respect MIN_ZOOM/MAX_ZOOM constraints
  */
+/**
+ * Handles pan/zoom transformations and programmatic focus for content.
+ * 
+ * Features:
+ * - Unified matrix-based transformation pipeline
+ * - Smooth animations via [MatrixAnimator]
+ * - Content-aware focus calculations
+ * - Gesture integration
+ * 
+ * @property zoom Current scale factor (1f = normal size)
+ * @property offset Current translation from origin
+ * @property isAnimating True when animation is in progress
+ * @property contentSize Size of the content area for focus calculations
+ * 
+ * @param initialZoom Starting zoom level (default: 1f)
+ * @param initialOffset Starting offset (default: Offset.Zero)
+ * @param animationSpec Animation configuration for transformations
+ */
 @Stable
 class TransformableState(
     initialZoom: Float = 1f,
     initialOffset: Offset = Offset.Zero,
     private val animationSpec: AnimationSpec<Matrix> = spring()
 ) {
+    // Reused array for matrix value extraction to avoid allocations
+    private val matrixValuesCache = FloatArray(9)
+    
     val matrixAnimator = MatrixAnimator(
         Matrix().apply {
             postScale(initialZoom, initialZoom)
@@ -97,20 +121,19 @@ class TransformableState(
     var contentSize by mutableStateOf(Size.Zero)
 
     val zoom: Float by derivedStateOf {
-        val values = FloatArray(9)
-        matrixAnimator.value.getValues(values)
-        values[Matrix.MSCALE_X]
+        matrixAnimator.value.getValues(matrixValuesCache)
+        matrixValuesCache[Matrix.MSCALE_X]
     }
 
     val offset: Offset by derivedStateOf {
-        val values = FloatArray(9)
-        matrixAnimator.value.getValues(values)
-        Offset(values[Matrix.MTRANS_X], values[Matrix.MTRANS_Y])
+        matrixAnimator.value.getValues(matrixValuesCache)
+        Offset(
+            matrixValuesCache[Matrix.MTRANS_X],
+            matrixValuesCache[Matrix.MTRANS_Y]
+        )
     }
 
-    fun updateContentSize(size: Size) {
-        contentSize = size
-    }
+    fun updateContentSize(size: Size) = run { contentSize = size }
 
     suspend fun focusOn(bounds: Rect) {
         if (bounds.isEmpty || contentSize.isEmpty()) return
@@ -135,19 +158,15 @@ class TransformableState(
         matrixAnimator.snapTo(Matrix(matrixAnimator.value).apply(block))
     }
 
-    private fun calculateZoomToFit(bounds: Rect): Float {
-        return min(
-            contentSize.width / bounds.width,
-            contentSize.height / bounds.height
-        )
-    }
+    private fun calculateZoomToFit(bounds: Rect): Float = min(
+        contentSize.width / bounds.width,
+        contentSize.height / bounds.height
+    )
 
-    private fun calculateCenteringOffset(bounds: Rect, zoom: Float): Offset {
-        return Offset(
-            (contentSize.width / 2) - (bounds.center.x * zoom),
-            (contentSize.height / 2) - (bounds.center.y * zoom)
-        )
-    }
+    private fun calculateCenteringOffset(bounds: Rect, zoom: Float): Offset = Offset(
+        (contentSize.width / 2) - (bounds.center.x * zoom),
+        (contentSize.height / 2) - (bounds.center.y * zoom)
+    )
 }
 
 @Composable
@@ -201,9 +220,7 @@ fun TransformableContent(
 
 
         val coroutineScope = rememberCoroutineScope()
-        Box(
-            modifier = Modifier
-                .pointerInput(Unit) {
+        Box(modifier = Modifier.pointerInput(Unit) {
                     detectTransformGestures { centroid, pan, zoom, _ ->
                         if (!state.isAnimating) {
                             coroutineScope.launch {

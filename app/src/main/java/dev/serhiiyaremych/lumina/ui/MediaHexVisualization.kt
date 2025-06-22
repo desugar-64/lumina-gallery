@@ -38,7 +38,12 @@ fun MediaHexVisualization(
     offset: Offset,
     onMediaClicked: (Media) -> Unit = {},
     onHexCellClicked: (HexCell) -> Unit = {},
-    onFocusRequested: (Rect) -> Unit = {} // New callback for focus requests
+    /**
+     * Callback when content requests programmatic focus.
+     * @param bounds The [Rect] bounds of the content to focus on, in content coordinates.
+     *               The transformation system will smoothly center and zoom to these bounds.
+     */
+    onFocusRequested: (Rect) -> Unit = {}
 ) {
     val density = LocalDensity.current
     val geometryReader = remember { GeometryReader() }

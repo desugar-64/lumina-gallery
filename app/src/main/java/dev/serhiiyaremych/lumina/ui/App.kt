@@ -18,6 +18,17 @@ import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.math.sqrt
 
+/**
+ * Root composable for the Lumina gallery view.
+ *
+ * Responsibilities:
+ * - Initializes and connects ViewModel for media data
+ * - Calculates optimal hex grid layout based on media groups
+ * - Manages transformation state for zoom/pan interactions
+ * - Coordinates between visualization and transformation systems
+ *
+ * @param modifier Compose modifier for layout
+ */
 @Composable
 fun App(modifier: Modifier = Modifier) {
     LuminaGalleryTheme {
