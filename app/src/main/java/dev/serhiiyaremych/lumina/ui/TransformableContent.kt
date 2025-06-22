@@ -157,13 +157,11 @@ fun TransformableContent(
         val matrix = remember { Matrix() }
         val cachedValues = remember { FloatArray(9) }
 
-        // Sync state → matrix
+        // Sync state → matrix (both for animations and direct changes)
         LaunchedEffect(state.zoom, state.offset) {
-            if (!state.isAnimating) {
-                matrix.reset()
-                matrix.postScale(state.zoom, state.zoom)
-                matrix.postTranslate(state.offset.x, state.offset.y)
-            }
+            matrix.reset()
+            matrix.postScale(state.zoom, state.zoom)
+            matrix.postTranslate(state.offset.x, state.offset.y)
         }
         val coroutineScope = rememberCoroutineScope()
         Box(
