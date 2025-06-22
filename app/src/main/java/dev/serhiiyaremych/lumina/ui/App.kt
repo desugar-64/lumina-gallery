@@ -1,17 +1,20 @@
 package dev.serhiiyaremych.lumina.ui
 
 import android.util.Log
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.serhiiyaremych.lumina.domain.model.HexGridGenerator
 import dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel
 import dev.serhiiyaremych.lumina.ui.theme.LuminaGalleryTheme
+import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.math.sqrt
 
@@ -50,10 +53,12 @@ fun App(modifier: Modifier = Modifier) {
         )
 
         val gridState = rememberGridCanvasState()
-        val transformableState = rememberTransformableState()
+        val transformableState = rememberTransformableState(
+            animationSpec = tween(durationMillis = 400)
+        )
         val hexGridRenderer = remember { HexGridRenderer() }
         val hexGridGenerator = remember { HexGridGenerator() }
-
+        val coroutineScope = rememberCoroutineScope()
         TransformableContent(
             modifier = modifier.fillMaxSize(),
             state = transformableState
@@ -73,7 +78,11 @@ fun App(modifier: Modifier = Modifier) {
                     hexCellSize = hexCellSize,
                     zoom = transformableState.zoom,
                     offset = transformableState.offset,
-                    onFocusRequested = { transformableState.focusOn(it) }
+                    onFocusRequested = { bounds ->
+                        coroutineScope.launch {
+                            transformableState.focusOn(bounds)
+                        }
+                    }
                 )
             }
         }
