@@ -3,8 +3,9 @@ package dev.serhiiyaremych.lumina.ui
 import android.graphics.Matrix
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.AnimationVector4D
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.TwoWayConverter
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
@@ -16,7 +17,6 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.SaverScope
@@ -27,12 +27,42 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.pointerInput
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.min
 
 private const val MIN_ZOOM = 0.1f
 private const val MAX_ZOOM = 10f
+
+class MatrixAnimator(
+    initial: Matrix = Matrix(),
+    private val spec: AnimationSpec<Matrix> = spring()
+) {
+    private val animatable = Animatable(initial, MatrixVectorConverter)
+    val value: Matrix get() = animatable.value
+
+    suspend fun animateTo(target: Matrix) = animatable.animateTo(target, spec)
+    suspend fun snapTo(value: Matrix) = animatable.snapTo(value)
+}
+
+object MatrixVectorConverter : TwoWayConverter<Matrix, AnimationVector4D> {
+    override val convertToVector: (Matrix) -> AnimationVector4D = { matrix ->
+        val values = FloatArray(9)
+        matrix.getValues(values)
+        AnimationVector4D(
+            values[Matrix.MSCALE_X],
+            values[Matrix.MTRANS_X],
+            values[Matrix.MTRANS_Y],
+            values[Matrix.MSCALE_Y]
+        )
+    }
+
+    override val convertFromVector: (AnimationVector4D) -> Matrix = { vector ->
+        Matrix().apply {
+            setScale(vector.v1, vector.v4)
+            postTranslate(vector.v2, vector.v3)
+        }
+    }
+}
 
 /**
  * Handles pan/zoom transformations and programmatic focus.
@@ -53,17 +83,30 @@ private const val MAX_ZOOM = 10f
 class TransformableState(
     initialZoom: Float = 1f,
     initialOffset: Offset = Offset.Zero,
-    private val animationSpec: AnimationSpec<Float> = spring(),
-    private val offsetAnimationSpec: AnimationSpec<Offset> = spring()
+    private val animationSpec: AnimationSpec<Matrix> = spring()
 ) {
-    val zoomAnimatable = Animatable(initialZoom)
-    val offsetAnimatable = Animatable(initialOffset, Offset.VectorConverter)
+    val matrixAnimator = MatrixAnimator(
+        Matrix().apply {
+            postScale(initialZoom, initialZoom)
+            postTranslate(initialOffset.x, initialOffset.y)
+        },
+        animationSpec
+    )
+
     var isAnimating by mutableStateOf(false)
     var contentSize by mutableStateOf(Size.Zero)
 
-    // Public state
-    val zoom: Float by derivedStateOf { zoomAnimatable.value }
-    val offset: Offset by derivedStateOf { offsetAnimatable.value }
+    val zoom: Float by derivedStateOf {
+        val values = FloatArray(9)
+        matrixAnimator.value.getValues(values)
+        values[Matrix.MSCALE_X]
+    }
+
+    val offset: Offset by derivedStateOf {
+        val values = FloatArray(9)
+        matrixAnimator.value.getValues(values)
+        Offset(values[Matrix.MTRANS_X], values[Matrix.MTRANS_Y])
+    }
 
     fun updateContentSize(size: Size) {
         contentSize = size
@@ -77,13 +120,19 @@ class TransformableState(
             val targetZoom = calculateZoomToFit(bounds).coerceIn(MIN_ZOOM, MAX_ZOOM)
             val targetOffset = calculateCenteringOffset(bounds, targetZoom)
 
-            coroutineScope {
-                launch { zoomAnimatable.animateTo(targetZoom, animationSpec) }
-                launch { offsetAnimatable.animateTo(targetOffset, offsetAnimationSpec) }
+            val targetMatrix = Matrix().apply {
+                postScale(targetZoom, targetZoom)
+                postTranslate(targetOffset.x, targetOffset.y)
             }
+
+            matrixAnimator.animateTo(targetMatrix)
         } finally {
             isAnimating = false
         }
+    }
+
+    suspend fun updateMatrix(block: Matrix.() -> Unit) {
+        matrixAnimator.snapTo(Matrix(matrixAnimator.value).apply(block))
     }
 
     private fun calculateZoomToFit(bounds: Rect): Float {
@@ -105,11 +154,7 @@ class TransformableState(
 fun rememberTransformableState(
     initialZoom: Float = 1f,
     initialOffset: Offset = Offset.Zero,
-    animationSpec: AnimationSpec<Float> = spring(
-        stiffness = Spring.StiffnessMediumLow,
-        dampingRatio = Spring.DampingRatioNoBouncy
-    ),
-    offsetAnimationSpec: AnimationSpec<Offset> = spring(
+    animationSpec: AnimationSpec<Matrix> = spring(
         stiffness = Spring.StiffnessMediumLow,
         dampingRatio = Spring.DampingRatioNoBouncy
     )
@@ -117,24 +162,25 @@ fun rememberTransformableState(
     TransformableState(
         initialZoom = initialZoom,
         initialOffset = initialOffset,
-        animationSpec = animationSpec,
-        offsetAnimationSpec = offsetAnimationSpec
+        animationSpec = animationSpec
     )
 }
 
 private object TransformerStateSaver : Saver<TransformableState, List<Any>> {
     override fun restore(value: List<Any>): TransformableState {
         return TransformableState(
-            initialZoom = value[0] as Float,
-            initialOffset = Offset(value[1] as Float, value[2] as Float)
+            initialZoom = value[2] as Float,
+            initialOffset = Offset(value[0] as Float, value[1] as Float)
         )
     }
 
     override fun SaverScope.save(state: TransformableState): List<Any> {
+        val values = FloatArray(9)
+        state.matrixAnimator.value.getValues(values)
         return listOf(
-            state.zoomAnimatable.value,
-            state.offsetAnimatable.value.x,
-            state.offsetAnimatable.value.y
+            values[Matrix.MTRANS_X],
+            values[Matrix.MTRANS_Y],
+            values[Matrix.MSCALE_X]
         )
     }
 }
@@ -153,41 +199,18 @@ fun TransformableContent(
             ))
         }
 
-        // Restore matrix-based transformation
-        val matrix = remember { Matrix() }
-        val cachedValues = remember { FloatArray(9) }
 
-        // Sync state → matrix (both for animations and direct changes)
-        LaunchedEffect(state.zoom, state.offset) {
-            matrix.reset()
-            matrix.postScale(state.zoom, state.zoom)
-            matrix.postTranslate(state.offset.x, state.offset.y)
-        }
         val coroutineScope = rememberCoroutineScope()
         Box(
             modifier = Modifier
                 .pointerInput(Unit) {
                     detectTransformGestures { centroid, pan, zoom, _ ->
                         if (!state.isAnimating) {
-                            matrix.getValues(cachedValues)
-                            val currentZoom = cachedValues[Matrix.MSCALE_X]
-                            val newZoom = (currentZoom * zoom).coerceIn(MIN_ZOOM, MAX_ZOOM)
-
                             coroutineScope.launch {
-                                matrix.postScale(
-                                    zoom, zoom,
-                                    centroid.x, centroid.y
-                                )
-                                matrix.postTranslate(pan.x, pan.y)
-
-                                matrix.getValues(cachedValues)
-                                state.zoomAnimatable.snapTo(cachedValues[Matrix.MSCALE_X])
-                                state.offsetAnimatable.snapTo(
-                                    Offset(
-                                        cachedValues[Matrix.MTRANS_X],
-                                        cachedValues[Matrix.MTRANS_Y]
-                                    )
-                                )
+                                state.updateMatrix {
+                                    postScale(zoom, zoom, centroid.x, centroid.y)
+                                    postTranslate(pan.x, pan.y)
+                                }
                             }
                         }
                     }
