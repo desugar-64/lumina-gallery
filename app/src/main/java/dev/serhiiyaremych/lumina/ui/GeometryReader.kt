@@ -34,15 +34,11 @@ class GeometryReader {
         hexCellBounds[hexCell] = Rect(minX, minY, maxX, maxY)
     }
 
-    fun getMediaAtPosition(position: Offset): Media? {
-        return mediaBounds.entries.find { it.value.contains(position) }?.key
-    }
+    fun getMediaAtPosition(position: Offset): Media? = mediaBounds.entries.find { it.value.contains(position) }?.key
 
-    fun getHexCellAtPosition(position: Offset): HexCell? {
-        return hexCellBounds.entries.firstOrNull { (hexCell, _) ->
-            isPointInHexagon(position, hexCell.vertices)
-        }?.key
-    }
+    fun getHexCellAtPosition(position: Offset): HexCell? = hexCellBounds.entries.firstOrNull { (hexCell, _) ->
+        isPointInHexagon(position, hexCell.vertices)
+    }?.key
 
     fun getMediaBounds(media: Media): Rect? = mediaBounds[media]
 
@@ -69,7 +65,8 @@ class GeometryReader {
             val j = (i + 1) % vertices.size
             if ((vertices[i].y > point.y) != (vertices[j].y > point.y) &&
                 point.x < (vertices[j].x - vertices[i].x) * (point.y - vertices[i].y) /
-                (vertices[j].y - vertices[i].y) + vertices[i].x) {
+                (vertices[j].y - vertices[i].y) + vertices[i].x
+            ) {
                 inside = !inside
             }
         }

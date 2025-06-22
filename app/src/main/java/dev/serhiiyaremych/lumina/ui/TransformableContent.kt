@@ -82,20 +82,21 @@ object MatrixVectorConverter : TwoWayConverter<Matrix, AnimationVector4D> {
  *
  * Note: All transformations respect MIN_ZOOM/MAX_ZOOM constraints
  */
+
 /**
  * Handles pan/zoom transformations and programmatic focus for content.
- * 
+ *
  * Features:
  * - Unified matrix-based transformation pipeline
  * - Smooth animations via [MatrixAnimator]
  * - Content-aware focus calculations
  * - Gesture integration
- * 
+ *
  * @property zoom Current scale factor (1f = normal size)
  * @property offset Current translation from origin
  * @property isAnimating True when animation is in progress
  * @property contentSize Size of the content area for focus calculations
- * 
+ *
  * @param initialZoom Starting zoom level (default: 1f)
  * @param initialOffset Starting offset (default: Offset.Zero)
  * @param animationSpec Animation configuration for transformations
@@ -108,7 +109,7 @@ class TransformableState(
 ) {
     // Reused array for matrix value extraction to avoid allocations
     private val matrixValuesCache = FloatArray(9)
-    
+
     val matrixAnimator = MatrixAnimator(
         Matrix().apply {
             postScale(initialZoom, initialZoom)
@@ -186,12 +187,10 @@ fun rememberTransformableState(
 }
 
 private object TransformerStateSaver : Saver<TransformableState, List<Any>> {
-    override fun restore(value: List<Any>): TransformableState {
-        return TransformableState(
-            initialZoom = value[2] as Float,
-            initialOffset = Offset(value[0] as Float, value[1] as Float)
-        )
-    }
+    override fun restore(value: List<Any>): TransformableState = TransformableState(
+        initialZoom = value[2] as Float,
+        initialOffset = Offset(value[0] as Float, value[1] as Float)
+    )
 
     override fun SaverScope.save(state: TransformableState): List<Any> {
         val values = FloatArray(9)
@@ -212,26 +211,28 @@ fun TransformableContent(
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         LaunchedEffect(this.constraints) {
-            state.updateContentSize(Size(
-                constraints.maxWidth.toFloat(),
-                constraints.maxHeight.toFloat()
-            ))
+            state.updateContentSize(
+                Size(
+                    constraints.maxWidth.toFloat(),
+                    constraints.maxHeight.toFloat()
+                )
+            )
         }
 
-
         val coroutineScope = rememberCoroutineScope()
-        Box(modifier = Modifier.pointerInput(Unit) {
-                    detectTransformGestures { centroid, pan, zoom, _ ->
-                        if (!state.isAnimating) {
-                            coroutineScope.launch {
-                                state.updateMatrix {
-                                    postScale(zoom, zoom, centroid.x, centroid.y)
-                                    postTranslate(pan.x, pan.y)
-                                }
+        Box(
+            modifier = Modifier.pointerInput(Unit) {
+                detectTransformGestures { centroid, pan, zoom, _ ->
+                    if (!state.isAnimating) {
+                        coroutineScope.launch {
+                            state.updateMatrix {
+                                postScale(zoom, zoom, centroid.x, centroid.y)
+                                postTranslate(pan.x, pan.y)
                             }
                         }
                     }
                 }
+            }
         ) {
             content()
         }
