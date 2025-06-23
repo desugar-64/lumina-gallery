@@ -33,6 +33,8 @@ import kotlin.math.min
 private const val MIN_ZOOM = 0.1f
 private const val MAX_ZOOM = 10f
 
+private data class TransformValues(val zoom: Float, val offset: Offset)
+
 class MatrixAnimator(
     initial: Matrix = Matrix(),
     private val spec: AnimationSpec<Matrix> = spring()
@@ -121,18 +123,20 @@ class TransformableState(
     var isAnimating by mutableStateOf(false)
     var contentSize by mutableStateOf(Size.Zero)
 
-    val zoom: Float by derivedStateOf {
+    // Combined matrix extraction to avoid redundant getValues() calls
+    private val transformValues by derivedStateOf {
         matrixAnimator.value.getValues(matrixValuesCache)
-        matrixValuesCache[Matrix.MSCALE_X]
-    }
-
-    val offset: Offset by derivedStateOf {
-        matrixAnimator.value.getValues(matrixValuesCache)
-        Offset(
-            matrixValuesCache[Matrix.MTRANS_X],
-            matrixValuesCache[Matrix.MTRANS_Y]
+        TransformValues(
+            zoom = matrixValuesCache[Matrix.MSCALE_X],
+            offset = Offset(
+                matrixValuesCache[Matrix.MTRANS_X],
+                matrixValuesCache[Matrix.MTRANS_Y]
+            )
         )
     }
+
+    val zoom: Float get() = transformValues.zoom
+    val offset: Offset get() = transformValues.offset
 
     fun updateContentSize(size: Size) = run { contentSize = size }
 
