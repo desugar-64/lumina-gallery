@@ -71,6 +71,32 @@ Implement smooth zoom/pan animations with programmatic focus that:
    - Minimum/maximum zoom clamping
    - Empty content bounds
 
+### Zoom Clamping Pattern (NEW)
+
+**Problem**: Users can zoom beyond usable limits, causing performance issues and poor UX.
+
+**Solution**: Implement gesture-level zoom limits with revert-to-original approach:
+```kotlin
+private const val MIN_ZOOM = 0.1f
+private const val MAX_ZOOM = 10f
+
+// In gesture handler:
+val originalMatrix = Matrix(matrix)
+matrix.postScale(zoomChange, zoomChange, centroid.x, centroid.y)
+
+val currentZoom = getMatrixScale(matrix)
+if (currentZoom !in MIN_ZOOM..MAX_ZOOM) {
+    matrix.set(originalMatrix) // Revert and skip pan
+    return@detectTransformGestures
+}
+// Continue with pan logic...
+```
+
+**Key Benefits**:
+- Prevents matrix shift artifacts (vs direct clamping)
+- Separates zoom/pan operations for better UX
+- Maintains gesture responsiveness at limits
+
 ### Visualization of the Solution
 ```
 [Gesture] → [Update Matrix] → [Sync State]  
