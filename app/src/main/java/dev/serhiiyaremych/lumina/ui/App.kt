@@ -2,16 +2,23 @@ package dev.serhiiyaremych.lumina.ui
 
 import android.util.Log
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.serhiiyaremych.lumina.domain.model.HexGridGenerator
+import dev.serhiiyaremych.lumina.ui.components.PermissionSelection
+import dev.serhiiyaremych.lumina.ui.components.PermissionSelectionBottomSheet
 import dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel
 import dev.serhiiyaremych.lumina.ui.theme.LuminaGalleryTheme
 import kotlinx.coroutines.launch
@@ -29,12 +36,18 @@ import kotlin.math.sqrt
  *
  * @param modifier Compose modifier for layout
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(modifier: Modifier = Modifier) {
     LuminaGalleryTheme {
         val galleryViewModel: GalleryViewModel = hiltViewModel()
         val media by galleryViewModel.mediaState.collectAsState()
         val groupedMedia by galleryViewModel.groupedMediaState.collectAsState()
+
+        // Bottom sheet state for permission selection
+        val bottomSheetState = rememberModalBottomSheetState()
+        var showBottomSheet by remember { mutableStateOf(true) }
+        var permissionGranted by remember { mutableStateOf(false) }
 
         // Calculate hex grid size based on number of groups
         val hexGridSize = remember(groupedMedia) {
@@ -70,32 +83,55 @@ fun App(modifier: Modifier = Modifier) {
         val hexGridRenderer = remember { HexGridRenderer() }
         val hexGridGenerator = remember { HexGridGenerator() }
         val coroutineScope = rememberCoroutineScope()
-        TransformableContent(
-            modifier = modifier.fillMaxSize(),
-            state = transformableState
-        ) {
-            GridCanvas(
+
+        Box(modifier = modifier.fillMaxSize()) {
+            TransformableContent(
                 modifier = Modifier.fillMaxSize(),
-                zoom = transformableState.zoom,
-                offset = transformableState.offset,
-                state = gridState
+                state = transformableState
             ) {
-                // Draw media visualization on hex grid
-                MediaHexVisualization(
-                    hexGridGenerator = hexGridGenerator,
-                    hexGridRenderer = hexGridRenderer,
-                    groupedMedia = groupedMedia,
-                    hexGridSize = hexGridSize,
-                    hexCellSize = hexCellSize,
+                GridCanvas(
+                    modifier = Modifier.fillMaxSize(),
                     zoom = transformableState.zoom,
                     offset = transformableState.offset,
-                    onFocusRequested = { bounds ->
-                        coroutineScope.launch {
-                            transformableState.focusOn(bounds)
+                    state = gridState
+                ) {
+                    // Draw media visualization on hex grid
+                    MediaHexVisualization(
+                        hexGridGenerator = hexGridGenerator,
+                        hexGridRenderer = hexGridRenderer,
+                        groupedMedia = groupedMedia,
+                        hexGridSize = hexGridSize,
+                        hexCellSize = hexCellSize,
+                        zoom = transformableState.zoom,
+                        offset = transformableState.offset,
+                        onFocusRequested = { bounds ->
+                            coroutineScope.launch {
+                                transformableState.focusOn(bounds)
+                            }
+                        }
+                    )
+                }
+            }
+
+            // Permission selection bottom sheet
+            PermissionSelectionBottomSheet(
+                isVisible = showBottomSheet,
+                sheetState = bottomSheetState,
+                onDismissRequest = { showBottomSheet = false },
+                onPermissionSelected = { selection ->
+                    showBottomSheet = false
+                    permissionGranted = true
+                    when (selection) {
+                        PermissionSelection.FULL_ACCESS -> {
+                            // TODO: Request full media access permission
+                        }
+                        PermissionSelection.SELECTIVE_ACCESS -> {
+                            // TODO: Launch photo picker
                         }
                     }
-                )
-            }
+                }
+            )
         }
     }
 }
+
