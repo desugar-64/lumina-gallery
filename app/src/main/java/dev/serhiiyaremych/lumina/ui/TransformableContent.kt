@@ -111,6 +111,8 @@ class TransformableState(
 ) {
     // Reused array for matrix value extraction to avoid allocations
     private val matrixValuesCache = FloatArray(9)
+    // Cached matrix instance for focusOn to avoid allocations
+    private val focusMatrix = Matrix()
 
     val matrixAnimator = MatrixAnimator(
         Matrix().apply {
@@ -148,12 +150,11 @@ class TransformableState(
             val targetZoom = calculateZoomToFit(bounds).coerceIn(MIN_ZOOM, MAX_ZOOM)
             val targetOffset = calculateCenteringOffset(bounds, targetZoom)
 
-            val targetMatrix = Matrix().apply {
-                postScale(targetZoom, targetZoom)
-                postTranslate(targetOffset.x, targetOffset.y)
-            }
+            focusMatrix.reset()
+            focusMatrix.postScale(targetZoom, targetZoom)
+            focusMatrix.postTranslate(targetOffset.x, targetOffset.y)
 
-            matrixAnimator.animateTo(targetMatrix)
+            matrixAnimator.animateTo(Matrix(focusMatrix))
         } finally {
             isAnimating = false
         }
