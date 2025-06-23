@@ -70,22 +70,6 @@ object MatrixVectorConverter : TwoWayConverter<Matrix, AnimationVector4D> {
 }
 
 /**
- * Handles pan/zoom transformations and programmatic focus.
- *
- * Key Features:
- * - Matrix-based transformation pipeline
- * - Focus-to-bounds calculation
- * - Gesture integration
- *
- * Usage:
- * 1. Attach to TransformableContent
- * 2. Call focusOn(bounds) to programmatically center content
- * 3. State is preserved across configuration changes
- *
- * Note: All transformations respect MIN_ZOOM/MAX_ZOOM constraints
- */
-
-/**
  * Handles pan/zoom transformations and programmatic focus for content.
  *
  * Features:
@@ -102,6 +86,8 @@ object MatrixVectorConverter : TwoWayConverter<Matrix, AnimationVector4D> {
  * @param initialZoom Starting zoom level (default: 1f)
  * @param initialOffset Starting offset (default: Offset.Zero)
  * @param animationSpec Animation configuration for transformations
+ *
+ * Note: All transformations respect MIN_ZOOM/MAX_ZOOM constraints
  */
 @Stable
 class TransformableState(
@@ -114,13 +100,16 @@ class TransformableState(
     // Cached matrix instance for focusOn to avoid allocations
     private val focusMatrix = Matrix()
 
-    val matrixAnimator = MatrixAnimator(
+    private val matrixAnimator = MatrixAnimator(
         Matrix().apply {
             postScale(initialZoom, initialZoom)
             postTranslate(initialOffset.x, initialOffset.y)
         },
         animationSpec
     )
+
+    // Internal accessor for state saving
+    internal val currentMatrix: Matrix get() = matrixAnimator.value
 
     var isAnimating by mutableStateOf(false)
     var contentSize by mutableStateOf(Size.Zero)
@@ -216,7 +205,7 @@ private object TransformerStateSaver : Saver<TransformableState, List<Any>> {
 
     override fun SaverScope.save(state: TransformableState): List<Any> {
         val values = FloatArray(9)
-        state.matrixAnimator.value.getValues(values)
+        state.currentMatrix.getValues(values)
         return listOf(
             values[Matrix.MTRANS_X],
             values[Matrix.MTRANS_Y],
