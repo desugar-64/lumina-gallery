@@ -10,6 +10,15 @@
 > 
 > Therefore, I wouldn't put too much hope into this project. 😄
 
+## 🎥 Demo
+
+|            Hexagonal Grid Visualization             |                        Permissions System                        |
+|:---------------------------------------------------:|:----------------------------------------------------------------:|
+|      ![Hex Grid Visual](hex_grid_visual.apng)       |            ![Permissions Demo](permissions_demo.apng)            |
+| *Dynamic, zoomable hexagonal grid layout for media* | *Modern Android 14+ permission flow with Limited Access support* |
+
+---
+
 Lumina is a modern, offline-first Android gallery application designed with a unique and visually rich user experience in mind. It moves beyond traditional grid layouts, leveraging advanced graphics capabilities, custom animations, and a fluid, gesture-based interface. Lumina is built to be a powerful, private, and beautiful home for your local media.
 
 ## ✨ Key Features
