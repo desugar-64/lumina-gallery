@@ -19,7 +19,7 @@ LuminaGallery is a modern Android Compose application focused on advanced image 
 ## Build Configuration
 
 - **Target SDK:** 35 (Android 15)
-- **Min SDK:** 28 (Android 9)
+- **Min SDK:** 29 (Android 10)
 - **Java Version:** 11
 - **Namespace:** `dev.serhiiyaremych.lumina`
 

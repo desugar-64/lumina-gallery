@@ -17,8 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.serhiiyaremych.lumina.domain.model.HexGridGenerator
-import dev.serhiiyaremych.lumina.ui.components.PermissionSelection
-import dev.serhiiyaremych.lumina.ui.components.PermissionSelectionBottomSheet
+import dev.serhiiyaremych.lumina.ui.components.MediaPermissionFlow
 import dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel
 import dev.serhiiyaremych.lumina.ui.theme.LuminaGalleryTheme
 import kotlinx.coroutines.launch
@@ -44,9 +43,7 @@ fun App(modifier: Modifier = Modifier) {
         val media by galleryViewModel.mediaState.collectAsState()
         val groupedMedia by galleryViewModel.groupedMediaState.collectAsState()
 
-        // Bottom sheet state for permission selection
-        val bottomSheetState = rememberModalBottomSheetState()
-        var showBottomSheet by remember { mutableStateOf(true) }
+        // Permission state management
         var permissionGranted by remember { mutableStateOf(false) }
 
         // Calculate hex grid size based on number of groups
@@ -85,52 +82,45 @@ fun App(modifier: Modifier = Modifier) {
         val coroutineScope = rememberCoroutineScope()
 
         Box(modifier = modifier.fillMaxSize()) {
-            TransformableContent(
-                modifier = Modifier.fillMaxSize(),
-                state = transformableState
-            ) {
-                GridCanvas(
+            if (permissionGranted) {
+                // Main gallery interface - only shown when permissions are granted
+                TransformableContent(
                     modifier = Modifier.fillMaxSize(),
-                    zoom = transformableState.zoom,
-                    offset = transformableState.offset,
-                    state = gridState
+                    state = transformableState
                 ) {
-                    // Draw media visualization on hex grid
-                    MediaHexVisualization(
-                        hexGridGenerator = hexGridGenerator,
-                        hexGridRenderer = hexGridRenderer,
-                        groupedMedia = groupedMedia,
-                        hexGridSize = hexGridSize,
-                        hexCellSize = hexCellSize,
+                    GridCanvas(
+                        modifier = Modifier.fillMaxSize(),
                         zoom = transformableState.zoom,
                         offset = transformableState.offset,
-                        onFocusRequested = { bounds ->
-                            coroutineScope.launch {
-                                transformableState.focusOn(bounds)
+                        state = gridState
+                    ) {
+                        // Draw media visualization on hex grid
+                        MediaHexVisualization(
+                            hexGridGenerator = hexGridGenerator,
+                            hexGridRenderer = hexGridRenderer,
+                            groupedMedia = groupedMedia,
+                            hexGridSize = hexGridSize,
+                            hexCellSize = hexCellSize,
+                            zoom = transformableState.zoom,
+                            offset = transformableState.offset,
+                            onFocusRequested = { bounds ->
+                                coroutineScope.launch {
+                                    transformableState.focusOn(bounds)
+                                }
                             }
-                        }
-                    )
-                }
-            }
-
-            // Permission selection bottom sheet
-            PermissionSelectionBottomSheet(
-                isVisible = showBottomSheet,
-                sheetState = bottomSheetState,
-                onDismissRequest = { showBottomSheet = false },
-                onPermissionSelected = { selection ->
-                    showBottomSheet = false
-                    permissionGranted = true
-                    when (selection) {
-                        PermissionSelection.FULL_ACCESS -> {
-                            // TODO: Request full media access permission
-                        }
-                        PermissionSelection.SELECTIVE_ACCESS -> {
-                            // TODO: Launch photo picker
-                        }
+                        )
                     }
                 }
-            )
+            } else {
+                // Permission flow - shown when permissions are not granted
+                MediaPermissionFlow(
+                    onPermissionGranted = { permissionGranted = true },
+                    onPermissionDenied = { 
+                        // Handle permission denial - maybe show limited UI or exit
+                        Log.w("App", "Media permissions denied")
+                    }
+                )
+            }
         }
     }
 }
