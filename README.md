@@ -14,7 +14,7 @@
 
 |            Hexagonal Grid Visualization             |                        Permissions System                        |
 |:---------------------------------------------------:|:----------------------------------------------------------------:|
-|      ![Hex Grid Visual](hex_grid_visual.apng)       |            ![Permissions Demo](permissions_demo.apng)            |
+|   ![Hex Grid Visual](image/hex_grid_visual.apng)    |         ![Permissions Demo](image/permissions_demo.apng)         |
 | *Dynamic, zoomable hexagonal grid layout for media* | *Modern Android 14+ permission flow with Limited Access support* |
 
 ---
