@@ -1,6 +1,6 @@
 # Lumina
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/serhiiyaremych/lumina)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/desugar-64/lumina-gallery)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > [!WARNING]
@@ -49,12 +49,12 @@ To build and run the project, you will need Android Studio (latest stable versio
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/desugar-64/lumina.git
+    git clone git@github.com:desugar-64/lumina-gallery.git
     ```
 
 2.  **Navigate to the project directory:**
     ```bash
-    cd lumina
+    cd lumina-gallery
     ```
 
 3.  **Build the application using the Gradle wrapper:**
