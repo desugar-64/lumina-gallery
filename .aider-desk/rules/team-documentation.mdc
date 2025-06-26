@@ -118,3 +118,122 @@ if (currentZoom !in MIN_ZOOM..MAX_ZOOM) {
        dampingRatio = 0.6f 
    )
    ```
+
+---
+
+# Android Media Permissions System Patterns (NEW)
+
+## Problem Statement
+Implement modern Android media permissions that:
+1. Support Android 10-15 with different permission models
+2. Handle Android 14+ "Limited Access" transparently
+3. Provide excellent UX without over-engineering
+
+## Root Cause Analysis (Five Whys)
+1. **Problem**: App stuck on permission screen after granting limited access
+   **Why?**: Only checking `READ_MEDIA_IMAGES`/`READ_MEDIA_VIDEO` permissions
+   **Why?**: Didn't account for Android 14's `READ_MEDIA_VISUAL_USER_SELECTED`
+   **Solution**: Check for either full OR limited access permissions
+
+2. **Problem**: Complex permission state management
+   **Why?**: Tried to detect and handle "limited access" as separate state
+   **Why?**: Misunderstood that limited access should be transparent to app
+   **Solution**: Simplified to binary "has access" vs "no access"
+
+## Key Learnings
+
+### 1. Android Permission Evolution Strategy
+```kotlin
+// Android 14+ - Check for either full OR limited access
+val hasFullAccess = (READ_MEDIA_IMAGES granted || READ_MEDIA_VIDEO granted)
+val hasLimitedAccess = READ_MEDIA_VISUAL_USER_SELECTED granted
+
+// Treat limited access same as full access - system handles the difference
+val effectiveAccess = hasFullAccess || hasLimitedAccess
+```
+
+### 2. Don't Over-Engineer Permission States
+**Anti-Pattern**: Complex state machines with GRANTED/LIMITED/DENIED/PERMANENTLY_DENIED
+```kotlin
+// ❌ Over-engineered
+enum class MediaPermissionState {
+    GRANTED, LIMITED, DENIED, PERMANENTLY_DENIED, NOT_REQUESTED
+}
+```
+
+**Best Practice**: Simple binary approach
+```kotlin
+// ✅ Simple and effective  
+enum class MediaPermissionState {
+    GRANTED, DENIED, NOT_REQUESTED
+}
+```
+
+### 3. Let the System Handle Complexity
+- **Limited Access**: System provides only selected photos to MediaStore queries
+- **Permanent Denial**: Android 11+ automatically stops showing dialogs after 2+ denials  
+- **Rationale**: Modern apps show good upfront explanation instead of complex rationale API
+
+### 4. Modern Permission UX Pattern
+```kotlin
+// Clean flow: Request → Has Access? → Show Content
+when {
+    permissionStatus.hasMediaAccess -> showGallery()
+    else -> showPermissionRequest()
+}
+```
+
+## Best Practices
+
+### 1. Version-Appropriate Permission Sets
+```kotlin
+private val requiredPermissions = when {
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE -> {
+        // Android 14+ - Include limited access permission
+        arrayOf(READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_MEDIA_VISUAL_USER_SELECTED)
+    }
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
+        // Android 13 - Granular media permissions
+        arrayOf(READ_MEDIA_IMAGES, READ_MEDIA_VIDEO)
+    }
+    else -> {
+        // Android 10-12 - Legacy storage permission
+        arrayOf(READ_EXTERNAL_STORAGE)
+    }
+}
+```
+
+### 2. Single Permission Request
+```kotlin
+// Request all permissions in one operation per Android docs
+permissionLauncher.launch(permissionManager.getAllPermissions())
+```
+
+### 3. Minimum SDK Strategy
+- **Bump to API 29** eliminates Android 9 edge cases
+- **Cleaner permission model** throughout supported range
+- **97%+ device coverage** with much simpler code
+
+## Code Health Metrics
+- **Reduced complexity**: Removed 5 unused states/composables  
+- **Better UX**: No complex "permanently denied" flows
+- **Maintenance**: Single permission detection path per Android version
+
+## Anti-Patterns Avoided
+1. **Tracking permanent denial manually** - Let Android handle it
+2. **Complex limited access UI** - Treat as transparent to app
+3. **Multiple permission request flows** - Use single Material3 bottom sheet
+4. **Supporting very old Android versions** - Focus on modern baseline
+
+## Future Considerations
+1. **Photo Picker Integration**: For apps wanting zero permissions
+2. **Scoped Storage Optimization**: Direct file access patterns for Android 11+
+3. **Privacy Dashboard**: Prepare for enhanced permission monitoring
+
+### Visualization of the Solution
+```
+User Action → System Permission Dialog → Binary Result
+[Allow All] → READ_MEDIA_* granted → App sees all photos
+[Allow Limited] → READ_MEDIA_VISUAL_USER_SELECTED granted → App sees selected photos  
+[Deny] → No permissions → Show retry option
+```

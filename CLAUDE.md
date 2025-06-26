@@ -79,6 +79,7 @@ The app follows Clean Architecture principles with clear separation of concerns:
 3. **UI Layer** (`ui/`):
    - Root composables (App.kt)
    - Custom UI components (TransformableContent, GridCanvas, HexGridRenderer, MediaHexVisualization)
+   - Permission system (MediaPermissionManager, MediaPermissionFlow)
    - Feature-specific ViewModels (GalleryViewModel)
    - Theme system (theme/)
 
@@ -114,6 +115,27 @@ The touch gesture system uses:
 - Zoom level clamping between 0.1x and 10x
 - State updates to trigger recomposition only when needed
 
+### Media Permissions System
+
+The app implements a modern, Android version-aware permissions system:
+
+- **Cross-Version Support**: Handles Android 10-15 with appropriate permission models
+- **Android 14+ Limited Access**: Transparent support for "Allow limited access" via `READ_MEDIA_VISUAL_USER_SELECTED`
+- **Material3 UX**: Clean permission flow with bottom sheet selection UI
+- **Binary State Model**: Simplified "has access" vs "no access" approach
+- **System-First Design**: Leverages Android's built-in permission behaviors
+
+**Key Components:**
+- `MediaPermissionManager`: Core permission detection and management logic
+- `MediaPermissionFlow`: Material3 UI flow with permission rationale and selection
+- `PermissionSelectionBottomSheet`: User-friendly permission choice interface
+
+**Permissions Used:**
+- `READ_MEDIA_IMAGES` and `READ_MEDIA_VIDEO` (Android 13+)
+- `READ_MEDIA_VISUAL_USER_SELECTED` (Android 14+ limited access)
+- `READ_EXTERNAL_STORAGE` (Android 10-12 legacy)
+- `ACCESS_MEDIA_LOCATION` (optional, for photo/video metadata)
+
 ## Dependencies
 
 Uses Gradle version catalog (libs.versions.toml) for dependency management. Key dependencies include:
@@ -133,6 +155,8 @@ This project includes comprehensive development rules in `.aider-desk/rules/` th
 - **five.mdc**: Five Whys root cause analysis technique for debugging and problem-solving
 - **continuous-improvement.mdc**: Framework for improving development practices and identifying patterns
 - **create-docs.mdc**: Template and process for creating comprehensive documentation
+- **team-documentation.mdc**: Documented patterns and lessons learned from transformable content and media permissions
+- **media/**: Android media permissions documentation including shared storage, permission patterns, and Android 14+ changes
 
 ### Code Style Notes
 
