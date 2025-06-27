@@ -237,3 +237,110 @@ User Action → System Permission Dialog → Binary Result
 [Allow Limited] → READ_MEDIA_VISUAL_USER_SELECTED granted → App sees selected photos  
 [Deny] → No permissions → Show retry option
 ```
+
+---
+
+# Atlas-Based Media Rendering System (NEW)
+
+## Problem Statement
+Replace Coil-based image loading with custom atlas system for:
+1. Large-scale hex grid canvas with hundreds/thousands of images
+2. Zoom-level optimized rendering (LOD - Level of Detail)
+3. Precise memory and GPU texture control
+4. Seamless performance across zoom ranges
+
+## Why Atlas Over Individual Images?
+**Performance Issues with Coil:**
+- Creates thousands of individual bitmap objects
+- Uncontrolled memory usage and GPU texture thrashing  
+- No zoom-level optimization (always loads same resolution)
+- Excessive draw calls (one per image vs one per atlas)
+
+**Atlas Benefits:**
+- Single large bitmap per zoom level
+- Massive reduction in GPU texture switches
+- Perfect memory control and predictable usage
+- Zoom-optimized rendering with multiple detail levels
+
+## Core Design Principles
+
+### 1. Single Atlas Focus (Phase 1)
+Before implementing multiple LOD levels, solve fundamental problems:
+- **Atlas Size**: Optimal balance between memory usage and texture limits
+- **Packing Algorithm**: How to arrange hundreds of thumbnails efficiently
+- **Image Data Storage**: Maintain mapping from media → atlas coordinates
+- **Region Retrieval**: Fast lookup of image regions within atlas
+
+### 2. Key Technical Challenges
+
+#### Atlas Size Strategy
+```kotlin
+// Target: Balance memory vs texture limits
+// Android GPU texture limit: typically 4096x4096 or 8192x8192
+// Optimal atlas size: 2048x2048 (4MB at ARGB_8888)
+
+val ATLAS_SIZE = 2048 // pixels
+val THUMBNAIL_SIZE = 128 // pixels  
+val THUMBNAILS_PER_ATLAS = (ATLAS_SIZE / THUMBNAIL_SIZE).pow(2) // 256 thumbnails
+```
+
+#### Image Data Storage Pattern
+```kotlin
+data class AtlasRegion(
+    val x: Int,        // pixel offset in atlas
+    val y: Int,        // pixel offset in atlas  
+    val width: Int,    // region width
+    val height: Int,   // region height
+    val atlasId: Int   // which atlas contains this image
+)
+
+class AtlasManager {
+    private val mediaToRegion = mutableMapOf<Media, AtlasRegion>()
+    private val atlases = mutableListOf<Bitmap>()
+    
+    fun getRegion(media: Media): AtlasRegion?
+    fun packThumbnail(media: Media, thumbnail: Bitmap): AtlasRegion
+}
+```
+
+#### Packing Algorithm Options
+1. **Simple Grid**: Fixed 128x128 slots in 16x16 grid
+2. **Bin Packing**: Variable sizes, optimal space usage
+3. **Hybrid**: Fixed rows with variable column widths
+
+#### Atlas Generation Architecture
+- **Location**: Data layer during media loading (not UI layer)
+- **Approach**: Offscreen rendering solution
+- **Candidates**: ImageWriter with Surface, hardware Canvas
+- **Goal**: Generate atlas bitmaps independent of UI thread
+
+## Implementation Strategy
+
+### Phase 1: Single Atlas Foundation
+1. **Remove Coil dependency** - Replace with native thumbnail generation
+2. **Atlas packing system** - Simple grid-based approach first
+3. **Region mapping** - Media → AtlasRegion lookup table
+4. **Canvas integration** - Update MediaHexVisualization to use atlas
+
+### Phase 2: Multiple LOD Levels (Future)
+```kotlin
+// Future LOD system based on zoom ranges
+Level 0: zoom 0.1-0.5  → 32px thumbs  (overview)
+Level 1: zoom 0.5-2.0  → 128px thumbs (navigation) 
+Level 2: zoom 2.0-8.0  → 512px thumbs (browsing)
+Level 3: zoom 8.0+     → full res     (detail)
+```
+
+## Key Technical Questions (Phase 1)
+1. **Atlas Size**: Start with 2048x2048 or test device limits?
+2. **Thumbnail Generation**: `ThumbnailUtils.extractThumbnail()` vs `ImageDecoder`?
+3. **Packing Strategy**: Fixed grid vs bin packing for first iteration?
+4. **Memory Management**: Single atlas vs multiple smaller atlases?
+5. **Threading**: Background atlas generation vs on-demand?
+6. **Offscreen Rendering**: Best approach for atlas generation outside UI?
+
+## Success Metrics
+- **Memory Usage**: Predictable and bounded per zoom level
+- **Draw Calls**: 1 per atlas region vs 1 per individual image
+- **Frame Rate**: Stable 60fps during pan/zoom operations
+- **Load Time**: Fast atlas generation for hundreds of images

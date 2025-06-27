@@ -54,8 +54,6 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
-    // Coil for image loading
-    implementation(libs.coil.compose)
 
     // Hilt dependencies
     implementation(libs.hilt.android)

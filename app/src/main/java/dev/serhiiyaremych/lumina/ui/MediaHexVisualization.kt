@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -18,43 +17,16 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
-import coil3.compose.AsyncImagePainter
-import coil3.compose.rememberAsyncImagePainter
-import coil3.request.ImageRequest
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.HexGridGenerator
 import dev.serhiiyaremych.lumina.domain.model.Media
 import java.time.LocalDate
 import kotlin.math.min
-import coil3.size.Size as CoilSize
 
-@Composable
-fun rememberMediaPainters(
-    groupedMedia: Map<LocalDate, List<Media>>,
-    thumbnailSize: IntSize
-): Map<Media, AsyncImagePainter> {
-    val context = LocalContext.current
-    val painters = remember { mutableStateMapOf<Media, AsyncImagePainter>() }
-    val allMedia = remember(groupedMedia) { groupedMedia.values.flatten() }
-
-    allMedia.forEach { media ->
-        painters[media] = rememberAsyncImagePainter(
-            model = ImageRequest.Builder(context)
-                .data(media.uri)
-                .size(CoilSize(thumbnailSize.width, thumbnailSize.height))
-                .build()
-        )
-    }
-    return painters
-}
 
 @Composable
 fun MediaHexVisualization(
@@ -81,10 +53,6 @@ fun MediaHexVisualization(
     var ripplePosition by remember { mutableStateOf<Offset?>(null) }
 
     if (groupedMedia.isEmpty()) return
-
-    val thumbnailSizePx = with(density) { (hexCellSize * 0.8f).toPx() }.toInt()
-    val thumbnailSize = remember(thumbnailSizePx) { IntSize(thumbnailSizePx, thumbnailSizePx) }
-    val mediaPainters = rememberMediaPainters(groupedMedia, thumbnailSize)
 
     LaunchedEffect(hexGridSize, hexCellSize) {
         geometryReader.clear()
@@ -161,8 +129,7 @@ fun MediaHexVisualization(
                     drawMediaInHexCell(
                         hexCell = hexCell,
                         mediaList = mediaList,
-                        offset = Offset.Zero,
-                        mediaPainters = mediaPainters
+                        offset = Offset.Zero
                     ).forEach { (media, bounds) ->
                         geometryReader.storeMediaBounds(media, bounds, hexCell)
                     }
@@ -237,8 +204,7 @@ fun MediaHexVisualization(
 private fun DrawScope.drawMediaInHexCell(
     hexCell: HexCell,
     mediaList: List<Media>,
-    offset: Offset,
-    mediaPainters: Map<Media, Painter>
+    offset: Offset
 ): List<Pair<Media, Rect>> = mediaList.map { media ->
     val scaledHexBounds = calculateHexBounds(hexCell)
     val minDimension = min(scaledHexBounds.width, scaledHexBounds.height)
@@ -258,24 +224,15 @@ private fun DrawScope.drawMediaInHexCell(
         bottom = position.y + offset.y + size.height
     )
 
-    val painter = mediaPainters[media]
-
-    if (painter != null) {
-        with(painter) {
-            translate(left = position.x, top = position.y) {
-                draw(size)
-            }
-        }
-    } else {
-        drawRect(
-            color = when (media) {
-                is Media.Image -> Color(0xFF2196F3)
-                is Media.Video -> Color(0xFF4CAF50)
-            },
-            topLeft = position,
-            size = size
-        )
-    }
+    // TODO: Replace with atlas-based rendering
+    drawRect(
+        color = when (media) {
+            is Media.Image -> Color(0xFF2196F3)
+            is Media.Video -> Color(0xFF4CAF50)
+        },
+        topLeft = position,
+        size = size
+    )
 
     media to bounds
 }
