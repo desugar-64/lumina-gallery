@@ -19,22 +19,14 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import dev.serhiiyaremych.lumina.domain.model.HexCell
-import dev.serhiiyaremych.lumina.domain.model.HexGridGenerator
 import dev.serhiiyaremych.lumina.domain.model.Media
-import java.time.LocalDate
-import kotlin.math.min
 
 
 @Composable
 fun MediaHexVisualization(
-    hexGridGenerator: HexGridGenerator,
+    hexGridLayout: dev.serhiiyaremych.lumina.domain.model.HexGridLayout,
     hexGridRenderer: HexGridRenderer,
-    groupedMedia: Map<LocalDate, List<Media>>,
-    hexGridSize: Int,
-    hexCellSize: Dp,
     zoom: Float,
     offset: Offset,
     onMediaClicked: (Media) -> Unit = {},
@@ -46,27 +38,17 @@ fun MediaHexVisualization(
      */
     onFocusRequested: (Rect) -> Unit = {}
 ) {
-    val density = LocalDensity.current
     val geometryReader = remember { GeometryReader() }
     var clickedMedia by remember { mutableStateOf<Media?>(null) }
     var clickedHexCell by remember { mutableStateOf<HexCell?>(null) }
     var ripplePosition by remember { mutableStateOf<Offset?>(null) }
 
-    if (groupedMedia.isEmpty()) return
+    if (hexGridLayout.hexCellsWithMedia.isEmpty()) return
 
-    LaunchedEffect(hexGridSize, hexCellSize) {
+    LaunchedEffect(hexGridLayout) {
         geometryReader.clear()
         clickedMedia = null
         clickedHexCell = null
-    }
-
-    val sortedGroups = groupedMedia.keys.sorted()
-    val grid = remember(hexGridSize, hexCellSize, density) {
-        hexGridGenerator.generateGrid(
-            gridSize = hexGridSize,
-            cellSizeDp = hexCellSize,
-            density = density
-        )
     }
 
     Canvas(
@@ -82,6 +64,7 @@ fun MediaHexVisualization(
 
                     ripplePosition = tapOffset
 
+                    
                     geometryReader.getMediaAtPosition(transformedPos)?.let { media ->
                         onMediaClicked(media)
                         clickedMedia = media
@@ -109,30 +92,39 @@ fun MediaHexVisualization(
             scale(clampedZoom, clampedZoom, pivot = Offset.Zero)
             translate(offset.x / clampedZoom, offset.y / clampedZoom)
         }) {
-            grid.cells.forEach { hexCell ->
-                geometryReader.storeHexCellBounds(hexCell)
+            // Store hex cell bounds for hit testing (world coordinates, same as before)
+            hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
+                geometryReader.storeHexCellBounds(hexCellWithMedia.hexCell)
             }
 
             hexGridRenderer.drawHexGrid(
                 drawScope = this,
-                hexGrid = grid,
+                hexGrid = hexGridLayout.hexGrid,
                 zoom = 1f,
                 offset = Offset.Zero
             )
 
             geometryReader.debugDrawHexCellBounds(this)
 
-            sortedGroups.forEachIndexed { index, date ->
-                val mediaList = groupedMedia[date] ?: return@forEachIndexed
-                if (index < grid.cells.size) {
-                    val hexCell = grid.cells[index]
-                    drawMediaInHexCell(
-                        hexCell = hexCell,
-                        mediaList = mediaList,
-                        offset = Offset.Zero
-                    ).forEach { (media, bounds) ->
-                        geometryReader.storeMediaBounds(media, bounds, hexCell)
-                    }
+            // Draw media using pre-computed positions (world coordinates, same as before)
+            hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
+                hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
+                    // Store world coordinates for hit testing (preserves current approach)
+                    geometryReader.storeMediaBounds(
+                        media = mediaWithPosition.media,
+                        bounds = mediaWithPosition.absoluteBounds, // World coordinates
+                        hexCell = hexCellWithMedia.hexCell
+                    )
+                    
+                    // TODO: Replace with atlas-based rendering
+                    drawRect(
+                        color = when (mediaWithPosition.media) {
+                            is Media.Image -> Color(0xFF2196F3)
+                            is Media.Video -> Color(0xFF4CAF50)
+                        },
+                        topLeft = mediaWithPosition.absoluteBounds.topLeft,
+                        size = mediaWithPosition.absoluteBounds.size
+                    )
                 }
             }
 
@@ -201,83 +193,3 @@ fun MediaHexVisualization(
     }
 }
 
-private fun DrawScope.drawMediaInHexCell(
-    hexCell: HexCell,
-    mediaList: List<Media>,
-    offset: Offset
-): List<Pair<Media, Rect>> = mediaList.map { media ->
-    val scaledHexBounds = calculateHexBounds(hexCell)
-    val minDimension = min(scaledHexBounds.width, scaledHexBounds.height)
-    val thumbnailMaxSize = minDimension * 0.4f
-
-    val (position, size) = generateScaledPositionWithOffset(
-        media = media,
-        scaledHexBounds = scaledHexBounds,
-        thumbnailMaxSize = thumbnailMaxSize,
-        seed = (media.id + hexCell.q * 1000000 + hexCell.r * 1000).toInt()
-    )
-
-    val bounds = Rect(
-        left = position.x + offset.x,
-        top = position.y + offset.y,
-        right = position.x + offset.x + size.width,
-        bottom = position.y + offset.y + size.height
-    )
-
-    // TODO: Replace with atlas-based rendering
-    drawRect(
-        color = when (media) {
-            is Media.Image -> Color(0xFF2196F3)
-            is Media.Video -> Color(0xFF4CAF50)
-        },
-        topLeft = position,
-        size = size
-    )
-
-    media to bounds
-}
-
-private fun generateScaledPositionWithOffset(
-    media: Media,
-    scaledHexBounds: Rect,
-    thumbnailMaxSize: Float,
-    seed: Int
-): Pair<Offset, androidx.compose.ui.geometry.Size> {
-    val aspectRatio = if (media.height != 0) media.width.toFloat() / media.height.toFloat() else 1f
-    val (width, height) = if (aspectRatio >= 1f) {
-        thumbnailMaxSize to thumbnailMaxSize / aspectRatio
-    } else {
-        thumbnailMaxSize * aspectRatio to thumbnailMaxSize
-    }
-
-    val random = kotlin.random.Random(seed)
-    val availableWidth = scaledHexBounds.width - width
-    val availableHeight = scaledHexBounds.height - height
-
-    return if (availableWidth > 0 && availableHeight > 0) {
-        Offset(
-            x = scaledHexBounds.left + random.nextFloat() * availableWidth,
-            y = scaledHexBounds.top + random.nextFloat() * availableHeight
-        ) to androidx.compose.ui.geometry.Size(width, height)
-    } else {
-        Offset(
-            scaledHexBounds.left + scaledHexBounds.width / 2 - width / 2,
-            scaledHexBounds.top + scaledHexBounds.height / 2 - height / 2
-        ) to androidx.compose.ui.geometry.Size(width, height)
-    }
-}
-
-private fun calculateHexBounds(hexCell: HexCell): androidx.compose.ui.geometry.Rect {
-    val vertices = hexCell.vertices
-    val minX = vertices.minOf { it.x }
-    val maxX = vertices.maxOf { it.x }
-    val minY = vertices.minOf { it.y }
-    val maxY = vertices.maxOf { it.y }
-
-    return androidx.compose.ui.geometry.Rect(
-        left = minX,
-        top = minY,
-        right = maxX,
-        bottom = maxY
-    )
-}

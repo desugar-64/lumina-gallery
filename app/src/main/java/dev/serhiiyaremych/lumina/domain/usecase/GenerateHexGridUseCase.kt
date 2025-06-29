@@ -1,7 +1,7 @@
 package dev.serhiiyaremych.lumina.domain.usecase
 
-import android.util.Size
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import dev.serhiiyaremych.lumina.domain.model.HexCell

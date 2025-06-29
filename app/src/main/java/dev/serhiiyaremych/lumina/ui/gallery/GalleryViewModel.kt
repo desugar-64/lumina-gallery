@@ -1,9 +1,13 @@
 package dev.serhiiyaremych.lumina.ui.gallery
 
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.unit.Density
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.serhiiyaremych.lumina.domain.model.HexGridLayout
 import dev.serhiiyaremych.lumina.domain.model.Media
+import dev.serhiiyaremych.lumina.domain.usecase.GenerateHexGridLayoutUseCase
 import dev.serhiiyaremych.lumina.domain.usecase.GetMediaUseCase
 import dev.serhiiyaremych.lumina.domain.usecase.GroupMediaUseCase
 import dev.serhiiyaremych.lumina.domain.usecase.GroupingPeriod
@@ -17,7 +21,8 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class GalleryViewModel @Inject constructor(
     private val getMediaUseCase: GetMediaUseCase,
-    private val groupMediaUseCase: GroupMediaUseCase
+    private val groupMediaUseCase: GroupMediaUseCase,
+    private val generateHexGridLayoutUseCase: GenerateHexGridLayoutUseCase
 ) : ViewModel() {
 
     var currentPeriod: GroupingPeriod = GroupingPeriod.DAILY
@@ -31,6 +36,9 @@ class GalleryViewModel @Inject constructor(
 
     private val _groupedMediaState = MutableStateFlow<Map<LocalDate, List<Media>>>(emptyMap())
     val groupedMediaState: StateFlow<Map<LocalDate, List<Media>>> = _groupedMediaState.asStateFlow()
+
+    private val _hexGridLayoutState = MutableStateFlow<HexGridLayout?>(null)
+    val hexGridLayoutState: StateFlow<HexGridLayout?> = _hexGridLayoutState.asStateFlow()
 
     init {
         loadMedia()
@@ -46,5 +54,20 @@ class GalleryViewModel @Inject constructor(
 
     private fun groupMedia() {
         _groupedMediaState.value = groupMediaUseCase(_mediaState.value, currentPeriod)
+    }
+
+    /**
+     * Generates hex grid layout with canvas size and density.
+     * Call this when canvas size becomes available.
+     */
+    fun generateHexGridLayout(density: Density, canvasSize: Size) {
+        viewModelScope.launch {
+            val layout = generateHexGridLayoutUseCase.execute(
+                density = density,
+                canvasSize = canvasSize,
+                groupingPeriod = currentPeriod
+            )
+            _hexGridLayoutState.value = layout
+        }
     }
 }
