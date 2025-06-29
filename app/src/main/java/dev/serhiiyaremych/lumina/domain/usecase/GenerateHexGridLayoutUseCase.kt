@@ -63,11 +63,11 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         val groupedMedia = groupMediaUseCase(allMedia, groupingPeriod)
 
         // Step 3: Get hex grid configuration based on group count
-        val (gridSize, cellSizeDp) = getHexGridParametersUseCase(groupedMedia.size)
+        val (_, cellSizeDp) = getHexGridParametersUseCase(groupedMedia.size)
 
-        // Step 4: Generate hex grid geometry
+        // Step 4: Generate hex grid geometry with exact cell count
         val hexGrid = generateHexGridUseCase(
-            gridSize = gridSize,
+            cellCount = groupedMedia.size,
             cellSizeDp = cellSizeDp,
             density = density,
             canvasSize = canvasSize
