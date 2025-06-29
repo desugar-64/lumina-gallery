@@ -91,7 +91,8 @@ enum class LODLevel(val resolution: Int, val zoomRange: ClosedFloatingPointRange
 - Load photos from MediaStore URIs
 - Scale to appropriate LOD resolution
 - Maintain aspect ratios
-- Use high-quality scaling (Lanczos filtering)
+- Use high-quality scaling.
+- **Decision**: While Lanczos filtering offers the highest quality, it is computationally expensive and slow to implement in pure Kotlin without the NDK. For the performance-critical task of generating many thumbnails quickly, we will use Android's built-in `Bitmap.createScaledBitmap` with its `filter` option enabled. This provides high-quality bilinear filtering that is hardware-accelerated and offers the best balance of speed and quality for this application.
 
 #### ⏳ Task 1.3: Atlas Generation
 **Files to create:**

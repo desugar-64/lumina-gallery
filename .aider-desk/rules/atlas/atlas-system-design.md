@@ -189,9 +189,16 @@ interface PhotoScaler {
             else -> source.width // Original size
         }
         
-        return downscale(source, targetSize, ResampleFilter.LANCZOS)
+        return downscale(source, targetSize, ResampleFilter.BILINEAR)
     }
 }
+
+// Note on Resampling Filters
+// While Lanczos provides the highest theoretical quality, it is significantly slower
+// and not practical for a pure Kotlin implementation. Android's native, hardware-accelerated
+// bilinear filtering (requested by `Bitmap.createScaledBitmap` with `filter=true`)
+// provides an excellent trade-off between performance and quality for generating
+// the small thumbnails required for LOD levels.
 ```
 
 ### When Scaling Occurs
