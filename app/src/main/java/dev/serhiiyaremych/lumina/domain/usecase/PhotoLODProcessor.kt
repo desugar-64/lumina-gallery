@@ -8,7 +8,8 @@ import androidx.compose.ui.unit.IntSize
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import javax.inject.Inject
 import javax.inject.Singleton
-import androidx.core.graphics.scale
+import dev.serhiiyaremych.lumina.data.PhotoScaler
+import dev.serhiiyaremych.lumina.data.ScaleStrategy
 
 /**
  * Processes photos for Level-of-Detail (LOD) atlas system.
@@ -16,7 +17,8 @@ import androidx.core.graphics.scale
  */
 @Singleton
 class PhotoLODProcessor @Inject constructor(
-    private val contentResolver: ContentResolver
+    private val contentResolver: ContentResolver,
+    private val photoScaler: PhotoScaler
 ) {
 
     /**
@@ -25,21 +27,24 @@ class PhotoLODProcessor @Inject constructor(
     suspend fun processPhotoForLOD(
         photoUri: Uri,
         lodLevel: LODLevel,
-        resizeStrategy: ResizeStrategy = ResizeStrategy.FIT_CENTER
+        scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER
     ): ProcessedPhoto? {
         return try {
             // Load original photo with efficient memory usage
             val originalBitmap = loadOriginalPhoto(photoUri) ?: return null
 
-            // Calculate scaled dimensions
-            val scaledSize = calculateScaledSize(
+            // Scale bitmap to LOD resolution using PhotoScaler
+            val targetSize = calculateTargetSize(
                 originalSize = IntSize(originalBitmap.width, originalBitmap.height),
-                targetSize = lodLevel.resolution,
-                strategy = resizeStrategy
+                lodResolution = lodLevel.resolution,
+                strategy = scaleStrategy
             )
-
-            // Scale bitmap to LOD resolution
-            val scaledBitmap = scaleToLOD(originalBitmap, scaledSize)
+            
+            val scaledBitmap = photoScaler.scale(
+                source = originalBitmap,
+                targetSize = targetSize,
+                strategy = scaleStrategy
+            )
 
             // Clean up original bitmap if different from scaled
             if (scaledBitmap != originalBitmap) {
@@ -49,8 +54,8 @@ class PhotoLODProcessor @Inject constructor(
             ProcessedPhoto(
                 bitmap = scaledBitmap,
                 originalSize = IntSize(originalBitmap.width, originalBitmap.height),
-                scaledSize = scaledSize,
-                aspectRatio = scaledSize.width.toFloat() / scaledSize.height,
+                scaledSize = targetSize,
+                aspectRatio = targetSize.width.toFloat() / targetSize.height,
                 lodLevel = lodLevel.level
             )
         } catch (e: Exception) {
@@ -112,63 +117,38 @@ class PhotoLODProcessor @Inject constructor(
     }
 
     /**
-     * Calculates scaled dimensions based on LOD level and resize strategy
+     * Calculates target size based on LOD resolution and scaling strategy
      */
-    private fun calculateScaledSize(
+    private fun calculateTargetSize(
         originalSize: IntSize,
-        targetSize: Int,
-        strategy: ResizeStrategy
+        lodResolution: Int,
+        strategy: ScaleStrategy
     ): IntSize {
         val aspectRatio = originalSize.width.toFloat() / originalSize.height
 
         return when (strategy) {
-            ResizeStrategy.FIT_CENTER -> {
-                // Scale to fit within target size while preserving aspect ratio
+            ScaleStrategy.FIT_CENTER -> {
+                // Scale to fit within LOD resolution while preserving aspect ratio
                 if (originalSize.width > originalSize.height) {
                     IntSize(
-                        width = targetSize,
-                        height = (targetSize / aspectRatio).toInt()
+                        width = lodResolution,
+                        height = (lodResolution / aspectRatio).toInt()
                     )
                 } else {
                     IntSize(
-                        width = (targetSize * aspectRatio).toInt(),
-                        height = targetSize
+                        width = (lodResolution * aspectRatio).toInt(),
+                        height = lodResolution
                     )
                 }
             }
-            ResizeStrategy.CENTER_CROP -> {
-                // Scale to fill target size, may crop edges
-                IntSize(targetSize, targetSize)
+            ScaleStrategy.CENTER_CROP -> {
+                // Scale to fill exact LOD resolution, may crop edges
+                IntSize(lodResolution, lodResolution)
             }
         }
     }
-
-    /**
-     * Scales bitmap to target size using high-quality filtering
-     */
-    private fun scaleToLOD(original: Bitmap, targetSize: IntSize): Bitmap {
-        return if (original.width == targetSize.width && original.height == targetSize.height) {
-            original
-        } else {
-            original.scale(targetSize.width, targetSize.height)
-        }
-    }
 }
 
-/**
- * Resize strategy for photo scaling
- */
-enum class ResizeStrategy {
-    /**
-     * Maintain aspect ratio, may have empty space
-     */
-    FIT_CENTER,
-
-    /**
-     * Fill target size, may crop edges
-     */
-    CENTER_CROP
-}
 
 /**
  * Result of photo processing for LOD level

@@ -98,6 +98,15 @@ The app follows Clean Architecture principles with clear separation of concerns:
 5. **MediaHexVisualization** - Renders media groups on hexagonal grid layout
 6. **GalleryViewModel** - Manages media state and grouping logic using StateFlow
 
+### Texture Atlas System Components
+
+The app implements a sophisticated texture atlas system for efficient photo rendering:
+
+7. **PhotoScaler** - Hardware-accelerated bitmap scaling using bilinear filtering
+8. **PhotoLODProcessor** - Processes photos for Level-of-Detail (LOD) atlas system
+9. **TexturePacker** - Shelf packing algorithm for efficient atlas generation
+10. **TextureAtlas, AtlasRegion, LODLevel** - Core data models for atlas system
+
 ### Performance Optimizations
 
 The app implements several performance optimizations:
@@ -106,6 +115,8 @@ The app implements several performance optimizations:
 - **State-driven recomposition** using offset/zoom state variables  
 - **Visible range calculations** in grid drawing to only render visible elements
 - **Matrix clamping** with MIN_ZOOM (0.1f) and MAX_ZOOM (10f) constants
+- **Hardware-accelerated scaling** using Android's bilinear filtering for photo processing
+- **Memory-efficient bitmap handling** with explicit recycling and cleanup patterns
 
 ### Gesture System
 

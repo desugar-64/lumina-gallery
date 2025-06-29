@@ -344,3 +344,178 @@ Level 3: zoom 8.0+     → full res     (detail)
 - **Draw Calls**: 1 per atlas region vs 1 per individual image
 - **Frame Rate**: Stable 60fps during pan/zoom operations
 - **Load Time**: Fast atlas generation for hundreds of images
+
+---
+
+# Photo Scaling for Atlas System (NEW)
+
+## Problem Statement
+Implement high-performance photo scaling for texture atlas generation:
+1. Process hundreds/thousands of photos efficiently
+2. Maintain excellent quality for thumbnail generation
+3. Support multiple LOD (Level of Detail) resolutions
+4. Leverage Android's hardware acceleration
+
+## Root Cause Analysis (Five Whys)
+1. **Problem**: Initially considered Lanczos filtering for best quality
+   **Why?**: Lanczos provides theoretically superior image quality
+   **Why?**: Wanted to optimize for visual appearance over performance
+   **Solution**: Recognized that bilinear filtering offers better performance/quality balance
+
+2. **Problem**: Complex scaling logic embedded in PhotoLODProcessor
+   **Why?**: Started with simple inline scaling approach
+   **Why?**: Didn't initially anticipate multiple scaling strategies needed
+   **Solution**: Extracted dedicated PhotoScaler component for reusability
+
+## Key Design Decision: Hardware-Accelerated Bilinear Filtering
+
+### Decision Rationale
+```kotlin
+// ❌ Theoretical best quality but impractical
+fun scaleLanczos(source: Bitmap, target: IntSize): Bitmap {
+    // Pure Kotlin implementation would be extremely slow
+    // No NDK available for atlas thumbnail generation
+}
+
+// ✅ Practical high-quality solution
+fun scaleHardwareAccelerated(source: Bitmap, target: IntSize): Bitmap {
+    return Bitmap.createScaledBitmap(
+        source, target.width, target.height,
+        true // Enable hardware-accelerated bilinear filtering
+    )
+}
+```
+
+**Why Bilinear Over Lanczos:**
+- **Performance**: Hardware-accelerated vs pure Kotlin implementation
+- **Quality**: Excellent for thumbnail generation (negligible visual difference)
+- **Platform Integration**: Leverages Android's optimized graphics pipeline
+- **Memory Efficiency**: No intermediate buffer allocations
+
+## Implementation Patterns
+
+### 1. Dedicated Scaling Component
+```kotlin
+@Singleton
+class PhotoScaler @Inject constructor() {
+    fun scale(source: Bitmap, targetSize: IntSize, strategy: ScaleStrategy): Bitmap
+    fun createThumbnail(source: Bitmap, maxDimension: Int): Bitmap
+    fun downscale(source: Bitmap, scaleFactor: Float): Bitmap
+}
+```
+
+**Benefits:**
+- **Single Responsibility**: Only handles bitmap scaling operations
+- **Reusable**: Can be used by atlas system, preview generation, etc.
+- **Testable**: Isolated scaling logic for unit testing
+- **Injectable**: Fits clean architecture with DI
+
+### 2. Strategy Pattern for Scaling Types
+```kotlin
+enum class ScaleStrategy {
+    FIT_CENTER,    // Maintain aspect ratio, may have empty space
+    CENTER_CROP    // Fill target completely, may crop edges
+}
+```
+
+**FIT_CENTER Use Case:**
+- Atlas thumbnails where aspect ratios vary
+- Prevents distortion of landscape/portrait photos
+- Maintains visual integrity of original content
+
+**CENTER_CROP Use Case:**
+- Fixed-size atlas slots for uniform grid layout
+- Social media style thumbnails
+- When consistent visual weight is more important than showing full content
+
+### 3. Memory-Safe Crop Implementation
+```kotlin
+private fun scaleAndCrop(source: Bitmap, targetSize: IntSize): Bitmap {
+    // 1. Scale to intermediate size (larger than target)
+    val scaledBitmap = Bitmap.createScaledBitmap(/*...*/)
+    
+    // 2. Crop from center to exact target size
+    val croppedBitmap = Bitmap.createBitmap(scaledBitmap, /*crop coords*/)
+    
+    // 3. Clean up intermediate bitmap
+    if (scaledBitmap != croppedBitmap) {
+        scaledBitmap.recycle()
+    }
+    
+    return croppedBitmap
+}
+```
+
+**Key Pattern**: Always clean up intermediate bitmaps to prevent memory leaks
+
+### 4. Integration with LOD Processor
+```kotlin
+// Before: Inline scaling logic
+class PhotoLODProcessor {
+    private fun scaleToLOD(original: Bitmap, targetSize: IntSize): Bitmap {
+        return original.scale(targetSize.width, targetSize.height)
+    }
+}
+
+// After: Dependency injection with dedicated scaler
+class PhotoLODProcessor @Inject constructor(
+    private val contentResolver: ContentResolver,
+    private val photoScaler: PhotoScaler
+) {
+    suspend fun processPhotoForLOD(
+        photoUri: Uri,
+        lodLevel: LODLevel,
+        scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER
+    ): ProcessedPhoto? {
+        val scaledBitmap = photoScaler.scale(original, targetSize, scaleStrategy)
+        // ...
+    }
+}
+```
+
+## Best Practices
+
+### 1. Always Enable Filtering
+```kotlin
+// ✅ High quality scaling
+Bitmap.createScaledBitmap(source, width, height, true)
+
+// ❌ Fast but poor quality
+Bitmap.createScaledBitmap(source, width, height, false)
+```
+
+### 2. Calculate Target Size Before Scaling
+```kotlin
+// ✅ Pre-calculate dimensions
+val targetSize = calculateTargetSize(original, lodLevel, strategy)
+val scaled = photoScaler.scale(original, targetSize, strategy)
+
+// ❌ Calculate during scaling
+val scaled = photoScaler.scale(original, lodLevel.resolution, strategy)
+```
+
+### 3. Memory Cleanup Patterns
+```kotlin
+// Always check if bitmaps are different before recycling
+if (scaledBitmap != originalBitmap) {
+    originalBitmap.recycle()
+}
+```
+
+## Code Health Metrics
+- **Separation of Concerns**: PhotoScaler handles only bitmap operations
+- **Testability**: Isolated scaling logic with predictable inputs/outputs  
+- **Memory Safety**: Explicit bitmap recycling prevents OOM issues
+- **Clean Architecture**: Follows dependency injection and single responsibility principles
+
+## Future Considerations
+1. **WebP Support**: Modern format with better compression for atlas storage
+2. **Multi-threading**: Parallel scaling for batch operations
+3. **Caching**: Scaled bitmap cache for frequently accessed images
+4. **Quality Metrics**: A/B testing for user-perceived quality differences
+
+## Anti-Patterns Avoided
+1. **Over-Engineering**: Chose practical bilinear over theoretical Lanczos
+2. **Inline Scaling**: Extracted reusable component instead of embedding in processor
+3. **Memory Leaks**: Explicit cleanup vs relying on GC
+4. **Quality Obsession**: Balanced quality with performance requirements
