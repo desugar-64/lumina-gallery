@@ -23,11 +23,13 @@ Lumina is a modern, offline-first Android gallery application designed with a un
 
 ## ✨ Key Features
 
--   **Advanced Graphics & UI**: A dynamic, zoomable, and pannable canvas for your media, powered by custom rendering and matrix-based transformations.
+-   **🖼️ Real Photo Rendering**: Advanced atlas texture system displaying actual photo thumbnails instead of placeholders, with hardware-accelerated scaling and GPU optimization.
+-   **📐 Hexagonal Grid Visualization**: Unique hexagonal grid layout for displaying grouped media on a zoomable, pannable canvas with ring-based generation.
+-   **⚡ Atlas Texture System**: Sophisticated Level-of-Detail (LOD) rendering with 2048x2048 texture atlases, shelf packing algorithm, and smart fallback mechanisms.
 -   **🎯 Smart Permissions**: Modern Android 10-15 permission system with transparent support for Android 14+ "Limited Access" mode.
 -   **🔒 Privacy-First**: Respects user choice - works with full library access or selected photos. Your privacy is paramount.
--   **📐 Hexagonal Grid Visualization**: Unique hexagonal grid layout for displaying grouped media on a zoomable, pannable canvas.
--   **🚀 Modern Tech Stack**: Built with the latest Android technologies, including 100% Kotlin, Jetpack Compose, and modern architectural patterns.
+-   **🚀 Advanced Graphics & UI**: Dynamic, zoomable, and pannable canvas powered by custom rendering, matrix-based transformations, and reactive state management.
+-   **🏗️ Clean Architecture**: Separation of concerns with domain/data/UI layers, dependency injection via Hilt, and comprehensive error handling.
 -   **📁 Direct Media Access**: Interfaces directly with the Android `MediaStore` API to efficiently access all photos and videos on your device.
 
 ## 🛠️ Project Info & Tech Stack
@@ -37,8 +39,10 @@ Lumina is built using a modern Android technology stack, emphasizing clean archi
 -   **UI**: [Jetpack Compose](https://developer.android.com/jetpack/compose) with Material 3 design system for a fully declarative and dynamic UI.
 -   **Language**: 100% [Kotlin](https://kotlinlang.org/) with Coroutines and StateFlow for reactive programming.
 -   **Architecture**: Clean Architecture with separate domain, data, and UI layers using [Hilt](https://dagger.dev/hilt/) for dependency injection.
+-   **Graphics**: Advanced atlas texture system with hardware-accelerated photo scaling, shelf packing algorithm, and Level-of-Detail (LOD) rendering.
 -   **Permissions**: Modern Android 10-15 permission system with automatic version detection and Android 14+ Limited Access support.
 -   **Gestures**: Advanced matrix-based transformations for smooth pan, zoom, and scale operations with performance optimizations.
+-   **State Management**: Reactive StateFlow architecture with proper Compose side-effects patterns (LaunchedEffect, snapshotFlow, rememberUpdatedState).
 -   **Build System**: [Gradle](https://gradle.org/) with the [Kotlin DSL](https://docs.gradle.org/current/userguide/kotlin_dsl.html) (`build.gradle.kts`), providing a type-safe and expressive build configuration.
 -   **Dependency Management**: Centralized dependency management using a TOML Version Catalog (`libs.versions.toml`), ensuring consistency and ease of updates.
 -   **Media**: Direct integration with Android's `MediaStore` API for robust and efficient media handling.
