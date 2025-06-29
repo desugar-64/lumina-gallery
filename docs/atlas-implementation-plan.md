@@ -252,6 +252,44 @@ object AtlasModule {
 3. **Loading Performance**: Progressive quality with quick previews
 4. **Device Compatibility**: Dynamic atlas size based on GPU capabilities
 
+## Future Improvements (Post Phase 1)
+
+### Batch Processing Enhancement
+**Current Approach**: Sequential processing of all photos at once
+**Future Enhancement**: Memory-aware batch processing for large photo sets
+
+```kotlin
+// Future implementation concept
+class AtlasGenerator {
+    suspend fun generateAtlas(
+        photoUris: List<Uri>, 
+        lodLevel: LODLevel,
+        batchSize: Int = 50  // Configurable batch size
+    ): AtlasResult {
+        // Process photos in chunks with memory monitoring
+        photoUris.chunked(batchSize).forEach { batch ->
+            if (memoryMonitor.isMemoryPressure()) {
+                // Handle memory pressure gracefully
+            }
+            // Process batch...
+        }
+    }
+}
+```
+
+**Benefits of Batch Processing:**
+- **Memory Control**: Process large photo sets without OOM
+- **Progress Reporting**: User feedback during long operations
+- **Cancellation Support**: Can interrupt processing between batches
+- **Memory Pressure Handling**: Adaptive behavior under low memory
+- **Multiple Atlas Support**: Generate multiple atlases for very large sets
+
+**Implementation Prerequisites:**
+- MemoryMonitor component (Task 2.2)
+- Progress reporting system
+- Atlas cache management (Task 2.2)
+- Multiple atlas coordination logic
+
 ### Fallback Mechanisms
 - **Atlas Generation Failure**: Fall back to colored placeholders
 - **Memory Pressure**: Reduce atlas count and LOD levels

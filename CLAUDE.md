@@ -105,7 +105,8 @@ The app implements a sophisticated texture atlas system for efficient photo rend
 7. **PhotoScaler** - Hardware-accelerated bitmap scaling using bilinear filtering
 8. **PhotoLODProcessor** - Processes photos for Level-of-Detail (LOD) atlas system
 9. **TexturePacker** - Shelf packing algorithm for efficient atlas generation
-10. **TextureAtlas, AtlasRegion, LODLevel** - Core data models for atlas system
+10. **AtlasGenerator** - Coordinates photo processing and packing into complete texture atlases
+11. **TextureAtlas, AtlasRegion, LODLevel** - Core data models for atlas system
 
 ### Performance Optimizations
 
@@ -117,6 +118,8 @@ The app implements several performance optimizations:
 - **Matrix clamping** with MIN_ZOOM (0.1f) and MAX_ZOOM (10f) constants
 - **Hardware-accelerated scaling** using Android's bilinear filtering for photo processing
 - **Memory-efficient bitmap handling** with explicit recycling and cleanup patterns
+- **Multi-stage atlas pipeline** with comprehensive failure tracking and partial success handling
+- **Index-based coordinate mapping** for reliable photo-to-atlas region tracking
 
 ### Gesture System
 
@@ -168,6 +171,8 @@ This project includes comprehensive development rules in `.aider-desk/rules/` th
 - **create-docs.mdc**: Template and process for creating comprehensive documentation
 - **team-documentation.mdc**: Documented patterns and lessons learned from transformable content and media permissions
 - **media/**: Android media permissions documentation including shared storage, permission patterns, and Android 14+ changes
+
+Think very hard about this problem and present with a plan before you change anything. Give me at least 3 options.
 
 ### Code Style Notes
 

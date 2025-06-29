@@ -519,3 +519,225 @@ if (scaledBitmap != originalBitmap) {
 2. **Inline Scaling**: Extracted reusable component instead of embedding in processor
 3. **Memory Leaks**: Explicit cleanup vs relying on GC
 4. **Quality Obsession**: Balanced quality with performance requirements
+
+---
+
+# Atlas Coordination and Pipeline (NEW)
+
+## Problem Statement
+Coordinate multiple complex components into a unified atlas generation pipeline:
+1. Bridge PhotoLODProcessor + TexturePacker into complete system
+2. Handle partial failures gracefully while maximizing success
+3. Manage memory efficiently during multi-step processing
+4. Provide detailed metrics for debugging and optimization
+
+## Root Cause Analysis (Five Whys)
+1. **Problem**: Need to coordinate PhotoLODProcessor and TexturePacker
+   **Why?**: Each component handles one piece of atlas generation
+   **Why?**: Single responsibility principle - each component has focused purpose
+   **Solution**: Create AtlasGenerator as coordination layer
+
+2. **Problem**: Complex failure handling across multiple processing stages
+   **Why?**: Photos can fail at loading, processing, or packing stages
+   **Why?**: Real-world photo data is unreliable (corrupted files, permissions, etc.)
+   **Solution**: Collect failures at each stage and provide comprehensive failure reporting
+
+## Key Design Decision: Sequential Processing with Immediate Cleanup
+
+### Decision Rationale
+```kotlin
+// ✅ Simple sequential approach for Phase 1
+suspend fun generateAtlas(photoUris: List<Uri>): AtlasGenerationResult {
+    // Step 1: Process all photos
+    for (uri in photoUris) {
+        val processed = photoLODProcessor.processPhotoForLOD(uri, lodLevel)
+        if (processed != null) processedPhotos.add(processed)
+    }
+    
+    // Step 2: Pack layout
+    val packResult = texturePacker.pack(imagesToPack)
+    
+    // Step 3: Draw atlas and cleanup immediately
+    val atlasBitmap = createAtlasBitmap(processedPhotos, packResult)
+    processedPhotos.forEach { it.bitmap.recycle() } // Immediate cleanup
+}
+
+// ❌ More complex batch processing (future enhancement)
+suspend fun generateAtlasWithBatching(photoUris: List<Uri>): AtlasGenerationResult {
+    photoUris.chunked(50).forEach { batch ->
+        if (memoryMonitor.isMemoryPressure()) return@forEach
+        // Complex memory management...
+    }
+}
+```
+
+**Why Sequential Over Batching (for now):**
+- **Simplicity**: Clear linear flow for debugging and testing
+- **Foundation**: Easy to refactor to batching when we add MemoryMonitor
+- **Predictable**: Known memory usage patterns
+- **Fast Implementation**: Get working system quickly
+
+## Implementation Patterns
+
+### 1. Multi-Stage Pipeline with Failure Tracking
+```kotlin
+class AtlasGenerator @Inject constructor(
+    private val photoLODProcessor: PhotoLODProcessor
+) {
+    suspend fun generateAtlas(photoUris: List<Uri>): AtlasGenerationResult {
+        val processedPhotos = mutableListOf<ProcessedPhoto>()
+        val failed = mutableListOf<Uri>()
+        
+        // Stage 1: Photo processing with individual failure tracking
+        for (uri in photoUris) {
+            try {
+                val processed = photoLODProcessor.processPhotoForLOD(uri, lodLevel)
+                if (processed != null) {
+                    processedPhotos.add(processed)
+                } else {
+                    failed.add(uri) // Track processing failures
+                }
+            } catch (e: Exception) {
+                failed.add(uri) // Track exception failures
+            }
+        }
+        
+        // Stage 2: Packing with additional failure tracking
+        val packResult = texturePacker.pack(imagesToPack)
+        val packingFailed = extractFailedUrisFromPackResult(packResult, photoUris)
+        
+        return AtlasGenerationResult(
+            atlas = if (packResult.packedImages.isNotEmpty()) atlas else null,
+            failed = failed + packingFailed, // Comprehensive failure list
+            // ... metrics
+        )
+    }
+}
+```
+
+**Benefits:**
+- **Comprehensive Failure Reporting**: Track exactly which URIs failed at which stage
+- **Partial Success**: Continue processing even when some photos fail
+- **Debuggable**: Clear separation of failure types for troubleshooting
+
+### 2. Index-Based ID Management
+```kotlin
+// Simple approach: Use array indices for reliable mapping
+val imagesToPack = processedPhotos.mapIndexed { index, photo ->
+    ImageToPack(id = index.toString(), size = photo.scaledSize)
+}
+
+// Later: Map back from packed results to original URIs
+val atlasRegions = packResult.packedImages.mapNotNull { packedImage ->
+    val index = packedImage.id.toIntOrNull()
+    if (index != null && index < originalUris.size) {
+        AtlasRegion(
+            photoId = originalUris[index].toString(), // Use URI as final ID
+            atlasRect = packedImage.rect,
+            // ...
+        )
+    } else null
+}
+```
+
+**Key Pattern**: Use simple indices during processing, then map to meaningful IDs for final result
+
+### 3. Memory-Safe Atlas Drawing
+```kotlin
+private fun createAtlasBitmap(processedPhotos: List<ProcessedPhoto>, packResult: PackResult): Bitmap {
+    val atlasBitmap = createBitmap(atlasSize.width, atlasSize.height)
+    val canvas = Canvas(atlasBitmap)
+    val paint = Paint().apply {
+        isAntiAlias = true
+        isFilterBitmap = true // Hardware-accelerated bilinear filtering
+    }
+    
+    packResult.packedImages.forEach { packedImage ->
+        val processedPhoto = processedPhotos[packedImage.id.toInt()]
+        if (!processedPhoto.bitmap.isRecycled) {
+            canvas.drawBitmap(processedPhoto.bitmap, null, packedImage.rect, paint)
+        }
+    }
+    
+    return atlasBitmap
+}
+```
+
+**Key Patterns**: 
+- Hardware-accelerated drawing with proper Paint configuration
+- Recycling safety checks before drawing
+- Null source rect for drawing entire processed bitmap
+
+### 4. Comprehensive Result Metrics
+```kotlin
+data class AtlasGenerationResult(
+    val atlas: TextureAtlas?,           // Nullable for clear failure indication
+    val failed: List<Uri>,              // Specific failed URIs for retry/debugging
+    val packingUtilization: Float,      // Atlas space efficiency
+    val totalPhotos: Int,               // Input count
+    val processedPhotos: Int            // Successfully processed count
+) {
+    val packedPhotos: Int get() = atlas?.regions?.size ?: 0
+    val successRate: Float get() = if (totalPhotos > 0) packedPhotos.toFloat() / totalPhotos else 0f
+}
+```
+
+**Benefits:**
+- **Debugging Metrics**: Distinguish between processing vs packing failures
+- **Performance Tracking**: Monitor atlas efficiency and success rates
+- **User Feedback**: Clear progress reporting ("Loaded 847 of 850 photos")
+
+## Best Practices
+
+### 1. Immediate Memory Cleanup
+```kotlin
+// ✅ Clean up processed photos immediately after atlas creation
+processedPhotos.forEach { processedPhoto ->
+    if (!processedPhoto.bitmap.isRecycled) {
+        processedPhoto.bitmap.recycle()
+    }
+}
+
+// ❌ Rely on garbage collection
+// Don't keep processed photos around unnecessarily
+```
+
+### 2. Graceful Partial Failure Handling
+```kotlin
+// ✅ Continue processing even with failures
+if (processedPhotos.isEmpty()) {
+    return AtlasGenerationResult(atlas = null, failed = allUris, ...)
+}
+if (packResult.packedImages.isEmpty()) {
+    return AtlasGenerationResult(atlas = null, failed = allUris, ...)
+}
+
+// ❌ Fail-fast on first error
+// Don't abort entire operation for single photo failure
+```
+
+### 3. Constants for Configuration
+```kotlin
+companion object {
+    private const val DEFAULT_ATLAS_SIZE = 2048  // From atlas plan
+    private const val ATLAS_PADDING = 2         // From atlas plan
+}
+```
+
+## Code Health Metrics
+- **Coordination Logic**: Single class handles multi-component coordination
+- **Failure Resilience**: Continues processing despite individual photo failures
+- **Memory Safety**: Explicit cleanup prevents bitmap accumulation
+- **Metrics Rich**: Comprehensive result data for debugging and optimization
+
+## Future Considerations (Documented for Enhancement)
+1. **Batch Processing**: Memory-aware chunked processing for large photo sets
+2. **Progress Reporting**: Real-time progress callbacks during long operations
+3. **Cancellation Support**: Coroutine cancellation between processing stages
+4. **Multiple Atlas Support**: Generate multiple atlases when photos exceed single atlas capacity
+
+## Anti-Patterns Avoided
+1. **All-or-Nothing Processing**: Chose partial success over complete failure
+2. **Complex ID Management**: Used simple indices instead of hash-based IDs
+3. **Memory Accumulation**: Immediate cleanup vs keeping all bitmaps in memory
+4. **Monolithic Processing**: Clear stage separation for debugging and testing
