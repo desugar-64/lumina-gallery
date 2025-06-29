@@ -16,6 +16,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -23,6 +24,7 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.Media
+import dev.serhiiyaremych.lumina.domain.usecase.AtlasUpdateResult
 
 
 @Composable
@@ -31,6 +33,7 @@ fun MediaHexVisualization(
     hexGridRenderer: HexGridRenderer,
     provideZoom: () -> Float,
     provideOffset: () -> Offset,
+    atlasState: AtlasUpdateResult? = null,
     onMediaClicked: (Media) -> Unit = {},
     onHexCellClicked: (HexCell) -> Unit = {},
     /**
@@ -64,8 +67,8 @@ fun MediaHexVisualization(
     // Monitor zoom/offset changes and report visible cells
     // Use currentOnVisibleCellsChanged as key to restart when callback logic changes
     LaunchedEffect(hexGridLayout, currentOnVisibleCellsChanged) {
-        snapshotFlow { 
-            provideZoom() to provideOffset() 
+        snapshotFlow {
+            provideZoom() to provideOffset()
         }.collect { (zoom, offset) ->
             val visibleCells = calculateVisibleCells(
                 hexGridLayout = hexGridLayout,
@@ -91,7 +94,7 @@ fun MediaHexVisualization(
 
                     ripplePosition = tapOffset
 
-                    
+
                     geometryReader.getMediaAtPosition(transformedPos)?.let { media ->
                         onMediaClicked(media)
                         clickedMedia = media
@@ -144,15 +147,12 @@ fun MediaHexVisualization(
                         bounds = mediaWithPosition.absoluteBounds, // World coordinates
                         hexCell = hexCellWithMedia.hexCell
                     )
-                    
-                    // TODO: Replace with atlas-based rendering
-                    drawRect(
-                        color = when (mediaWithPosition.media) {
-                            is Media.Image -> Color(0xFF2196F3)
-                            is Media.Video -> Color(0xFF4CAF50)
-                        },
-                        topLeft = mediaWithPosition.absoluteBounds.topLeft,
-                        size = mediaWithPosition.absoluteBounds.size
+
+                    // Render from atlas or fallback to colored rectangle
+                    drawMediaFromAtlas(
+                        media = mediaWithPosition.media,
+                        bounds = mediaWithPosition.absoluteBounds,
+                        atlasState = atlasState
                     )
                 }
             }
@@ -234,5 +234,74 @@ private fun calculateVisibleCells(
     // Simple approach: return all cells for now
     // TODO: Implement actual viewport intersection based on zoom/offset
     return hexGridLayout.hexCellsWithMedia
+}
+
+/**
+ * Draws media from atlas texture or falls back to colored rectangle.
+ */
+private fun DrawScope.drawMediaFromAtlas(
+    media: Media,
+    bounds: Rect,
+    atlasState: AtlasUpdateResult?
+) {
+    when (atlasState) {
+        is AtlasUpdateResult.Success -> {
+            // Try to get atlas region for this media
+            val photoId = media.uri.toString()
+            val atlasRegion = atlasState.atlas.regions[photoId]
+
+            if (atlasRegion != null) {
+                // Draw from atlas texture
+                val atlasBitmap = atlasState.atlas.bitmap.asImageBitmap()
+
+                drawImage(
+                    image = atlasBitmap,
+                    srcOffset = androidx.compose.ui.unit.IntOffset(
+                        atlasRegion.atlasRect.left.toInt(),
+                        atlasRegion.atlasRect.top.toInt()
+                    ),
+                    srcSize = androidx.compose.ui.unit.IntSize(
+                        atlasRegion.atlasRect.width.toInt(),
+                        atlasRegion.atlasRect.height.toInt()
+                    ),
+                    dstOffset = androidx.compose.ui.unit.IntOffset(
+                        bounds.left.toInt(),
+                        bounds.top.toInt()
+                    ),
+                    dstSize = androidx.compose.ui.unit.IntSize(
+                        bounds.width.toInt(),
+                        bounds.height.toInt()
+                    )
+                )
+            } else {
+                // Fallback: Atlas exists but photo not found in it
+                drawPlaceholderRect(media, bounds, Color.Gray)
+            }
+        }
+        else -> {
+            // Fallback: No atlas available, draw colored rectangle
+            drawPlaceholderRect(media, bounds)
+        }
+    }
+}
+
+/**
+ * Draws a colored placeholder rectangle for media.
+ */
+private fun DrawScope.drawPlaceholderRect(
+    media: Media,
+    bounds: Rect,
+    overrideColor: Color? = null
+) {
+    val color = overrideColor ?: when (media) {
+        is Media.Image -> Color(0xFF2196F3)
+        is Media.Video -> Color(0xFF4CAF50)
+    }
+
+    drawRect(
+        color = color,
+        topLeft = bounds.topLeft,
+        size = bounds.size
+    )
 }
 

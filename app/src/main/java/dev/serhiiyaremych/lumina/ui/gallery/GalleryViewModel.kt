@@ -5,8 +5,11 @@ import androidx.compose.ui.unit.Density
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.domain.model.HexGridLayout
 import dev.serhiiyaremych.lumina.domain.model.Media
+import dev.serhiiyaremych.lumina.domain.usecase.AtlasManager
+import dev.serhiiyaremych.lumina.domain.usecase.AtlasUpdateResult
 import dev.serhiiyaremych.lumina.domain.usecase.GenerateHexGridLayoutUseCase
 import dev.serhiiyaremych.lumina.domain.usecase.GetMediaUseCase
 import dev.serhiiyaremych.lumina.domain.usecase.GroupMediaUseCase
@@ -22,7 +25,8 @@ import kotlinx.coroutines.launch
 class GalleryViewModel @Inject constructor(
     private val getMediaUseCase: GetMediaUseCase,
     private val groupMediaUseCase: GroupMediaUseCase,
-    private val generateHexGridLayoutUseCase: GenerateHexGridLayoutUseCase
+    private val generateHexGridLayoutUseCase: GenerateHexGridLayoutUseCase,
+    private val atlasManager: AtlasManager
 ) : ViewModel() {
 
     var currentPeriod: GroupingPeriod = GroupingPeriod.DAILY
@@ -39,6 +43,9 @@ class GalleryViewModel @Inject constructor(
 
     private val _hexGridLayoutState = MutableStateFlow<HexGridLayout?>(null)
     val hexGridLayoutState: StateFlow<HexGridLayout?> = _hexGridLayoutState.asStateFlow()
+
+    private val _atlasState = MutableStateFlow<AtlasUpdateResult?>(null)
+    val atlasState: StateFlow<AtlasUpdateResult?> = _atlasState.asStateFlow()
 
     init {
         loadMedia()
@@ -70,4 +77,20 @@ class GalleryViewModel @Inject constructor(
             _hexGridLayoutState.value = layout
         }
     }
+
+    /**
+     * Handle visible cells changed from UI callback.
+     * Updates atlas manager with current visible cells.
+     */
+    fun onVisibleCellsChanged(visibleCells: List<HexCellWithMedia>, currentZoom: Float) {
+        viewModelScope.launch {
+            val result = atlasManager.updateVisibleCells(visibleCells, currentZoom)
+            _atlasState.value = result
+        }
+    }
+
+    /**
+     * Get current atlas manager for UI rendering.
+     */
+    fun getAtlasManager(): AtlasManager = atlasManager
 }
