@@ -107,8 +107,8 @@ fun App(modifier: Modifier = Modifier) {
                                 MediaHexVisualization(
                                     hexGridLayout = layout,
                                     hexGridRenderer = hexGridRenderer,
-                                    zoom = transformableState.zoom,
-                                    offset = transformableState.offset,
+                                    provideZoom = { transformableState.zoom },
+                                    provideOffset = { transformableState.offset },
                                     onMediaClicked = { media ->
                                         Log.d("App", "Media clicked: ${media.displayName}")
                                     },
@@ -120,6 +120,10 @@ fun App(modifier: Modifier = Modifier) {
                                         coroutineScope.launch {
                                             transformableState.focusOn(bounds)
                                         }
+                                    },
+                                    onVisibleCellsChanged = { visibleCells ->
+                                        Log.d("App", "Visible cells changed: ${visibleCells.size} cells")
+                                        // TODO: Pass to AtlasManager
                                     }
                                 )
                             }

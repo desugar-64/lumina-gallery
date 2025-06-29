@@ -8,7 +8,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -27,8 +29,8 @@ import dev.serhiiyaremych.lumina.domain.model.Media
 fun MediaHexVisualization(
     hexGridLayout: dev.serhiiyaremych.lumina.domain.model.HexGridLayout,
     hexGridRenderer: HexGridRenderer,
-    zoom: Float,
-    offset: Offset,
+    provideZoom: () -> Float,
+    provideOffset: () -> Offset,
     onMediaClicked: (Media) -> Unit = {},
     onHexCellClicked: (HexCell) -> Unit = {},
     /**
@@ -36,12 +38,20 @@ fun MediaHexVisualization(
      * @param bounds The [Rect] bounds of the content to focus on, in content coordinates.
      *               The transformation system will smoothly center and zoom to these bounds.
      */
-    onFocusRequested: (Rect) -> Unit = {}
+    onFocusRequested: (Rect) -> Unit = {},
+    /**
+     * Callback when visible cells change due to zoom/pan operations.
+     * Reports cells that are actually being rendered on screen.
+     */
+    onVisibleCellsChanged: (List<dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia>) -> Unit = {}
 ) {
     val geometryReader = remember { GeometryReader() }
     var clickedMedia by remember { mutableStateOf<Media?>(null) }
     var clickedHexCell by remember { mutableStateOf<HexCell?>(null) }
     var ripplePosition by remember { mutableStateOf<Offset?>(null) }
+
+    // Capture latest callback to avoid restarting effect when callback changes
+    val currentOnVisibleCellsChanged by rememberUpdatedState(onVisibleCellsChanged)
 
     if (hexGridLayout.hexCellsWithMedia.isEmpty()) return
 
@@ -51,11 +61,28 @@ fun MediaHexVisualization(
         clickedHexCell = null
     }
 
+    // Monitor zoom/offset changes and report visible cells
+    // Use currentOnVisibleCellsChanged as key to restart when callback logic changes
+    LaunchedEffect(hexGridLayout, currentOnVisibleCellsChanged) {
+        snapshotFlow { 
+            provideZoom() to provideOffset() 
+        }.collect { (zoom, offset) ->
+            val visibleCells = calculateVisibleCells(
+                hexGridLayout = hexGridLayout,
+                zoom = zoom,
+                offset = offset
+            )
+            currentOnVisibleCellsChanged(visibleCells)
+        }
+    }
+
     Canvas(
         modifier = Modifier
             .fillMaxSize()
-            .pointerInput(Unit, zoom, offset) {
+            .pointerInput(Unit, provideZoom, provideOffset) {
                 detectTapGestures { tapOffset ->
+                    val zoom = provideZoom()
+                    val offset = provideOffset()
                     val clampedZoom = zoom.coerceIn(0.01f, 100f)
                     val transformedPos = Offset(
                         (tapOffset.x - offset.x) / clampedZoom,
@@ -87,6 +114,8 @@ fun MediaHexVisualization(
                 }
             }
     ) {
+        val zoom = provideZoom()
+        val offset = provideOffset()
         val clampedZoom = zoom.coerceIn(0.01f, 100f)
         withTransform({
             scale(clampedZoom, clampedZoom, pivot = Offset.Zero)
@@ -191,5 +220,19 @@ fun MediaHexVisualization(
             ripplePosition = null
         }
     }
+}
+
+/**
+ * Calculates which hex cells are visible in the current viewport.
+ * This is called from UI thread and has access to current zoom/offset state.
+ */
+private fun calculateVisibleCells(
+    hexGridLayout: dev.serhiiyaremych.lumina.domain.model.HexGridLayout,
+    zoom: Float,
+    offset: Offset
+): List<dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia> {
+    // Simple approach: return all cells for now
+    // TODO: Implement actual viewport intersection based on zoom/offset
+    return hexGridLayout.hexCellsWithMedia
 }
 
