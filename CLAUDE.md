@@ -190,6 +190,12 @@ This project includes comprehensive documentation in `docs/` that should be refe
   - **permissions-requesting.md**: Permission patterns and requesting strategies
   - **shared-media.md**: Shared storage and media handling documentation
 
+### Performance & Testing Documentation
+- **macrobenchmark/**: Android Macrobenchmark testing documentation
+  - **macrobenchmark-sample.md**: Sample macrobenchmark implementation
+  - **macrobenchmark-capture-metrics.md**: Guide for capturing performance metrics
+  - **macrobenchmark-control-app.md**: Setup and control app configuration
+
 ### Navigation Documentation
 - **nav3/**: Navigation 3 documentation and guides
   - **navigation-3-get-started.md**: Getting started with Navigation 3
