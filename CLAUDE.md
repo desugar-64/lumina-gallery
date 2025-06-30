@@ -161,100 +161,49 @@ Uses Gradle version catalog (libs.versions.toml) for dependency management. Key 
 
 ## Development Rules and Guidelines
 
-This project includes comprehensive development rules in `.aider-desk/rules/` that should be referenced when working on the codebase:
+This project includes comprehensive documentation in `docs/` that should be referenced when working on the codebase:
 
-- **modern-android.mdc**: Core principles for modern Android development with Jetpack Compose, state management patterns, and architectural guidelines
+### Development Guidelines & Best Practices
+- **modern-android.md**: Core principles for modern Android development with Jetpack Compose, state management patterns, and architectural guidelines
 - **kotlin-coding-conventions.md**: Official Kotlin coding standards including naming, formatting, and code organization rules
-- **implement-task.mdc**: Systematic approach for task implementation with planning, evaluation, and best practices
-- **five.mdc**: Five Whys root cause analysis technique for debugging and problem-solving
-- **continuous-improvement.mdc**: Framework for improving development practices and identifying patterns
-- **create-docs.mdc**: Template and process for creating comprehensive documentation
-- **team-documentation.mdc**: Documented patterns and lessons learned from transformable content and media permissions
-- **media/**: Android media permissions documentation including shared storage, permission patterns, and Android 14+ changes
+- **implement-task.md**: Systematic approach for task implementation with planning, evaluation, and best practices
+- **five.md**: Five Whys root cause analysis technique for debugging and problem-solving
+- **continuous-improvement.md**: Framework for improving development practices and identifying patterns
+- **create-docs.md**: Template and process for creating comprehensive documentation
+- **team-documentation.md**: Patterns and Lessons Learned During Project Development
+- **gemini.md**: Guide for using Gemini CLI for large codebase analysis
 
-Think very hard about this problem and present with a plan before you change anything. Give me at least 3 options.
+### Technical Documentation
+- **atlas-implementation-plan.md**: Implementation plan for the texture atlas system
+- **atlas-texture-patterns.md**: Documentation of atlas texture system patterns and Phase 1 completion
+- **atlas/atlas-system-design.md**: Detailed system design for the atlas rendering system
+
+### Compose & UI Documentation
+- **compose-side-effects.md**: Documentation for Compose side-effects patterns
+- **compose-side-effects-samples.md**: Sample code for Compose side-effects usage
+- **compose-animation-doc.md**: Guide for Compose animations
+- **compose-animations-samples.md**: Sample code for Compose animations
+
+### Android-Specific Documentation
+- **media/**: Android media permissions documentation
+  - **android14-changes-partial-photo-video-access.md**: Android 14+ changes for photo/video access
+  - **permissions-requesting.md**: Permission patterns and requesting strategies
+  - **shared-media.md**: Shared storage and media handling documentation
+
+### Navigation Documentation
+- **nav3/**: Navigation 3 documentation and guides
+  - **navigation-3-get-started.md**: Getting started with Navigation 3
+  - **navigation-3-basics.md**: Basic concepts and patterns
+  - **navigatino-3-code-basics.md**: Code examples and implementation basics
+
+Think hard to understand the true nature of a problem, not just to find a solution. Present at least three distinct solutions with their trade-offs before you act.
 
 ### Code Style Notes
 
 - Uses wildcard imports for cleaner code organization
-- Follows Compose naming conventions per .aider-desk/rules/kotlin-coding-conventions.md
+- Follows Compose naming conventions per docs/kotlin-coding-conventions.md
 - Constants are defined at top-level (MIN_ZOOM, MAX_ZOOM)
 - State management follows Compose best practices with remember and mutableStateOf
-- Adheres to modern Android patterns outlined in .aider-desk/rules/modern-android.mdc
-- Troubleshooting problems following .aider-desk/rules/five.mdc
-- When documenting code read .aider-desk/rules/create-docs.mdc
-
-### Using Gemini CLI for Large Codebase Analysis
-
-When analyzing large codebases or multiple files that might exceed context limits, use the Gemini CLI with its massive
-context window. Use `gemini -p` to leverage Google Gemini's large context capacity.
-
-## File and Directory Inclusion Syntax
-
-Use the `@` syntax to include files and directories in your Gemini prompts. The paths should be relative to WHERE you run the
-gemini command:
-
-## Examples:
-
-**Single file analysis:**
-gemini -p "@src/main.py Explain this file's purpose and structure"
-
-Multiple files:
-gemini -p "@package.json @src/index.js Analyze the dependencies used in the code"
-
-Entire directory:
-gemini -p "@src/ Summarize the architecture of this codebase"
-
-Multiple directories:
-gemini -p "@src/ @tests/ Analyze test coverage for the source code"
-
-Current directory and subdirectories:
-gemini -p "@./ Give me an overview of this entire project"
-
-# Or use --all_files flag:
-gemini --all_files -p "Analyze the project structure and dependencies"
-
-Implementation Verification Examples
-
-Check if a feature is implemented:
-gemini -p "@src/ @lib/ Has dark mode been implemented in this codebase? Show me the relevant files and functions"
-
-Verify authentication implementation:
-gemini -p "@src/ @middleware/ Is JWT authentication implemented? List all auth-related endpoints and middleware"
-
-Check for specific patterns:
-gemini -p "@src/ Are there any React hooks that handle WebSocket connections? List them with file paths"
-
-Verify error handling:
-gemini -p "@src/ @api/ Is proper error handling implemented for all API endpoints? Show examples of try-catch blocks"
-
-Check for rate limiting:
-gemini -p "@backend/ @middleware/ Is rate limiting implemented for the API? Show the implementation details"
-
-Verify caching strategy:
-gemini -p "@src/ @lib/ @services/ Is Redis caching implemented? List all cache-related functions and their usage"
-
-Check for specific security measures:
-gemini -p "@src/ @api/ Are SQL injection protections implemented? Show how user inputs are sanitized"
-
-Verify test coverage for features:
-gemini -p "@src/payment/ @tests/ Is the payment processing module fully tested? List all test cases"
-
-# When to Use Gemini CLI
-
-Use gemini -p when:
-- Analyzing entire codebases or large directories
-- Comparing multiple large files
-- Need to understand project-wide patterns or architecture
-- Current context window is insufficient for the task
-- Working with files totaling more than 100KB
-- Verifying if specific features, patterns, or security measures are implemented
-- Checking for the presence of certain coding patterns across the entire codebase
-
-# Important Notes
-
-- Paths in @ syntax are relative to your current working directory when invoking gemini
-- The CLI will include file contents directly in the context
-- No need for --yolo flag for read-only analysis
-- Gemini's context window can handle entire codebases that would overflow Claude's context
-- When checking implementations, be specific about what you're looking for to get accurate results
+- Adheres to modern Android patterns outlined in docs/modern-android.md
+- Troubleshooting problems following docs/five.md
+- When documenting code read docs/create-docs.md
