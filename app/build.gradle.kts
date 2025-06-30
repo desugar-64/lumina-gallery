@@ -29,6 +29,12 @@ android {
                 "proguard-rules.pro"
             )
         }
+        create("benchmark") {
+            initWith(buildTypes.getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -66,6 +72,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.androidx.material3.adaptive.navigation3)
     implementation(libs.kotlinx.serialization.core)
+
+    // Tracing dependencies for benchmarking
+    implementation(libs.androidx.tracing.ktx)
+    implementation(libs.androidx.compose.runtime.tracing)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
