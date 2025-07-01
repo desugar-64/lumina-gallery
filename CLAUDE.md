@@ -108,9 +108,9 @@ The app implements a sophisticated texture atlas system for efficient photo rend
 10. **AtlasGenerator** - Coordinates photo processing and packing into complete texture atlases
 11. **TextureAtlas, AtlasRegion, LODLevel** - Core data models for atlas system
 
-### Performance Optimizations
+### Performance Optimizations & Instrumentation
 
-The app implements several performance optimizations:
+The app implements several performance optimizations with comprehensive instrumentation:
 
 - **Cached FloatArray** for matrix operations to avoid allocations
 - **State-driven recomposition** using offset/zoom state variables  
@@ -120,6 +120,33 @@ The app implements several performance optimizations:
 - **Memory-efficient bitmap handling** with explicit recycling and cleanup patterns
 - **Multi-stage atlas pipeline** with comprehensive failure tracking and partial success handling
 - **Index-based coordinate mapping** for reliable photo-to-atlas region tracking
+
+### Comprehensive Performance Instrumentation
+
+The app features a sophisticated benchmarking system with detailed performance tracking:
+
+**I/O Separation Tracking:**
+- **Disk I/O Operations**: `PhotoLODProcessor.diskOpenInputStream` (ContentResolver file access)
+- **Memory I/O Operations**: `PhotoLODProcessor.memoryDecodeBounds`, `memoryDecodeBitmap`, `memorySampleSizeCalc`
+- Clear separation between file system access and in-memory bitmap processing
+
+**Software Canvas Instrumentation:**
+- **AtlasGenerator.softwareCanvas**: Tracks actual Canvas.drawBitmap() operations where individual photos are composited onto atlas texture
+- Hardware-accelerated bilinear filtering operations with Paint optimization
+- Bitmap-to-bitmap drawing performance with destination rectangle mapping
+
+**Comprehensive Metrics (25+ tracked operations):**
+- **Primary Targets**: Bitmap scaling, software canvas rendering (300ms aggressive target)
+- **Hardware Operations**: PhotoScaler bilinear filtering, createScaledBitmap acceleration
+- **Memory Management**: Bitmap allocation/recycling, atlas cleanup, processed photo cleanup
+- **Algorithm Performance**: Texture packing shelf algorithm, image sorting, shelf fitting
+- **Atlas Pipeline**: Photo processing, texture packing, atlas bitmap creation
+
+**Benchmarking Infrastructure:**
+- **Timeline Management**: `atlas_benchmark_collector.py` with git integration and dirty flag handling
+- **HTML Reports**: `atlas_timeline_chart.py` generates comprehensive performance visualization
+- **Performance Targets**: 300ms aggressive target (down from 1600ms baseline)
+- **Automated Analysis**: Bottleneck identification and regression detection
 
 ### Gesture System
 
@@ -192,10 +219,12 @@ This project includes comprehensive documentation in `docs/` that should be refe
 
 ### Performance & Testing Documentation
 - **benchmarking-system-guide.md**: Complete guide to the performance benchmarking system
-  - Benchmark data collection and processing workflows
-  - Timeline management and profile-based optimization tracking
-  - Collector script commands and extension guidelines
-  - Git integration, safety features, and troubleshooting
+  - Comprehensive I/O separation tracking (Disk I/O vs Memory I/O operations)
+  - Software canvas drawing instrumentation with hardware-accelerated operations
+  - Atlas texture pipeline performance analysis (25+ detailed metrics)
+  - Timeline management and profile-based optimization tracking (300ms aggressive target)
+  - Collector script commands, HTML report generation, and git integration
+  - Automated performance regression detection and bottleneck identification
 - **macrobenchmark/**: Android Macrobenchmark testing documentation
   - **macrobenchmark-sample.md**: Sample macrobenchmark implementation
   - **macrobenchmark-capture-metrics.md**: Guide for capturing performance metrics

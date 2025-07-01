@@ -25,12 +25,13 @@ Lumina is a modern, offline-first Android gallery application designed with a un
 
 -   **🖼️ Real Photo Rendering**: Advanced atlas texture system displaying actual photo thumbnails instead of placeholders, with hardware-accelerated scaling and GPU optimization.
 -   **📐 Hexagonal Grid Visualization**: Unique hexagonal grid layout for displaying grouped media on a zoomable, pannable canvas with ring-based generation.
--   **⚡ Atlas Texture System**: Sophisticated Level-of-Detail (LOD) rendering with 2048x2048 texture atlases, shelf packing algorithm, and smart fallback mechanisms.
+-   **⚡ Atlas Texture System**: Sophisticated Level-of-Detail (LOD) rendering with 2048x2048 texture atlases, shelf packing algorithm, smart fallback mechanisms, and comprehensive performance instrumentation.
 -   **🎯 Smart Permissions**: Modern Android 10-15 permission system with transparent support for Android 14+ "Limited Access" mode.
 -   **🔒 Privacy-First**: Respects user choice - works with full library access or selected photos. Your privacy is paramount.
 -   **🚀 Advanced Graphics & UI**: Dynamic, zoomable, and pannable canvas powered by custom rendering, matrix-based transformations, and reactive state management.
 -   **🏗️ Clean Architecture**: Separation of concerns with domain/data/UI layers, dependency injection via Hilt, and comprehensive error handling.
 -   **📁 Direct Media Access**: Interfaces directly with the Android `MediaStore` API to efficiently access all photos and videos on your device.
+-   **📊 Performance Benchmarking**: Comprehensive performance instrumentation with I/O separation tracking, software canvas monitoring, and automated regression detection targeting 300ms atlas generation times.
 
 ## 🛠️ Project Info & Tech Stack
 
@@ -46,6 +47,7 @@ Lumina is built using a modern Android technology stack, emphasizing clean archi
 -   **Build System**: [Gradle](https://gradle.org/) with the [Kotlin DSL](https://docs.gradle.org/current/userguide/kotlin_dsl.html) (`build.gradle.kts`), providing a type-safe and expressive build configuration.
 -   **Dependency Management**: Centralized dependency management using a TOML Version Catalog (`libs.versions.toml`), ensuring consistency and ease of updates.
 -   **Media**: Direct integration with Android's `MediaStore` API for robust and efficient media handling.
+-   **Performance**: Comprehensive benchmarking infrastructure with 25+ detailed metrics, I/O separation tracking, HTML report generation, and 300ms optimization targets.
 
 ## 🏗️ How to Build
 

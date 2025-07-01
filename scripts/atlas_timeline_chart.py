@@ -23,9 +23,9 @@ class AtlasTimelineChart:
         self.chart_height = 300
         self.margin = 60
         
-        # Performance targets (from atlas implementation plan)
-        self.target_time_ms = 1000.0  # 1 second target
-        self.baseline_time_ms = 5000.0  # 5 second baseline (from plan)
+        # Performance targets (updated for aggressive optimization)
+        self.target_time_ms = 300.0  # 300ms aggressive target
+        self.baseline_time_ms = 1600.0  # ~1.6 second actual baseline
     
     def generate_html_report(self, output_file: str = "benchmark_results/atlas_performance_report.html"):
         """Generate simple HTML report with timeline chart"""
@@ -98,7 +98,7 @@ class AtlasTimelineChart:
         return data_points
     
     def _create_timeline_chart(self, data_points: List[Dict]) -> str:
-        """Create simple SVG timeline chart"""
+        """Create enhanced SVG timeline chart with all atlas components"""
         if not data_points:
             return "<p>No data available for chart</p>"
         
@@ -106,12 +106,54 @@ class AtlasTimelineChart:
         plot_width = self.chart_width - 2 * self.margin
         plot_height = self.chart_height - 2 * self.margin
         
-        # Find data ranges
-        times = [point["atlas_time"] for point in data_points if point["atlas_time"] > 0]
-        if not times:
+        # Atlas component metrics to track (comprehensive performance breakdown)
+        component_metrics = {
+            # Primary optimization targets
+            "PhotoLODProcessor.scaleBitmapSumMs": {"name": "Bitmap Scaling", "color": "#f59e0b"},
+            "AtlasGenerator.softwareCanvasSumMs": {"name": "Software Canvas", "color": "#8b5cf6"},
+            
+            # Supporting atlas operations
+            "PhotoLODProcessor.loadBitmapSumMs": {"name": "Bitmap Loading", "color": "#ef4444"},
+            "AtlasGenerator.createAtlasBitmapSumMs": {"name": "Atlas Creation", "color": "#06b6d4"},
+            "AtlasManager.generateAtlasSumMs": {"name": "Total Atlas", "color": "#2563eb"},
+            
+            # Disk I/O Operations (File System Access)
+            "PhotoLODProcessor.diskOpenInputStreamSumMs": {"name": "Disk I/O", "color": "#dc2626"},
+            
+            # Memory I/O Operations (Bitmap Processing in RAM)
+            "PhotoLODProcessor.memoryDecodeBoundsSumMs": {"name": "Decode Bounds", "color": "#f97316"},
+            "PhotoLODProcessor.memoryDecodeBitmapSumMs": {"name": "Decode Bitmap", "color": "#ea580c"},
+            "PhotoLODProcessor.memorySampleSizeCalcSumMs": {"name": "Sample Size", "color": "#fb923c"},
+            
+            # Hardware-accelerated scaling operations
+            "PhotoScaler.scaleSumMs": {"name": "PhotoScaler", "color": "#84cc16"},
+            "PhotoScaler.createScaledBitmapSumMs": {"name": "HW Scaling", "color": "#65a30d"},
+            
+            # Memory management operations
+            "Atlas.bitmapAllocateSumMs": {"name": "Mem Alloc", "color": "#10b981"},
+            "Atlas.bitmapRecycleSumMs": {"name": "Mem Recycle", "color": "#059669"},
+            
+            # Texture packing algorithm performance
+            "TexturePacker.packAlgorithmSumMs": {"name": "Pack Algorithm", "color": "#3b82f6"},
+            "TexturePacker.sortImagesSumMs": {"name": "Image Sorting", "color": "#1d4ed8"},
+        }
+        
+        # Find data ranges across all metrics from timeline
+        all_values = []
+        timeline = self._load_timeline()
+        for entry in timeline:
+            zoom_test = entry.get("zoom_test", {})
+            if zoom_test.get("found"):
+                profile_metrics = zoom_test.get("profile_metrics", {})
+                for metric_key in component_metrics.keys():
+                    value = profile_metrics.get(metric_key, 0)
+                    if value > 0:
+                        all_values.append(value)
+        
+        if not all_values:
             return "<p>No performance data available</p>"
         
-        max_time = max(max(times), self.target_time_ms * 1.2)
+        max_time = max(max(all_values), self.target_time_ms * 1.2)
         min_time = 0
         
         # Calculate positions
@@ -123,18 +165,19 @@ class AtlasTimelineChart:
         def get_y(time_ms: float) -> float:
             return self.margin + plot_height - ((time_ms - min_time) / (max_time - min_time)) * plot_height
         
-        # Start SVG
+        # Start SVG with enhanced styling
         svg_parts = [
             f'<svg width="{self.chart_width}" height="{self.chart_height}" xmlns="http://www.w3.org/2000/svg">',
             '<defs>',
             '<style>',
-            '.chart-line { fill: none; stroke: #2563eb; stroke-width: 2; }',
             '.target-line { fill: none; stroke: #dc2626; stroke-width: 2; stroke-dasharray: 5,5; }',
-            '.data-point { fill: #2563eb; stroke: white; stroke-width: 2; }',
+            '.component-line { fill: none; stroke-width: 2; }',
+            '.data-point { stroke: white; stroke-width: 2; r: 4; }',
             '.axis-line { stroke: #6b7280; stroke-width: 1; }',
             '.axis-text { font-family: Arial, sans-serif; font-size: 12px; fill: #374151; }',
             '.chart-title { font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #111827; }',
             '.legend-text { font-family: Arial, sans-serif; font-size: 12px; fill: #374151; }',
+            '.legend-item { font-family: Arial, sans-serif; font-size: 11px; fill: #374151; }',
             '</style>',
             '</defs>'
         ]
@@ -166,26 +209,68 @@ class AtlasTimelineChart:
         svg_parts.append(f'<line x1="{self.margin}" y1="{target_y}" x2="{self.margin + plot_width}" y2="{target_y}" class="target-line"/>')
         svg_parts.append(f'<text x="{self.margin + plot_width - 5}" y="{target_y - 5}" text-anchor="end" class="legend-text">Target: {self.target_time_ms:.0f}ms</text>')
         
-        # Data line
-        if len(data_points) > 1:
-            line_points = []
+        # Extract component data from timeline entries  
+        component_data = {}
+        for metric_key in component_metrics.keys():
+            component_data[metric_key] = []
             for point in data_points:
-                if point["atlas_time"] > 0:
-                    x = get_x(point["index"])
-                    y = get_y(point["atlas_time"])
-                    line_points.append(f"{x},{y}")
-            
-            if line_points:
-                svg_parts.append(f'<polyline points="{" ".join(line_points)}" class="chart-line"/>')
+                # Get the metric value from the original timeline data
+                timeline_entry = None
+                for entry in self._load_timeline():
+                    if entry.get("optimization") == point["optimization"]:
+                        timeline_entry = entry
+                        break
+                
+                if timeline_entry:
+                    zoom_test = timeline_entry.get("zoom_test", {})
+                    profile_metrics = zoom_test.get("profile_metrics", {})
+                    value = profile_metrics.get(metric_key, 0)
+                else:
+                    value = 0
+                    
+                component_data[metric_key].append({
+                    "index": point["index"],
+                    "value": value,
+                    "optimization": point["optimization"]
+                })
         
-        # Data points
-        for point in data_points:
-            if point["atlas_time"] > 0:
-                x = get_x(point["index"])
-                y = get_y(point["atlas_time"])
-                svg_parts.append(f'<circle cx="{x}" cy="{y}" r="4" class="data-point">')
-                svg_parts.append(f'<title>{point["optimization"]}: {point["atlas_time"]:.1f}ms</title>')
-                svg_parts.append('</circle>')
+        # Draw component lines (if we have multiple data points)
+        if len(data_points) > 1:
+            for metric_key, metric_info in component_metrics.items():
+                line_points = []
+                for data_point in component_data[metric_key]:
+                    if data_point["value"] > 0:
+                        x = get_x(data_point["index"])
+                        y = get_y(data_point["value"])
+                        line_points.append(f"{x},{y}")
+                
+                if len(line_points) > 1:
+                    svg_parts.append(f'<polyline points="{" ".join(line_points)}" class="component-line" stroke="{metric_info["color"]}"/>')
+        
+        # Draw component data points with colors
+        for metric_key, metric_info in component_metrics.items():
+            for data_point in component_data[metric_key]:
+                if data_point["value"] > 0:
+                    x = get_x(data_point["index"])
+                    y = get_y(data_point["value"])
+                    svg_parts.append(f'<circle cx="{x}" cy="{y}" r="3" fill="{metric_info["color"]}" class="data-point">')
+                    svg_parts.append(f'<title>{metric_info["name"]}: {data_point["value"]:.1f}ms ({data_point["optimization"]})</title>')
+                    svg_parts.append('</circle>')
+        
+        # Legend
+        legend_y = 45
+        legend_x_start = self.margin
+        for i, (metric_key, metric_info) in enumerate(component_metrics.items()):
+            legend_x = legend_x_start + (i * 140)
+            if legend_x + 120 > self.chart_width - self.margin:
+                # Wrap to next line if needed
+                legend_y += 15
+                legend_x = legend_x_start
+            
+            # Legend color box
+            svg_parts.append(f'<rect x="{legend_x}" y="{legend_y - 8}" width="10" height="10" fill="{metric_info["color"]}"/>')
+            # Legend text
+            svg_parts.append(f'<text x="{legend_x + 15}" y="{legend_y}" class="legend-item">{metric_info["name"]}</text>')
         
         # X-axis labels (optimization names)
         for point in data_points:
@@ -206,9 +291,12 @@ class AtlasTimelineChart:
             '<thead>',
             '<tr>',
             '<th>Optimization</th>',
-            '<th>Atlas Time (ms)</th>',
+            '<th>Total Atlas (ms)</th>',
+            '<th>Disk I/O (ms)</th>',
+            '<th>Bitmap Decode (ms)</th>',
             '<th>Bitmap Scaling (ms)</th>',
-            '<th>Canvas Rendering (ms)</th>',
+            '<th>Software Canvas (ms)</th>',
+            '<th>Atlas Creation (ms)</th>',
             '<th>Git Commit</th>',
             '<th>Date</th>',
             '</tr>',
@@ -225,8 +313,12 @@ class AtlasTimelineChart:
             if atlas_time == 0:
                 atlas_time = profile_metrics.get("AtlasManager.generateAtlasSumMs", 0)
             
+            # Extract I/O separation metrics
+            disk_io = profile_metrics.get("PhotoLODProcessor.diskOpenInputStreamSumMs", 0)
+            bitmap_decode = profile_metrics.get("PhotoLODProcessor.memoryDecodeBitmapSumMs", 0) 
             bitmap_scaling = profile_metrics.get("PhotoLODProcessor.scaleBitmapSumMs", 0)
-            canvas_rendering = profile_metrics.get("AtlasGenerator.softwareCanvasSumMs", 0)
+            software_canvas = profile_metrics.get("AtlasGenerator.softwareCanvasSumMs", 0)
+            atlas_creation = profile_metrics.get("AtlasGenerator.createAtlasBitmapSumMs", 0)
             
             # Format timestamp
             timestamp = entry.get("timestamp", "")
@@ -240,8 +332,11 @@ class AtlasTimelineChart:
                 '<tr>',
                 f'<td>{entry.get("optimization", "unknown")}</td>',
                 f'<td>{atlas_time:.1f}</td>',
+                f'<td>{disk_io:.1f}</td>',
+                f'<td>{bitmap_decode:.1f}</td>',
                 f'<td>{bitmap_scaling:.1f}</td>',
-                f'<td>{canvas_rendering:.1f}</td>',
+                f'<td>{software_canvas:.1f}</td>',
+                f'<td>{atlas_creation:.1f}</td>',
                 f'<td><code>{entry.get("git_commit", "unknown")}</code></td>',
                 f'<td>{formatted_date}</td>',
                 '</tr>'

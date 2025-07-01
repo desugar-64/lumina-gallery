@@ -2,6 +2,13 @@ package dev.serhiiyaremych.lumina.data
 
 import android.graphics.Bitmap
 import androidx.compose.ui.unit.IntSize
+import androidx.tracing.trace
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_SCALER_SCALE
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_SCALER_CREATE_SCALED_BITMAP
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_SCALER_CREATE_CROPPED_BITMAP
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_SCALER_CALCULATE_DIMENSIONS
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.ATLAS_MEMORY_BITMAP_ALLOCATE
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.ATLAS_MEMORY_BITMAP_RECYCLE
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,20 +32,24 @@ class PhotoScaler @Inject constructor() {
         targetSize: IntSize,
         strategy: ScaleStrategy = ScaleStrategy.FIT_CENTER
     ): Bitmap {
-        // Return original if already correct size
-        if (source.width == targetSize.width && source.height == targetSize.height) {
-            return source
-        }
-        
-        val scaledSize = calculateScaledSize(
-            originalSize = IntSize(source.width, source.height),
-            targetSize = targetSize,
-            strategy = strategy
-        )
-        
-        return when (strategy) {
-            ScaleStrategy.FIT_CENTER -> scaleWithAspectRatio(source, scaledSize)
-            ScaleStrategy.CENTER_CROP -> scaleAndCrop(source, targetSize)
+        return trace(PHOTO_SCALER_SCALE) {
+            // Return original if already correct size
+            if (source.width == targetSize.width && source.height == targetSize.height) {
+                return@trace source
+            }
+            
+            val scaledSize = trace(PHOTO_SCALER_CALCULATE_DIMENSIONS) {
+                calculateScaledSize(
+                    originalSize = IntSize(source.width, source.height),
+                    targetSize = targetSize,
+                    strategy = strategy
+                )
+            }
+            
+            when (strategy) {
+                ScaleStrategy.FIT_CENTER -> scaleWithAspectRatio(source, scaledSize)
+                ScaleStrategy.CENTER_CROP -> scaleAndCrop(source, targetSize)
+            }
         }
     }
     
@@ -46,12 +57,16 @@ class PhotoScaler @Inject constructor() {
      * Scales bitmap maintaining aspect ratio using hardware-accelerated filtering
      */
     private fun scaleWithAspectRatio(source: Bitmap, targetSize: IntSize): Bitmap {
-        return Bitmap.createScaledBitmap(
-            source,
-            targetSize.width,
-            targetSize.height,
-            true // Enable bilinear filtering for high quality
-        )
+        return trace(PHOTO_SCALER_CREATE_SCALED_BITMAP) {
+            trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
+                Bitmap.createScaledBitmap(
+                    source,
+                    targetSize.width,
+                    targetSize.height,
+                    true // Enable bilinear filtering for high quality
+                )
+            }
+        }
     }
     
     /**
@@ -77,28 +92,38 @@ class PhotoScaler @Inject constructor() {
         }
         
         // First scale to intermediate size
-        val scaledBitmap = Bitmap.createScaledBitmap(
-            source,
-            intermediateSize.width,
-            intermediateSize.height,
-            true // Enable bilinear filtering
-        )
+        val scaledBitmap = trace(PHOTO_SCALER_CREATE_SCALED_BITMAP) {
+            trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
+                Bitmap.createScaledBitmap(
+                    source,
+                    intermediateSize.width,
+                    intermediateSize.height,
+                    true // Enable bilinear filtering
+                )
+            }
+        }
         
         // Then crop to exact target size from center
         val cropX = (scaledBitmap.width - targetSize.width) / 2
         val cropY = (scaledBitmap.height - targetSize.height) / 2
         
-        val croppedBitmap = Bitmap.createBitmap(
-            scaledBitmap,
-            cropX,
-            cropY,
-            targetSize.width,
-            targetSize.height
-        )
+        val croppedBitmap = trace(PHOTO_SCALER_CREATE_CROPPED_BITMAP) {
+            trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
+                Bitmap.createBitmap(
+                    scaledBitmap,
+                    cropX,
+                    cropY,
+                    targetSize.width,
+                    targetSize.height
+                )
+            }
+        }
         
         // Clean up intermediate bitmap if different from result
         if (scaledBitmap != croppedBitmap) {
-            scaledBitmap.recycle()
+            trace(ATLAS_MEMORY_BITMAP_RECYCLE) {
+                scaledBitmap.recycle()
+            }
         }
         
         return croppedBitmap
@@ -148,12 +173,16 @@ class PhotoScaler @Inject constructor() {
         val targetWidth = (source.width * scaleFactor).toInt()
         val targetHeight = (source.height * scaleFactor).toInt()
         
-        return Bitmap.createScaledBitmap(
-            source,
-            targetWidth,
-            targetHeight,
-            true // Enable bilinear filtering
-        )
+        return trace(PHOTO_SCALER_CREATE_SCALED_BITMAP) {
+            trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
+                Bitmap.createScaledBitmap(
+                    source,
+                    targetWidth,
+                    targetHeight,
+                    true // Enable bilinear filtering
+                )
+            }
+        }
     }
     
     /**

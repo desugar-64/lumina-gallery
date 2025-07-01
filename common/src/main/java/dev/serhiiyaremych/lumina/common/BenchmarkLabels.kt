@@ -16,16 +16,45 @@ object BenchmarkLabels {
     const val PHOTO_LOD_PROCESS_PHOTO = "PhotoLODProcessor.processPhoto"
     const val PHOTO_LOD_LOAD_BITMAP = "PhotoLODProcessor.loadBitmap"
     
+    // Disk I/O Operations (File System Access)
+    const val PHOTO_LOD_DISK_OPEN_INPUT_STREAM = "PhotoLODProcessor.diskOpenInputStream"
+    const val PHOTO_LOD_DISK_READ_FILE_HEADER = "PhotoLODProcessor.diskReadFileHeader"
+    
+    // Memory I/O Operations (Bitmap Processing in RAM)
+    const val PHOTO_LOD_MEMORY_DECODE_BOUNDS = "PhotoLODProcessor.memoryDecodeBounds"
+    const val PHOTO_LOD_MEMORY_DECODE_BITMAP = "PhotoLODProcessor.memoryDecodeBitmap"
+    const val PHOTO_LOD_MEMORY_SAMPLE_SIZE_CALC = "PhotoLODProcessor.memorySampleSizeCalc"
+    
+    // PhotoScaler trace labels (Hardware-accelerated operations)
+    const val PHOTO_SCALER_SCALE = "PhotoScaler.scale"
+    const val PHOTO_SCALER_CREATE_SCALED_BITMAP = "PhotoScaler.createScaledBitmap"
+    const val PHOTO_SCALER_CREATE_CROPPED_BITMAP = "PhotoScaler.createCroppedBitmap"
+    const val PHOTO_SCALER_CALCULATE_DIMENSIONS = "PhotoScaler.calculateDimensions"
+    
+    // Memory Management (Load/Unload operations)
+    const val ATLAS_MEMORY_BITMAP_ALLOCATE = "Atlas.bitmapAllocate"
+    const val ATLAS_MEMORY_BITMAP_RECYCLE = "Atlas.bitmapRecycle"
+    const val ATLAS_MEMORY_ATLAS_CLEANUP = "Atlas.atlasCleanup"
+    const val ATLAS_MEMORY_PROCESSED_PHOTO_CLEANUP = "Atlas.processedPhotoCleanup"
+    
     // AtlasGenerator trace labels
     const val ATLAS_GENERATOR_GENERATE_ATLAS = "AtlasGenerator.generateAtlas"
     const val ATLAS_GENERATOR_PROCESS_PHOTOS = "AtlasGenerator.processPhotos"
     const val ATLAS_GENERATOR_PACK_TEXTURES = "AtlasGenerator.packTextures"
     const val ATLAS_GENERATOR_CREATE_ATLAS_BITMAP = "AtlasGenerator.createAtlasBitmap"
     
+    // TexturePacker trace labels (Algorithm performance)
+    const val TEXTURE_PACKER_PACK_ALGORITHM = "TexturePacker.packAlgorithm"
+    const val TEXTURE_PACKER_SORT_IMAGES = "TexturePacker.sortImages"
+    const val TEXTURE_PACKER_PACK_SINGLE_IMAGE = "TexturePacker.packSingleImage"
+    const val TEXTURE_PACKER_FIND_SHELF_FIT = "TexturePacker.findShelfFit"
+    const val TEXTURE_PACKER_CREATE_NEW_SHELF = "TexturePacker.createNewShelf"
+    
     // AtlasManager trace labels
     const val ATLAS_MANAGER_UPDATE_VISIBLE_CELLS = "AtlasManager.updateVisibleCells"
     const val ATLAS_MANAGER_SELECT_LOD_LEVEL = "AtlasManager.selectLODLevel"
     const val ATLAS_MANAGER_GENERATE_ATLAS = "AtlasManager.generateAtlas"
+    
     
     // UI test tags for UIAutomator
     const val GALLERY_CANVAS_TEST_TAG = "gallery_canvas"

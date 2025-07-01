@@ -42,7 +42,35 @@ class AtlasBenchmarkCollector:
                 "AtlasGenerator.createAtlasBitmapSumMs": "Atlas bitmap creation",
                 "AtlasManager.updateVisibleCellsSumMs": "Atlas coordination",
                 "AtlasManager.generateAtlasSumMs": "Atlas generation total",
-                "AtlasManager.selectLODLevelSumMs": "LOD level selection"
+                "AtlasManager.selectLODLevelSumMs": "LOD level selection",
+                
+                # Disk I/O Operations (File System Access)
+                "PhotoLODProcessor.diskOpenInputStreamSumMs": "Disk I/O - ContentResolver file access",
+                "PhotoLODProcessor.diskReadFileHeaderSumMs": "Disk I/O - File header reading",
+                
+                # Memory I/O Operations (Bitmap Processing in RAM)  
+                "PhotoLODProcessor.memoryDecodeBoundsSumMs": "Memory I/O - Bitmap bounds decoding",
+                "PhotoLODProcessor.memoryDecodeBitmapSumMs": "Memory I/O - Full bitmap decoding",
+                "PhotoLODProcessor.memorySampleSizeCalcSumMs": "Memory I/O - Sample size calculation",
+                
+                # Hardware-accelerated scaling operations
+                "PhotoScaler.scaleSumMs": "PhotoScaler main operations",
+                "PhotoScaler.createScaledBitmapSumMs": "Hardware-accelerated bitmap scaling",
+                "PhotoScaler.createCroppedBitmapSumMs": "Bitmap cropping operations",
+                "PhotoScaler.calculateDimensionsSumMs": "Size calculation algorithms",
+                
+                # Memory management operations
+                "Atlas.bitmapAllocateSumMs": "Bitmap memory allocation",
+                "Atlas.bitmapRecycleSumMs": "Bitmap memory recycling",
+                "Atlas.atlasCleanupSumMs": "Atlas memory cleanup",
+                "Atlas.processedPhotoCleanupSumMs": "Processed photo cleanup",
+                
+                # Texture packing algorithm performance
+                "TexturePacker.packAlgorithmSumMs": "Main texture packing algorithm",
+                "TexturePacker.sortImagesSumMs": "Image sorting by height",
+                "TexturePacker.packSingleImageSumMs": "Individual image packing",
+                "TexturePacker.findShelfFitSumMs": "Shelf fitting algorithm",
+                "TexturePacker.createNewShelfSumMs": "New shelf creation"
             }
             self.target_time_ms = 1000.0
             self.baseline_time_ms = 5000.0
@@ -212,7 +240,7 @@ class AtlasBenchmarkCollector:
             
             commit_hash = result.stdout.strip()
             
-            # Check for uncommitted changes
+            # Check for uncommitted changes (excluding benchmark results)
             status_result = subprocess.run(
                 ['git', 'status', '--porcelain'], 
                 capture_output=True, 
@@ -220,9 +248,16 @@ class AtlasBenchmarkCollector:
                 cwd=Path(__file__).parent.parent
             )
             
-            has_uncommitted = bool(status_result.stdout.strip())
+            # Filter out changes in benchmark_results/ directory since those are expected outputs
+            if status_result.returncode == 0:
+                uncommitted_lines = status_result.stdout.strip().split('\n') if status_result.stdout.strip() else []
+                # Only count changes that are NOT in benchmark_results/
+                actual_changes = [line for line in uncommitted_lines if line and not 'benchmark_results/' in line]
+                has_uncommitted = bool(actual_changes)
+            else:
+                has_uncommitted = False
             
-            # Return commit with dirty indicator
+            # Return commit with dirty indicator only for actual code changes
             return f"{commit_hash}{'-dirty' if has_uncommitted else ''}"
             
         except Exception:
@@ -279,8 +314,8 @@ class AtlasBenchmarkCollector:
         baseline = timeline[0]
         latest = timeline[-1]
         
-        baseline_atlas = baseline['zoom_test']['atlas_metrics'].get('AtlasManager.generateAtlasSumMs', 0)
-        latest_atlas = latest['zoom_test']['atlas_metrics'].get('AtlasManager.generateAtlasSumMs', 0)
+        baseline_atlas = baseline['zoom_test']['profile_metrics'].get('AtlasManager.generateAtlasSumMs', 0)
+        latest_atlas = latest['zoom_test']['profile_metrics'].get('AtlasManager.generateAtlasSumMs', 0)
         
         if baseline_atlas > 0 and latest_atlas > 0:
             improvement = (baseline_atlas - latest_atlas) / baseline_atlas * 100
@@ -289,11 +324,11 @@ class AtlasBenchmarkCollector:
             print(f"   Improvement: {improvement:+.1f}%")
             
             # Primary optimization targets
-            baseline_scaling = baseline['zoom_test']['atlas_metrics'].get('PhotoLODProcessor.scaleBitmapSumMs', 0)
-            latest_scaling = latest['zoom_test']['atlas_metrics'].get('PhotoLODProcessor.scaleBitmapSumMs', 0)
+            baseline_scaling = baseline['zoom_test']['profile_metrics'].get('PhotoLODProcessor.scaleBitmapSumMs', 0)
+            latest_scaling = latest['zoom_test']['profile_metrics'].get('PhotoLODProcessor.scaleBitmapSumMs', 0)
             
-            baseline_canvas = baseline['zoom_test']['atlas_metrics'].get('AtlasGenerator.softwareCanvasSumMs', 0)
-            latest_canvas = latest['zoom_test']['atlas_metrics'].get('AtlasGenerator.softwareCanvasSumMs', 0)
+            baseline_canvas = baseline['zoom_test']['profile_metrics'].get('AtlasGenerator.softwareCanvasSumMs', 0)
+            latest_canvas = latest['zoom_test']['profile_metrics'].get('AtlasGenerator.softwareCanvasSumMs', 0)
             
             if baseline_scaling > 0:
                 scaling_improvement = (baseline_scaling - latest_scaling) / baseline_scaling * 100
@@ -328,9 +363,9 @@ class AtlasBenchmarkCollector:
         }
         
         # Compare atlas metrics
-        for metric in self.atlas_metrics.keys():
-            baseline_time = baseline["zoom_test"]["atlas_metrics"].get(metric, 0)
-            latest_time = latest["zoom_test"]["atlas_metrics"].get(metric, 0)
+        for metric in self.metrics.keys():
+            baseline_time = baseline["zoom_test"]["profile_metrics"].get(metric, 0)
+            latest_time = latest["zoom_test"]["profile_metrics"].get(metric, 0)
             
             if baseline_time > 0:
                 improvement = (baseline_time - latest_time) / baseline_time * 100

@@ -2,6 +2,12 @@ package dev.serhiiyaremych.lumina.data
 
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.IntSize
+import androidx.tracing.trace
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_PACK_ALGORITHM
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_SORT_IMAGES
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_PACK_SINGLE_IMAGE
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_FIND_SHELF_FIT
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_CREATE_NEW_SHELF
 
 /**
  * Shelf packing algorithm for texture atlas generation.
@@ -16,29 +22,35 @@ class ShelfTexturePacker(
      * Pack images into atlas using shelf packing algorithm
      */
     fun pack(images: List<ImageToPack>): PackResult {
-        val shelves = mutableListOf<Shelf>()
-        val packedImages = mutableListOf<PackedImage>()
-        val failedImages = mutableListOf<ImageToPack>()
-        
-        // Sort images by height (descending) for better packing
-        val sortedImages = images.sortedByDescending { it.size.height }
-        
-        for (image in sortedImages) {
-            val packedImage = packImage(image, shelves)
-            if (packedImage != null) {
-                packedImages.add(packedImage)
-            } else {
-                failedImages.add(image)
+        return trace(TEXTURE_PACKER_PACK_ALGORITHM) {
+            val shelves = mutableListOf<Shelf>()
+            val packedImages = mutableListOf<PackedImage>()
+            val failedImages = mutableListOf<ImageToPack>()
+            
+            // Sort images by height (descending) for better packing
+            val sortedImages = trace(TEXTURE_PACKER_SORT_IMAGES) {
+                images.sortedByDescending { it.size.height }
             }
+            
+            for (image in sortedImages) {
+                val packedImage = trace(TEXTURE_PACKER_PACK_SINGLE_IMAGE) {
+                    packImage(image, shelves)
+                }
+                if (packedImage != null) {
+                    packedImages.add(packedImage)
+                } else {
+                    failedImages.add(image)
+                }
+            }
+            
+            val utilization = calculateUtilization(packedImages)
+            
+            PackResult(
+                packedImages = packedImages,
+                utilization = utilization,
+                failed = failedImages
+            )
         }
-        
-        val utilization = calculateUtilization(packedImages)
-        
-        return PackResult(
-            packedImages = packedImages,
-            utilization = utilization,
-            failed = failedImages
-        )
     }
     
     /**
@@ -57,7 +69,9 @@ class ShelfTexturePacker(
         
         // Try to fit in existing shelves
         for (shelf in shelves) {
-            val position = shelf.tryFit(imageWithPadding)
+            val position = trace(TEXTURE_PACKER_FIND_SHELF_FIT) {
+                shelf.tryFit(imageWithPadding)
+            }
             if (position != null) {
                 return PackedImage(
                     id = image.id,
@@ -75,14 +89,18 @@ class ShelfTexturePacker(
         // Create new shelf if possible
         val nextShelfY = shelves.sumOf { it.height }
         if (nextShelfY + imageWithPadding.height <= atlasSize.height) {
-            val newShelf = Shelf(
-                y = nextShelfY,
-                height = imageWithPadding.height,
-                atlasWidth = atlasSize.width
-            )
+            val newShelf = trace(TEXTURE_PACKER_CREATE_NEW_SHELF) {
+                Shelf(
+                    y = nextShelfY,
+                    height = imageWithPadding.height,
+                    atlasWidth = atlasSize.width
+                )
+            }
             shelves.add(newShelf)
             
-            val position = newShelf.tryFit(imageWithPadding)
+            val position = trace(TEXTURE_PACKER_FIND_SHELF_FIT) {
+                newShelf.tryFit(imageWithPadding)
+            }
             if (position != null) {
                 return PackedImage(
                     id = image.id,

@@ -29,7 +29,7 @@ class GalleryViewModel @Inject constructor(
     private val atlasManager: AtlasManager
 ) : ViewModel() {
 
-    var currentPeriod: GroupingPeriod = GroupingPeriod.DAILY
+    var currentPeriod: GroupingPeriod = GroupingPeriod.MONTHLY
         set(value) {
             field = value
             groupMedia()

@@ -7,6 +7,12 @@ import android.net.Uri
 import androidx.compose.ui.unit.IntSize
 import androidx.tracing.trace
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_LOD_DISK_OPEN_INPUT_STREAM
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_LOD_MEMORY_DECODE_BOUNDS
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_LOD_MEMORY_DECODE_BITMAP
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_LOD_MEMORY_SAMPLE_SIZE_CALC
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.ATLAS_MEMORY_BITMAP_ALLOCATE
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.ATLAS_MEMORY_BITMAP_RECYCLE
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -55,7 +61,9 @@ class PhotoLODProcessor @Inject constructor(
 
                 // Clean up original bitmap if different from scaled
                 if (scaledBitmap != originalBitmap) {
-                    originalBitmap.recycle()
+                    trace(ATLAS_MEMORY_BITMAP_RECYCLE) {
+                        originalBitmap.recycle()
+                    }
                 }
 
                 ProcessedPhoto(
@@ -77,21 +85,38 @@ class PhotoLODProcessor @Inject constructor(
      */
     private fun loadOriginalPhoto(uri: Uri): Bitmap? {
         return try {
-            contentResolver.openInputStream(uri)?.use { inputStream ->
-                // First, decode bounds to get dimensions
+            // DISK I/O: File system access via ContentResolver
+            trace(PHOTO_LOD_DISK_OPEN_INPUT_STREAM) {
+                contentResolver.openInputStream(uri)
+            }?.use { inputStream ->
+                // MEMORY I/O: Decode image header for dimensions (no full decode)
                 val options = BitmapFactory.Options().apply {
                     inJustDecodeBounds = true
                 }
-                BitmapFactory.decodeStream(inputStream, null, options)
+                trace(PHOTO_LOD_MEMORY_DECODE_BOUNDS) {
+                    BitmapFactory.decodeStream(inputStream, null, options)
+                }
 
-                // Reset stream and decode with calculated sample size
-                contentResolver.openInputStream(uri)?.use { inputStream2 ->
+                // MEMORY I/O: Calculate optimal sample size for memory efficiency
+                val sampleSize = trace(PHOTO_LOD_MEMORY_SAMPLE_SIZE_CALC) {
+                    calculateInSampleSize(options, 2048, 2048) // Max 2048px
+                }
+
+                // DISK I/O: Reset stream and read again for full decode
+                trace(PHOTO_LOD_DISK_OPEN_INPUT_STREAM) {
+                    contentResolver.openInputStream(uri)
+                }?.use { inputStream2 ->
                     val decodeOptions = BitmapFactory.Options().apply {
                         inJustDecodeBounds = false
                         inPreferredConfig = Bitmap.Config.ARGB_8888
-                        inSampleSize = calculateInSampleSize(options, 2048, 2048) // Max 2048px
+                        inSampleSize = sampleSize
                     }
-                    BitmapFactory.decodeStream(inputStream2, null, decodeOptions)
+                    // MEMORY I/O: Full bitmap decode and memory allocation
+                    trace(PHOTO_LOD_MEMORY_DECODE_BITMAP) {
+                        trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
+                            BitmapFactory.decodeStream(inputStream2, null, decodeOptions)
+                        }
+                    }
                 }
             }
         } catch (e: Exception) {
