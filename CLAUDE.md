@@ -191,6 +191,11 @@ This project includes comprehensive documentation in `docs/` that should be refe
   - **shared-media.md**: Shared storage and media handling documentation
 
 ### Performance & Testing Documentation
+- **benchmarking-system-guide.md**: Complete guide to the performance benchmarking system
+  - Benchmark data collection and processing workflows
+  - Timeline management and profile-based optimization tracking
+  - Collector script commands and extension guidelines
+  - Git integration, safety features, and troubleshooting
 - **macrobenchmark/**: Android Macrobenchmark testing documentation
   - **macrobenchmark-sample.md**: Sample macrobenchmark implementation
   - **macrobenchmark-capture-metrics.md**: Guide for capturing performance metrics
