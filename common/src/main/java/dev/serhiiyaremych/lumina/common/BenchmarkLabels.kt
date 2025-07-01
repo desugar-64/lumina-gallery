@@ -33,4 +33,13 @@ object BenchmarkLabels {
     // Atlas state descriptions for idleness tracking
     const val ATLAS_STATE_GENERATING = "ATLAS-GENERATING"
     const val ATLAS_STATE_IDLE = "ATLAS-IDLE"
+    
+    // Compose idleness state descriptions for UI animation tracking
+    const val COMPOSE_STATE_ANIMATING = "COMPOSE-ANIMATING"
+    const val COMPOSE_STATE_IDLE = "COMPOSE-IDLE"
+    
+    // Benchmark mode intent extras
+    const val BENCHMARK_MODE_EXTRA = "benchmark_mode"
+    const val BENCHMARK_AUTO_ZOOM = "auto_zoom"
+    const val BENCHMARK_AUTO_PAN = "auto_pan"
 }

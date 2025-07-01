@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import kotlinx.coroutines.launch
 import kotlin.math.min
@@ -149,23 +150,25 @@ class TransformableState(
         }
     }
 
+    // Animation methods removed - using updateMatrix directly for benchmark automation
+
     suspend fun updateMatrix(block: Matrix.() -> Unit): Boolean {
         val originalMatrix = Matrix(matrixAnimator.value)
         val newMatrix = Matrix(originalMatrix).apply(block)
-        
+
         // Extract and clamp zoom level
         newMatrix.getValues(matrixValuesCache)
         val currentZoom = matrixValuesCache[Matrix.MSCALE_X]
         val clampedZoom = currentZoom.coerceIn(MIN_ZOOM, MAX_ZOOM)
-        
+
         val wasZoomClamped = clampedZoom != currentZoom
-        
+
         // If zoom was clamped, revert to original and apply only the allowed zoom
         if (wasZoomClamped) {
             matrixAnimator.snapTo(originalMatrix)
             return true
         }
-        
+
         matrixAnimator.snapTo(newMatrix)
         return false
     }
@@ -232,25 +235,26 @@ fun TransformableContent(
 
         val coroutineScope = rememberCoroutineScope()
         Box(
-            modifier = Modifier.pointerInput(Unit) {
-                detectTransformGestures { centroid, pan, zoom, _ ->
-                    if (!state.isAnimating) {
-                        coroutineScope.launch {
-                            // Apply zoom first and check if it was clamped
-                            val wasZoomClamped = state.updateMatrix {
-                                postScale(zoom, zoom, centroid.x, centroid.y)
-                            }
-                            
-                            // Only apply pan if zoom wasn't clamped
-                            if (!wasZoomClamped) {
-                                state.updateMatrix {
-                                    postTranslate(pan.x, pan.y)
+            modifier = Modifier
+                .pointerInput(Unit) {
+                    detectTransformGestures { centroid, pan, zoom, _ ->
+                        if (!state.isAnimating) {
+                            coroutineScope.launch {
+                                // Apply zoom first and check if it was clamped
+                                val wasZoomClamped = state.updateMatrix {
+                                    postScale(zoom, zoom, centroid.x, centroid.y)
+                                }
+                                
+                                // Only apply pan if zoom wasn't clamped
+                                if (!wasZoomClamped) {
+                                    state.updateMatrix {
+                                        postTranslate(pan.x, pan.y)
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
         ) {
             content()
         }

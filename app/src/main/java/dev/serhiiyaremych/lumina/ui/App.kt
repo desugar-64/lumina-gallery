@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -50,7 +51,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun App(
     modifier: Modifier = Modifier,
-    galleryViewModel: GalleryViewModel
+    galleryViewModel: GalleryViewModel,
+    isBenchmarkMode: Boolean = false,
+    autoZoom: Boolean = false,
+    autoPan: Boolean = false
 ) {
     LuminaGalleryTheme {
         val media by galleryViewModel.mediaState.collectAsState()
@@ -103,6 +107,91 @@ fun App(
                                     postTranslate(centerOffset.x, centerOffset.y)
                                 }
                             }
+                        }
+                    }
+
+                    // Automatic benchmark interactions
+                    LaunchedEffect(isBenchmarkMode, autoZoom, autoPan, hexGridLayout) {
+                        if (isBenchmarkMode && hexGridLayout != null) {
+                            // Wait for initial atlas generation
+                            delay(2000)
+
+                            if (autoZoom) {
+                                Log.d("App", "Starting auto zoom benchmark sequence")
+                                
+                                val centerX = canvasSize.width / 2f
+                                val centerY = canvasSize.height / 2f
+                                
+                                // 1. Zoom out to trigger LOD_0 (32px)
+                                Log.d("App", "Auto zoom: zooming out to 0.3x")
+                                transformableState.updateMatrix {
+                                    val currentZoom = transformableState.zoom
+                                    val scaleFactor = 0.3f / currentZoom
+                                    postScale(scaleFactor, scaleFactor, centerX, centerY)
+                                }
+                                delay(3000) // Wait for atlas generation
+                                
+                                // 2. Zoom in to trigger LOD_2 (128px)
+                                Log.d("App", "Auto zoom: zooming in to 1.5x")
+                                transformableState.updateMatrix {
+                                    val currentZoom = transformableState.zoom
+                                    val scaleFactor = 1.5f / currentZoom
+                                    postScale(scaleFactor, scaleFactor, centerX, centerY)
+                                }
+                                delay(3000) // Wait for atlas generation
+                                
+                                // 3. Zoom in more to trigger LOD_4 (512px)
+                                Log.d("App", "Auto zoom: zooming in to 3.0x")
+                                transformableState.updateMatrix {
+                                    val currentZoom = transformableState.zoom
+                                    val scaleFactor = 3.0f / currentZoom
+                                    postScale(scaleFactor, scaleFactor, centerX, centerY)
+                                }
+                                delay(5000) // Wait for atlas generation
+                                
+                                // 4. Zoom back to medium level
+                                Log.d("App", "Auto zoom: zooming back to 1.0x")
+                                transformableState.updateMatrix {
+                                    val currentZoom = transformableState.zoom
+                                    val scaleFactor = 1.0f / currentZoom
+                                    postScale(scaleFactor, scaleFactor, centerX, centerY)
+                                }
+                                delay(3000)
+                            }
+
+                            if (autoPan) {
+                                Log.d("App", "Starting auto pan benchmark sequence")
+                                
+                                // Pan left
+                                Log.d("App", "Auto pan: panning left")
+                                transformableState.updateMatrix {
+                                    postTranslate(-300f, 0f)
+                                }
+                                delay(2000)
+                                
+                                // Pan right
+                                Log.d("App", "Auto pan: panning right")
+                                transformableState.updateMatrix {
+                                    postTranslate(600f, 0f) // +600 to go from -300 to +300
+                                }
+                                delay(2000)
+                                
+                                // Pan up
+                                Log.d("App", "Auto pan: panning up")
+                                transformableState.updateMatrix {
+                                    postTranslate(-300f, -300f) // Move back to center X and up
+                                }
+                                delay(2000)
+                                
+                                // Return to center
+                                Log.d("App", "Auto pan: returning to center")
+                                transformableState.updateMatrix {
+                                    postTranslate(0f, 300f) // Move back down to center
+                                }
+                                delay(2000)
+                            }
+                            
+                            Log.d("App", "Benchmark sequence completed")
                         }
                     }
 
