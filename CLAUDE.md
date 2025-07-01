@@ -52,6 +52,27 @@ LuminaGallery is a modern Android Compose application focused on advanced image 
 ./gradlew app:connectedDebugAndroidTest
 ```
 
+### Atlas Performance Benchmarking
+```bash
+# Initialize fresh baseline measurement
+./gradlew :benchmark:initAtlasBaseline
+
+# Track optimization improvements
+./gradlew :benchmark:benchmarkAtlasOptimization -Poptimization.name="your_optimization_name"
+
+# View performance timeline and generate reports
+./gradlew :benchmark:listAtlasTimeline
+./gradlew :benchmark:generateAtlasReport
+
+# Baseline management
+./gradlew :benchmark:updateAtlasBaseline -Pbaseline.name="baseline_v2"
+./gradlew :benchmark:cleanAtlasTimeline -Pforce
+
+# Experimental development (allows uncommitted changes)
+./gradlew :benchmark:benchmarkAtlasOptimization -Poptimization.name="experimental" -Pallow.dirty
+./gradlew :benchmark:cleanAtlasExperimental
+```
+
 ### Development
 ```bash
 # Run lint checks
@@ -147,6 +168,7 @@ The app features a sophisticated benchmarking system with detailed performance t
 - **HTML Reports**: `atlas_timeline_chart.py` generates comprehensive performance visualization
 - **Performance Targets**: 300ms aggressive target (down from 1600ms baseline)
 - **Automated Analysis**: Bottleneck identification and regression detection
+- **Gradle Integration**: Comprehensive task workflow for baseline management and optimization tracking
 
 ### Gesture System
 
@@ -247,3 +269,112 @@ Think hard to understand the true nature of a problem, not just to find a soluti
 - Adheres to modern Android patterns outlined in docs/modern-android.md
 - Troubleshooting problems following docs/five.md
 - When documenting code read docs/create-docs.md
+
+## Atlas Benchmarking Workflow
+
+### Quick Reference Commands
+
+**Essential benchmarking tasks for atlas performance optimization:**
+
+```bash
+# 1. Start with baseline measurement
+./gradlew :benchmark:initAtlasBaseline
+
+# 2. After each optimization implementation  
+./gradlew :benchmark:benchmarkAtlasOptimization -Poptimization.name="descriptive_name"
+
+# 3. Monitor progress
+./gradlew :benchmark:listAtlasTimeline
+```
+
+### Complete Workflow Example
+
+```bash
+# Step 1: Initialize baseline (fresh start)
+./gradlew :benchmark:initAtlasBaseline -Pbaseline.name="baseline_v1"
+
+# Step 2: Implement bitmap pool optimization in code...
+
+# Step 3: Benchmark optimization
+./gradlew :benchmark:benchmarkAtlasOptimization -Poptimization.name="bitmap_pool"
+
+# Step 4: Implement hardware canvas optimization in code...
+
+# Step 5: Benchmark optimization  
+./gradlew :benchmark:benchmarkAtlasOptimization -Poptimization.name="hardware_canvas"
+
+# Step 6: View progress
+./gradlew :benchmark:listAtlasTimeline
+# Expected output shows progression: 1600ms → 1200ms → 800ms
+
+# Step 7: Generate HTML report
+./gradlew :benchmark:generateAtlasReport
+```
+
+### Task Reference
+
+| Task | When to Use | Key Parameters |
+|------|-------------|----------------|
+| `initAtlasBaseline` | Start fresh timeline with new baseline | `-Pbaseline.name="name"` |
+| `benchmarkAtlasOptimization` | Track each optimization improvement | `-Poptimization.name="name"` |
+| `updateAtlasBaseline` | Update baseline while keeping optimization history | `-Pbaseline.name="new_name"` |
+| `listAtlasTimeline` | View current progress and performance trends | None |
+| `cleanAtlasTimeline` | Complete restart (removes all data) | `-Pforce` (skip confirmation) |
+| `cleanAtlasExperimental` | Remove only experimental (-dirty) entries | `-Pforce` |
+
+### Experimental Development
+
+**For rapid iteration with uncommitted changes:**
+
+```bash
+# Allow dirty commits during development
+./gradlew :benchmark:benchmarkAtlasOptimization -Poptimization.name="experimental_fix" -Pallow.dirty
+
+# Clean experimental entries when done
+./gradlew :benchmark:cleanAtlasExperimental -Pforce
+```
+
+### Performance Target Tracking
+
+**Current Performance Baseline: ~1600ms**  
+**Aggressive Target: 300ms (80% improvement needed)**
+
+**Primary optimization areas:**
+1. **Bitmap Scaling** (~900ms): Target <100ms via bitmap pooling
+2. **Software Canvas** (~450ms): Target <50ms via hardware acceleration  
+3. **Memory Management** (~200MB): Target <150MB via efficient allocation
+
+### Expected Output Examples
+
+**Baseline establishment:**
+```
+🎯 Initializing fresh atlas baseline: baseline_v1
+📊 Atlas Performance (Zoom Test):
+   Total Generation Time: 1623.4ms
+   Bitmap Scaling: 892.1ms
+   Canvas Rendering: 456.8ms
+```
+
+**Optimization tracking:**
+```
+📈 Improvement since baseline (baseline_v1):
+   Atlas Generation: 1623.4ms → 876.2ms
+   Improvement: +46.0%
+   Bitmap Scaling: +23.4%
+   Canvas Rendering: +67.8%
+```
+
+### Integration with Development Workflow
+
+**When implementing atlas optimizations:**
+
+1. **Before optimization**: Establish baseline or use existing
+2. **During optimization**: Use `-Pallow.dirty` for rapid iteration
+3. **After optimization**: Commit changes and run clean benchmark
+4. **Documentation**: Results automatically tracked with git commits
+
+**Files tracked in benchmarking:**
+- `scripts/atlas_benchmark_collector.py` - Collection and timeline management
+- `scripts/atlas_timeline_chart.py` - HTML report generation (if available)
+- `benchmark_results/atlas_timeline.json` - Timeline database
+- `benchmark_results/atlas_performance_report.html` - Generated reports

@@ -72,8 +72,8 @@ class AtlasBenchmarkCollector:
                 "TexturePacker.findShelfFitSumMs": "Shelf fitting algorithm",
                 "TexturePacker.createNewShelfSumMs": "New shelf creation"
             }
-            self.target_time_ms = 1000.0
-            self.baseline_time_ms = 5000.0
+            self.target_time_ms = 300.0  # 300ms aggressive target
+            self.baseline_time_ms = 1600.0  # Current realistic baseline
         else:
             # Future profiles can be added here when needed
             available_profiles = ["atlas"]
@@ -93,7 +93,7 @@ class AtlasBenchmarkCollector:
         ]
     
     def collect_benchmark_result(self, benchmark_json_path: str, optimization_name: str, 
-                                 allow_dirty: bool = False) -> Dict[str, Any]:
+                                 allow_dirty: bool = False, mode: str = "optimization") -> Dict[str, Any]:
         """Collect a new benchmark result and add to timeline"""
         if not Path(benchmark_json_path).exists():
             raise FileNotFoundError(f"Benchmark file not found: {benchmark_json_path}")
@@ -136,6 +136,7 @@ class AtlasBenchmarkCollector:
         timeline_entry = {
             "timestamp": datetime.datetime.now().isoformat(),
             "optimization": optimization_name,
+            "mode": mode,
             "device_context": self._extract_device_context(benchmark_data),
             "zoom_test": zoom_metrics,
             "pan_test": pan_metrics,
@@ -144,9 +145,18 @@ class AtlasBenchmarkCollector:
             "benchmark_file": str(Path(benchmark_json_path).name)
         }
         
-        # Load existing timeline
+        # Handle different modes
         timeline = self._load_timeline()
-        timeline.append(timeline_entry)
+        
+        if mode == "baseline":
+            # Replace existing baseline or add as first entry
+            self._handle_baseline_mode(timeline, timeline_entry)
+        elif mode == "update_baseline":
+            # Update baseline while preserving optimization history
+            self._handle_update_baseline_mode(timeline, timeline_entry)
+        else:
+            # Standard optimization tracking
+            timeline.append(timeline_entry)
         
         # Save updated timeline
         with open(self.timeline_file, 'w') as f:
@@ -470,6 +480,116 @@ class AtlasBenchmarkCollector:
             print(f"   {i}: {entry['optimization']} ({entry.get('git_commit', 'unknown')})")
         
         self.remove_timeline_entries(dirty_indices, backup, force)
+    
+    def _handle_baseline_mode(self, timeline: List[Dict], timeline_entry: Dict[str, Any]) -> None:
+        """Handle baseline mode - replace any existing baseline or add as first entry"""
+        # Find existing baseline entries
+        baseline_indices = []
+        for i, entry in enumerate(timeline):
+            if entry.get("mode") == "baseline" or "baseline" in entry.get("optimization", "").lower():
+                baseline_indices.append(i)
+        
+        if baseline_indices:
+            print(f"🔄 Found {len(baseline_indices)} existing baseline entries, replacing...")
+            # Remove existing baselines (in reverse order)
+            for i in sorted(baseline_indices, reverse=True):
+                removed = timeline.pop(i)
+                print(f"   Removed baseline: {removed['optimization']}")
+        
+        # Add new baseline at the beginning
+        timeline.insert(0, timeline_entry)
+        print(f"✅ Established new baseline: {timeline_entry['optimization']}")
+    
+    def _handle_update_baseline_mode(self, timeline: List[Dict], timeline_entry: Dict[str, Any]) -> None:
+        """Handle update baseline mode - update baseline while preserving optimization timeline"""
+        # Create backup before updating
+        backup_file = self.results_dir / f"atlas_timeline_backup_baseline_update_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(backup_file, 'w') as f:
+            json.dump(timeline, f, indent=2)
+        print(f"💾 Created backup before baseline update: {backup_file}")
+        
+        # Find and update baseline (first entry or entry marked as baseline)
+        baseline_index = 0
+        for i, entry in enumerate(timeline):
+            if entry.get("mode") == "baseline" or "baseline" in entry.get("optimization", "").lower():
+                baseline_index = i
+                break
+        
+        if timeline:
+            old_baseline = timeline[baseline_index]
+            timeline[baseline_index] = timeline_entry
+            print(f"🔄 Updated baseline: {old_baseline['optimization']} → {timeline_entry['optimization']}")
+        else:
+            timeline.append(timeline_entry)
+            print(f"✅ Added first baseline: {timeline_entry['optimization']}")
+    
+    def init_fresh_timeline(self, benchmark_json_path: str, baseline_name: str = "baseline", 
+                           allow_dirty: bool = False) -> Dict[str, Any]:
+        """Initialize a completely fresh timeline with new baseline"""
+        # Create backup of existing timeline if it exists
+        if self.timeline_file.exists():
+            backup_file = self.results_dir / f"atlas_timeline_backup_fresh_init_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            timeline = self._load_timeline()
+            with open(backup_file, 'w') as f:
+                json.dump(timeline, f, indent=2)
+            print(f"💾 Backed up existing timeline: {backup_file}")
+        
+        # Remove existing timeline
+        if self.timeline_file.exists():
+            self.timeline_file.unlink()
+            print("🗑️  Removed existing timeline")
+        
+        # Collect new baseline
+        result = self.collect_benchmark_result(
+            benchmark_json_path, 
+            baseline_name, 
+            allow_dirty=allow_dirty, 
+            mode="baseline"
+        )
+        
+        print(f"🎯 Initialized fresh timeline with baseline: {baseline_name}")
+        return result
+    
+    def clean_all_timeline_data(self, backup: bool = True, force: bool = False) -> None:
+        """Remove all benchmark data and start completely fresh"""
+        if not self.timeline_file.exists():
+            print("📭 No timeline data to clean.")
+            return
+        
+        timeline = self._load_timeline()
+        if not timeline:
+            print("📭 Timeline is already empty.")
+            return
+        
+        # Create backup if requested
+        if backup:
+            backup_file = self.results_dir / f"atlas_timeline_backup_clean_all_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            with open(backup_file, 'w') as f:
+                json.dump(timeline, f, indent=2)
+            print(f"💾 Created backup: {backup_file}")
+        
+        # Show what will be cleaned
+        print(f"🗑️  Will remove {len(timeline)} timeline entries:")
+        for i, entry in enumerate(timeline[:5]):  # Show first 5
+            print(f"   {i}: {entry['optimization']} ({entry.get('git_commit', 'unknown')})")
+        if len(timeline) > 5:
+            print(f"   ... and {len(timeline) - 5} more entries")
+        
+        # Confirm removal
+        if not force:
+            try:
+                response = input(f"\nRemove ALL {len(timeline)} timeline entries? (y/N): ").strip().lower()
+                if response != 'y':
+                    print("❌ Timeline cleaning cancelled.")
+                    return
+            except EOFError:
+                print("❌ Cannot prompt for confirmation in non-interactive mode. Use --force flag.")
+                return
+        
+        # Remove timeline file
+        self.timeline_file.unlink()
+        print(f"✅ Cleaned all timeline data ({len(timeline)} entries removed)")
+        print("🎯 Ready for fresh baseline initialization")
 
 if __name__ == "__main__":
     import sys
@@ -489,6 +609,20 @@ if __name__ == "__main__":
     collect_parser.add_argument("optimization_name", help="Name for this optimization")
     collect_parser.add_argument("--allow-dirty", action="store_true", 
                                help="Allow collection with uncommitted git changes")
+    collect_parser.add_argument("--mode", choices=["optimization", "baseline", "update_baseline"], 
+                               default="optimization", help="Collection mode")
+    
+    # Init baseline command
+    init_parser = subparsers.add_parser("init", help="Initialize fresh timeline with baseline")
+    init_parser.add_argument("benchmark_file", help="Path to benchmark JSON file")
+    init_parser.add_argument("--baseline-name", default="baseline", help="Name for baseline")
+    init_parser.add_argument("--allow-dirty", action="store_true", 
+                            help="Allow with uncommitted git changes")
+    
+    # Clean all command
+    clean_all_parser = subparsers.add_parser("clean-all", help="Remove all timeline data")
+    clean_all_parser.add_argument("--no-backup", action="store_true", help="Skip backup creation")
+    clean_all_parser.add_argument("--force", action="store_true", help="Skip confirmation prompt")
     
     # List command
     list_parser = subparsers.add_parser("list", help="List timeline entries")
@@ -529,10 +663,23 @@ if __name__ == "__main__":
         result = collector.collect_benchmark_result(
             args.benchmark_file, 
             args.optimization_name, 
+            allow_dirty=args.allow_dirty,
+            mode=args.mode
+        )
+        if not result:
+            sys.exit(1)
+    
+    elif args.command == "init":
+        result = collector.init_fresh_timeline(
+            args.benchmark_file,
+            args.baseline_name,
             allow_dirty=args.allow_dirty
         )
         if not result:
             sys.exit(1)
+    
+    elif args.command == "clean-all":
+        collector.clean_all_timeline_data(backup=not args.no_backup, force=args.force)
     
     elif args.command == "list":
         collector.list_timeline_entries()
