@@ -34,3 +34,4 @@ dependencyResolutionManagement {
 rootProject.name = "Lumina Gallery"
 include(":app")
 include(":benchmark")
+include(":common")

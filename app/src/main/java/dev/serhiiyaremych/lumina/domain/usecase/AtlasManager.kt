@@ -2,7 +2,9 @@ package dev.serhiiyaremych.lumina.domain.usecase
 
 import android.content.Context
 import android.util.Log
+import androidx.tracing.trace
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.domain.model.AtlasRegion
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
@@ -55,24 +57,29 @@ class AtlasManager @Inject constructor(
         visibleCells: List<HexCellWithMedia>,
         currentZoom: Float,
         marginRings: Int = DEFAULT_MARGIN_RINGS
-    ): AtlasUpdateResult = withContext(Dispatchers.Default) {
-        try {
-            Log.d(TAG, "updateVisibleCells: ${visibleCells.size} cells, zoom=$currentZoom")
+    ): AtlasUpdateResult = trace(BenchmarkLabels.ATLAS_MANAGER_UPDATE_VISIBLE_CELLS) {
+        withContext(Dispatchers.Default) {
+            try {
+                Log.d(TAG, "updateVisibleCells: ${visibleCells.size} cells, zoom=$currentZoom")
 
-            // Select appropriate LOD level based on zoom
-            val lodLevel = selectLODLevel(currentZoom)
-            
-            // Expand visible cells by margin rings for smooth scrolling
-            val expandedCells = expandCellsByRings(visibleCells, marginRings)
-            
-            // Generate unique key for this cell set
-            val cellSetKey = generateCellSetKey(expandedCells, lodLevel)
-            
-            // Check if we need to regenerate atlas
-            if (shouldRegenerateAtlas(cellSetKey, lodLevel)) {
-                Log.d(TAG, "Regenerating atlas for ${expandedCells.size} cells at $lodLevel")
+                // Select appropriate LOD level based on zoom
+                val lodLevel = trace(BenchmarkLabels.ATLAS_MANAGER_SELECT_LOD_LEVEL) {
+                    selectLODLevel(currentZoom)
+                }
                 
-                val atlasResult = generateAtlasForCells(expandedCells, lodLevel)
+                // Expand visible cells by margin rings for smooth scrolling
+                val expandedCells = expandCellsByRings(visibleCells, marginRings)
+                
+                // Generate unique key for this cell set
+                val cellSetKey = generateCellSetKey(expandedCells, lodLevel)
+                
+                // Check if we need to regenerate atlas
+                if (shouldRegenerateAtlas(cellSetKey, lodLevel)) {
+                    Log.d(TAG, "Regenerating atlas for ${expandedCells.size} cells at $lodLevel")
+                    
+                    val atlasResult = trace(BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS) {
+                        generateAtlasForCells(expandedCells, lodLevel)
+                    }
                 
                 if (atlasResult.atlas != null) {
                     // Update current state
@@ -87,17 +94,18 @@ class AtlasManager @Inject constructor(
                     }
                     Log.d(TAG, message)
                     AtlasUpdateResult.Success(atlasResult.atlas)
+                    } else {
+                        Log.w(TAG, "Atlas generation failed completely: ${atlasResult.failed.size} failed photos")
+                        AtlasUpdateResult.GenerationFailed("Atlas generation failed completely")
+                    }
                 } else {
-                    Log.w(TAG, "Atlas generation failed completely: ${atlasResult.failed.size} failed photos")
-                    AtlasUpdateResult.GenerationFailed("Atlas generation failed completely")
+                    Log.d(TAG, "Using existing atlas (no regeneration needed)")
+                    AtlasUpdateResult.Success(currentAtlas!!)
                 }
-            } else {
-                Log.d(TAG, "Using existing atlas (no regeneration needed)")
-                AtlasUpdateResult.Success(currentAtlas!!)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error updating visible cells", e)
+                AtlasUpdateResult.Error(e)
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error updating visible cells", e)
-            AtlasUpdateResult.Error(e)
         }
     }
 

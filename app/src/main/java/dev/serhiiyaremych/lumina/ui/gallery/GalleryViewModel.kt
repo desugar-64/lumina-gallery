@@ -47,6 +47,10 @@ class GalleryViewModel @Inject constructor(
     private val _atlasState = MutableStateFlow<AtlasUpdateResult?>(null)
     val atlasState: StateFlow<AtlasUpdateResult?> = _atlasState.asStateFlow()
 
+    // Atlas generation state for benchmarking
+    private val _isAtlasGenerating = MutableStateFlow(false)
+    val isAtlasGenerating: StateFlow<Boolean> = _isAtlasGenerating.asStateFlow()
+
     init {
         loadMedia()
     }
@@ -84,8 +88,13 @@ class GalleryViewModel @Inject constructor(
      */
     fun onVisibleCellsChanged(visibleCells: List<HexCellWithMedia>, currentZoom: Float) {
         viewModelScope.launch {
-            val result = atlasManager.updateVisibleCells(visibleCells, currentZoom)
-            _atlasState.value = result
+            _isAtlasGenerating.value = true // Mark as generating
+            try {
+                val result = atlasManager.updateVisibleCells(visibleCells, currentZoom)
+                _atlasState.value = result
+            } finally {
+                _isAtlasGenerating.value = false // Mark as complete
+            }
         }
     }
 

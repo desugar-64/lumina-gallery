@@ -5,6 +5,9 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.net.Uri
 import androidx.compose.ui.unit.IntSize
+import androidx.core.graphics.createBitmap
+import androidx.tracing.trace
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.data.ImageToPack
 import dev.serhiiyaremych.lumina.data.PackResult
 import dev.serhiiyaremych.lumina.data.ScaleStrategy
@@ -14,7 +17,6 @@ import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
 import javax.inject.Inject
 import javax.inject.Singleton
-import androidx.core.graphics.createBitmap
 
 /**
  * Generates texture atlases by coordinating photo processing and packing algorithms.
@@ -38,9 +40,9 @@ class AtlasGenerator @Inject constructor(
         lodLevel: LODLevel,
         atlasSize: IntSize = IntSize(DEFAULT_ATLAS_SIZE, DEFAULT_ATLAS_SIZE),
         scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER
-    ): AtlasGenerationResult {
+    ): AtlasGenerationResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
         if (photoUris.isEmpty()) {
-            return AtlasGenerationResult(
+            return@trace AtlasGenerationResult(
                 atlas = null,
                 failed = emptyList(),
                 packingUtilization = 0f,
@@ -53,22 +55,24 @@ class AtlasGenerator @Inject constructor(
         val failed = mutableListOf<Uri>()
 
         // Step 1: Process all photos for the specified LOD level
-        for (uri in photoUris) {
-            try {
-                val processed = photoLODProcessor.processPhotoForLOD(uri, lodLevel, scaleStrategy)
-                if (processed != null) {
-                    processedPhotos.add(processed)
-                } else {
+        trace(BenchmarkLabels.ATLAS_GENERATOR_PROCESS_PHOTOS) {
+            for (uri in photoUris) {
+                try {
+                    val processed = photoLODProcessor.processPhotoForLOD(uri, lodLevel, scaleStrategy)
+                    if (processed != null) {
+                        processedPhotos.add(processed)
+                    } else {
+                        failed.add(uri)
+                    }
+                } catch (e: Exception) {
+                    // Log error and add to failed list
                     failed.add(uri)
                 }
-            } catch (e: Exception) {
-                // Log error and add to failed list
-                failed.add(uri)
             }
         }
 
         if (processedPhotos.isEmpty()) {
-            return AtlasGenerationResult(
+            return@trace AtlasGenerationResult(
                 atlas = null,
                 failed = failed,
                 packingUtilization = 0f,
@@ -86,12 +90,14 @@ class AtlasGenerator @Inject constructor(
         }
 
         // Step 3: Calculate optimal packing layout
-        val texturePacker = ShelfTexturePacker(atlasSize, ATLAS_PADDING)
-        val packResult = texturePacker.pack(imagesToPack)
+        val packResult = trace(BenchmarkLabels.ATLAS_GENERATOR_PACK_TEXTURES) {
+            val texturePacker = ShelfTexturePacker(atlasSize, ATLAS_PADDING)
+            texturePacker.pack(imagesToPack)
+        }
 
         if (packResult.packedImages.isEmpty()) {
             // No images fit in atlas
-            return AtlasGenerationResult(
+            return@trace AtlasGenerationResult(
                 atlas = null,
                 failed = photoUris,
                 packingUtilization = 0f,
@@ -101,7 +107,9 @@ class AtlasGenerator @Inject constructor(
         }
 
         // Step 4: Create atlas bitmap and draw photos
-        val atlasBitmap = createAtlasBitmap(processedPhotos, packResult, atlasSize)
+        val atlasBitmap = trace(BenchmarkLabels.ATLAS_GENERATOR_CREATE_ATLAS_BITMAP) {
+            createAtlasBitmap(processedPhotos, packResult, atlasSize)
+        }
 
         // Step 5: Create atlas regions from packed images
         val atlasRegions = createAtlasRegions(processedPhotos, packResult, lodLevel, photoUris)
@@ -132,7 +140,7 @@ class AtlasGenerator @Inject constructor(
             size = atlasSize
         )
 
-        return AtlasGenerationResult(
+        return@trace AtlasGenerationResult(
             atlas = atlas,
             failed = allFailed,
             packingUtilization = packResult.utilization,
@@ -151,30 +159,32 @@ class AtlasGenerator @Inject constructor(
     ): Bitmap {
         val atlasBitmap = createBitmap(atlasSize.width, atlasSize.height)
 
-        val canvas = Canvas(atlasBitmap)
-        val paint = Paint().apply {
-            isAntiAlias = true
-            isFilterBitmap = true // Enable bilinear filtering
-        }
+        trace(BenchmarkLabels.ATLAS_GENERATOR_SOFTWARE_CANVAS) {
+            val canvas = Canvas(atlasBitmap)
+            val paint = Paint().apply {
+                isAntiAlias = true
+                isFilterBitmap = true // Enable bilinear filtering
+            }
 
-        // Draw each packed photo onto the atlas
-        packResult.packedImages.forEach { packedImage ->
-            val index = packedImage.id.toIntOrNull()
-            if (index != null && index < processedPhotos.size) {
-                val processedPhoto = processedPhotos[index]
+            // Draw each packed photo onto the atlas
+            packResult.packedImages.forEach { packedImage ->
+                val index = packedImage.id.toIntOrNull()
+                if (index != null && index < processedPhotos.size) {
+                    val processedPhoto = processedPhotos[index]
 
-                if (!processedPhoto.bitmap.isRecycled) {
-                    canvas.drawBitmap(
-                        processedPhoto.bitmap,
-                        null, // source rect (entire bitmap)
-                        android.graphics.RectF(
-                            packedImage.rect.left,
-                            packedImage.rect.top,
-                            packedImage.rect.right,
-                            packedImage.rect.bottom
-                        ),
-                        paint
-                    )
+                    if (!processedPhoto.bitmap.isRecycled) {
+                        canvas.drawBitmap(
+                            processedPhoto.bitmap,
+                            null, // source rect (entire bitmap)
+                            android.graphics.RectF(
+                                packedImage.rect.left,
+                                packedImage.rect.top,
+                                packedImage.rect.right,
+                                packedImage.rect.bottom
+                            ),
+                            paint
+                        )
+                    }
                 }
             }
         }

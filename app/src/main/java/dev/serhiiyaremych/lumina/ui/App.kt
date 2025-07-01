@@ -22,8 +22,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.ui.components.MediaPermissionFlow
 import dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel
 import dev.serhiiyaremych.lumina.ui.theme.LuminaGalleryTheme
@@ -39,12 +44,15 @@ import kotlinx.coroutines.launch
  * - Coordinates between visualization and transformation systems
  *
  * @param modifier Compose modifier for layout
+ * @param galleryViewModel Gallery view model instance (passed from MainActivity)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun App(modifier: Modifier = Modifier) {
+fun App(
+    modifier: Modifier = Modifier,
+    galleryViewModel: GalleryViewModel
+) {
     LuminaGalleryTheme {
-        val galleryViewModel: GalleryViewModel = hiltViewModel()
         val media by galleryViewModel.mediaState.collectAsState()
         val groupedMedia by galleryViewModel.groupedMediaState.collectAsState()
         val hexGridLayout by galleryViewModel.hexGridLayoutState.collectAsState()
@@ -103,7 +111,13 @@ fun App(modifier: Modifier = Modifier) {
                         state = transformableState
                     ) {
                         GridCanvas(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .semantics { 
+                                    testTagsAsResourceId = true
+                                    contentDescription = "Gallery canvas"
+                                }
+                                .testTag(BenchmarkLabels.GALLERY_CANVAS_TEST_TAG),
                             zoom = transformableState.zoom,
                             offset = transformableState.offset,
                             state = gridState

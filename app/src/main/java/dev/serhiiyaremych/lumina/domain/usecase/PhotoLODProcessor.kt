@@ -5,6 +5,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.ui.unit.IntSize
+import androidx.tracing.trace
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,38 +31,44 @@ class PhotoLODProcessor @Inject constructor(
         lodLevel: LODLevel,
         scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER
     ): ProcessedPhoto? {
-        return try {
-            // Load original photo with efficient memory usage
-            val originalBitmap = loadOriginalPhoto(photoUri) ?: return null
+        return trace(BenchmarkLabels.PHOTO_LOD_PROCESS_PHOTO) {
+            try {
+                // Load original photo with efficient memory usage
+                val originalBitmap = trace(BenchmarkLabels.PHOTO_LOD_LOAD_BITMAP) {
+                    loadOriginalPhoto(photoUri)
+                } ?: return@trace null
 
-            // Scale bitmap to LOD resolution using PhotoScaler
-            val targetSize = calculateTargetSize(
-                originalSize = IntSize(originalBitmap.width, originalBitmap.height),
-                lodResolution = lodLevel.resolution,
-                strategy = scaleStrategy
-            )
-            
-            val scaledBitmap = photoScaler.scale(
-                source = originalBitmap,
-                targetSize = targetSize,
-                strategy = scaleStrategy
-            )
+                // Scale bitmap to LOD resolution using PhotoScaler
+                val targetSize = calculateTargetSize(
+                    originalSize = IntSize(originalBitmap.width, originalBitmap.height),
+                    lodResolution = lodLevel.resolution,
+                    strategy = scaleStrategy
+                )
+                
+                val scaledBitmap = trace(BenchmarkLabels.PHOTO_LOD_SCALE_BITMAP) {
+                    photoScaler.scale(
+                        source = originalBitmap,
+                        targetSize = targetSize,
+                        strategy = scaleStrategy
+                    )
+                }
 
-            // Clean up original bitmap if different from scaled
-            if (scaledBitmap != originalBitmap) {
-                originalBitmap.recycle()
+                // Clean up original bitmap if different from scaled
+                if (scaledBitmap != originalBitmap) {
+                    originalBitmap.recycle()
+                }
+
+                ProcessedPhoto(
+                    bitmap = scaledBitmap,
+                    originalSize = IntSize(originalBitmap.width, originalBitmap.height),
+                    scaledSize = targetSize,
+                    aspectRatio = targetSize.width.toFloat() / targetSize.height,
+                    lodLevel = lodLevel.level
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
             }
-
-            ProcessedPhoto(
-                bitmap = scaledBitmap,
-                originalSize = IntSize(originalBitmap.width, originalBitmap.height),
-                scaledSize = targetSize,
-                aspectRatio = targetSize.width.toFloat() / targetSize.height,
-                lodLevel = lodLevel.level
-            )
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
         }
     }
 

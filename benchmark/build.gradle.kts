@@ -30,6 +30,7 @@ android {
 }
 
 dependencies {
+    implementation(project(path = ":common"))
     implementation(libs.androidx.junit)
     implementation(libs.androidx.espresso.core)
     implementation(libs.androidx.uiautomator)
