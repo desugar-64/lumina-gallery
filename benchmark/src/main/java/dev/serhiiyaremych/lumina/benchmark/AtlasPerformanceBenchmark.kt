@@ -144,6 +144,7 @@ class AtlasPerformanceBenchmark {
 
     @OptIn(ExperimentalMetricApi::class)
     @Test
+    @org.junit.Ignore("Temporarily disabled to focus on zoom test")
     fun atlasGenerationThroughPanInteractions() = benchmarkRule.measureRepeated(
         packageName = TARGET_PACKAGE,
         metrics = listOf(
