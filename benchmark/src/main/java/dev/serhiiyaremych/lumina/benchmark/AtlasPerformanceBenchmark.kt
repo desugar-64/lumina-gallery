@@ -106,12 +106,12 @@ class AtlasPerformanceBenchmark {
             TraceSectionMetric(BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS),
 
             // System metrics
-            // FrameTimingMetric(), // TODO: Enable for physical devices - requires GPU profiling in developer settings
+//            FrameTimingMetric(), // TODO: Enable for physical devices - requires GPU profiling in developer settings
             MemoryUsageMetric(MemoryUsageMetric.Mode.Max)
         ),
         compilationMode = CompilationMode.Partial(),
         startupMode = StartupMode.WARM,
-        iterations = 3, // Small number for faster feedback
+        iterations = 2, // Small number for faster feedback
         setupBlock = {
             // Grant permissions before starting the app
             grantPermissionsIfNeeded()
@@ -153,7 +153,7 @@ class AtlasPerformanceBenchmark {
         ),
         compilationMode = CompilationMode.Partial(),
         startupMode = StartupMode.WARM,
-        iterations = 3,
+        iterations = 2,
         setupBlock = {
             // Grant permissions before starting the app
             grantPermissionsIfNeeded()

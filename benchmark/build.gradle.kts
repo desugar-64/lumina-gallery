@@ -12,6 +12,8 @@ android {
         targetSdk = 36
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+//        testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR"
+//        testInstrumentationRunnerArguments["androidx.benchmark.enabledRules"] = "TraceSectionMetric,MemoryUsageMetric"
     }
 
     buildTypes {

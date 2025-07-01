@@ -25,22 +25,22 @@ data class HexCell(
 /**
  * Complete hexagonal grid structure containing all cells.
  *
- * @property size Number of cells along one axis (grid is size x size)
+ * @property size Approximate diameter of the hexagonal grid (for layout calculations)
  * @property cellSizeDp Design-time cell size in density-independent pixels
  * @property cells List of all hex cells in the grid
  * @property cellSizePx Computed cell size in pixels at current density
  */
 data class HexGrid(
-    val size: Int, // NxN grid size
+    val size: Int, // Approximate grid diameter
     val cellSizeDp: Dp,
     val cells: List<HexCell>,
     val cellSizePx: Float
 ) {
     init {
         require(size > 0) { "Grid size must be positive" }
-        require(cells.size == size * size) {
-            "Cell count ${cells.size} doesn't match grid size $size"
-        }
+        require(cells.isNotEmpty()) { "Grid must contain at least one cell" }
+        // Note: For hexagonal grids, cell count doesn't follow size*size pattern
+        // Validation removed to support variable hex ring patterns
     }
 
     /**
