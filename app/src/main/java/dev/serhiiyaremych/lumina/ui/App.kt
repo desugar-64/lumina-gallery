@@ -3,9 +3,12 @@ package dev.serhiiyaremych.lumina.ui
 import android.util.Log
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
@@ -21,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -33,7 +37,10 @@ import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.ui.components.MediaPermissionFlow
 import dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel
 import dev.serhiiyaremych.lumina.ui.theme.LuminaGalleryTheme
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 
 /**
  * Root composable for the Lumina gallery view.
@@ -54,7 +61,6 @@ fun App(
     galleryViewModel: GalleryViewModel,
     isBenchmarkMode: Boolean = false,
     autoZoom: Boolean = false,
-    autoPan: Boolean = false
 ) {
     LuminaGalleryTheme {
         val media by galleryViewModel.mediaState.collectAsState()
@@ -111,17 +117,17 @@ fun App(
                     }
 
                     // Automatic benchmark interactions
-                    LaunchedEffect(isBenchmarkMode, autoZoom, autoPan, hexGridLayout) {
+                    LaunchedEffect(isBenchmarkMode, autoZoom, hexGridLayout) {
                         if (isBenchmarkMode && hexGridLayout != null) {
                             // Wait for initial atlas generation
-                            delay(2000)
 
                             if (autoZoom) {
+                                galleryViewModel.isAtlasGenerating.filter { !it }.first()
                                 Log.d("App", "Starting auto zoom benchmark sequence")
-                                
+
                                 val centerX = canvasSize.width / 2f
                                 val centerY = canvasSize.height / 2f
-                                
+
                                 // 1. Zoom out to trigger LOD_0 (32px)
                                 Log.d("App", "Auto zoom: zooming out to 0.3x")
                                 transformableState.updateMatrix {
@@ -129,8 +135,8 @@ fun App(
                                     val scaleFactor = 0.3f / currentZoom
                                     postScale(scaleFactor, scaleFactor, centerX, centerY)
                                 }
-                                delay(3000) // Wait for atlas generation
-                                
+                                delay(500) // Wait for atlas generation
+                                galleryViewModel.isAtlasGenerating.filter { !it }.first()
                                 // 2. Zoom in to trigger LOD_2 (128px)
                                 Log.d("App", "Auto zoom: zooming in to 1.5x")
                                 transformableState.updateMatrix {
@@ -138,8 +144,8 @@ fun App(
                                     val scaleFactor = 1.5f / currentZoom
                                     postScale(scaleFactor, scaleFactor, centerX, centerY)
                                 }
-                                delay(3000) // Wait for atlas generation
-                                
+                                delay(500) // Wait for atlas generation
+                                galleryViewModel.isAtlasGenerating.filter { !it }.first()
                                 // 3. Zoom in more to trigger LOD_4 (512px)
                                 Log.d("App", "Auto zoom: zooming in to 3.0x")
                                 transformableState.updateMatrix {
@@ -147,8 +153,8 @@ fun App(
                                     val scaleFactor = 3.0f / currentZoom
                                     postScale(scaleFactor, scaleFactor, centerX, centerY)
                                 }
-                                delay(5000) // Wait for atlas generation
-                                
+                                delay(500) // Wait for atlas generation
+                                galleryViewModel.isAtlasGenerating.filter { !it }.first()
                                 // 4. Zoom back to medium level
                                 Log.d("App", "Auto zoom: zooming back to 1.0x")
                                 transformableState.updateMatrix {
@@ -156,41 +162,9 @@ fun App(
                                     val scaleFactor = 1.0f / currentZoom
                                     postScale(scaleFactor, scaleFactor, centerX, centerY)
                                 }
-                                delay(3000)
-                            }
+                                delay(500)
+                                galleryViewModel.isAtlasGenerating.filter { !it }.first()                            }
 
-                            if (autoPan) {
-                                Log.d("App", "Starting auto pan benchmark sequence")
-                                
-                                // Pan left
-                                Log.d("App", "Auto pan: panning left")
-                                transformableState.updateMatrix {
-                                    postTranslate(-300f, 0f)
-                                }
-                                delay(2000)
-                                
-                                // Pan right
-                                Log.d("App", "Auto pan: panning right")
-                                transformableState.updateMatrix {
-                                    postTranslate(600f, 0f) // +600 to go from -300 to +300
-                                }
-                                delay(2000)
-                                
-                                // Pan up
-                                Log.d("App", "Auto pan: panning up")
-                                transformableState.updateMatrix {
-                                    postTranslate(-300f, -300f) // Move back to center X and up
-                                }
-                                delay(2000)
-                                
-                                // Return to center
-                                Log.d("App", "Auto pan: returning to center")
-                                transformableState.updateMatrix {
-                                    postTranslate(0f, 300f) // Move back down to center
-                                }
-                                delay(2000)
-                            }
-                            
                             Log.d("App", "Benchmark sequence completed")
                         }
                     }
@@ -202,7 +176,7 @@ fun App(
                         GridCanvas(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .semantics { 
+                                .semantics {
                                     testTagsAsResourceId = true
                                     contentDescription = "Gallery canvas"
                                 }
@@ -245,8 +219,10 @@ fun App(
                         if (state is dev.serhiiyaremych.lumina.domain.usecase.AtlasUpdateResult.Success) {
                             Box(
                                 modifier = Modifier
-                                    .size(200.dp)
-                                    .align(Alignment.TopEnd),
+                                    .fillMaxWidth()
+                                    .aspectRatio(1.0f)
+                                    .align(Alignment.TopEnd)
+                                    .border(0.5.dp, Color.Magenta),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Image(

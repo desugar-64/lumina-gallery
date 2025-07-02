@@ -27,18 +27,17 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
+
         // Setup atlas idleness tracking for benchmarking
         launchAtlasIdlenessTracking(galleryViewModel)
-        
+
         // Setup compose idleness tracking for benchmarking
         launchIdlenessTracking()
-        
+
         // Check for benchmark mode
         val isBenchmarkMode = intent.getBooleanExtra(BenchmarkLabels.BENCHMARK_MODE_EXTRA, false)
         val autoZoom = intent.getBooleanExtra(BenchmarkLabels.BENCHMARK_AUTO_ZOOM, false)
-        val autoPan = intent.getBooleanExtra(BenchmarkLabels.BENCHMARK_AUTO_PAN, false)
-        
+
         setContent {
             LuminaGalleryTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -47,7 +46,6 @@ class MainActivity : ComponentActivity() {
                         galleryViewModel = galleryViewModel,
                         isBenchmarkMode = isBenchmarkMode,
                         autoZoom = autoZoom,
-                        autoPan = autoPan
                     )
                 }
             }
@@ -60,7 +58,7 @@ class MainActivity : ComponentActivity() {
      */
     private fun launchAtlasIdlenessTracking(viewModel: GalleryViewModel) {
         val contentView: View = findViewById(android.R.id.content)
-        
+
         // Track atlas generation state
         lifecycleScope.launch {
             viewModel.isAtlasGenerating.collect { isGenerating ->
@@ -72,7 +70,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-    
+
     /**
      * Launch Compose idleness tracking for benchmarking.
      * Uses Choreographer to detect when Compose recomposition is idle.

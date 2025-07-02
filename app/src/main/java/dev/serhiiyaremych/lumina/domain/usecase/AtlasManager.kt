@@ -13,20 +13,21 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.measureTimedValue
 
 /**
  * Atlas Manager - Phase 1: Simple Implementation
- * 
+ *
  * Manages texture atlas lifecycle for efficient photo rendering.
  * This Phase 1 implementation focuses on getting visual results quickly
  * with a single atlas generation approach.
- * 
+ *
  * Features:
  * - Generates atlas for currently visible cells
  * - Ring-based margin system for smooth scrolling
  * - LOD level selection based on zoom
  * - Simple memory management (single atlas at a time)
- * 
+ *
  * Future Phase 2 enhancements:
  * - Viewport-based caching
  * - Multiple atlas coordination
@@ -62,35 +63,30 @@ class AtlasManager @Inject constructor(
             try {
                 Log.d(TAG, "updateVisibleCells: ${visibleCells.size} cells, zoom=$currentZoom")
 
-                // Select appropriate LOD level based on zoom
                 val lodLevel = trace(BenchmarkLabels.ATLAS_MANAGER_SELECT_LOD_LEVEL) {
                     selectLODLevel(currentZoom)
                 }
-                
-                // Expand visible cells by margin rings for smooth scrolling
+
                 val expandedCells = expandCellsByRings(visibleCells, marginRings)
-                
-                // Generate unique key for this cell set
+
                 val cellSetKey = generateCellSetKey(expandedCells, lodLevel)
-                
-                // Check if we need to regenerate atlas
+
                 if (shouldRegenerateAtlas(cellSetKey, lodLevel)) {
                     Log.d(TAG, "Regenerating atlas for ${expandedCells.size} cells at $lodLevel")
-                    
-                    val atlasResult = trace(BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS) {
-                        generateAtlasForCells(expandedCells, lodLevel)
+
+                    val (atlasResult, duration) = trace(BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS) {
+                        measureTimedValue { generateAtlasForCells(expandedCells, lodLevel) }
                     }
-                
+
                 if (atlasResult.atlas != null) {
-                    // Update current state
                     currentAtlas = atlasResult.atlas
                     currentCellIds = cellSetKey
                     currentLODLevel = lodLevel
-                    
+
                     val message = if (atlasResult.failed.isEmpty()) {
-                        "Atlas generated successfully: ${atlasResult.atlas.regions.size} regions"
+                        "Atlas generated successfully ${duration.inWholeMilliseconds}ms: ${atlasResult.atlas.regions.size} regions"
                     } else {
-                        "Atlas partial success: ${atlasResult.atlas.regions.size} regions, ${atlasResult.failed.size} failed"
+                        "Atlas partial success ${duration.inWholeMilliseconds}ms: ${atlasResult.atlas.regions.size} regions, ${atlasResult.failed.size} failed"
                     }
                     Log.d(TAG, message)
                     AtlasUpdateResult.Success(atlasResult.atlas)
@@ -152,7 +148,7 @@ class AtlasManager @Inject constructor(
         marginRings: Int
     ): List<HexCellWithMedia> {
         if (marginRings <= 0) return visibleCells
-        
+
         // For Phase 1, return visible cells as-is
         // TODO Phase 2: Implement actual hex ring expansion
         // This would require access to the complete hex grid to find adjacent cells
@@ -170,8 +166,8 @@ class AtlasManager @Inject constructor(
         cellSetKey: Set<String>,
         lodLevel: LODLevel
     ): Boolean {
-        return currentAtlas == null || 
-               currentCellIds != cellSetKey || 
+        return currentAtlas == null ||
+               currentCellIds != cellSetKey ||
                currentLODLevel != lodLevel
     }
 

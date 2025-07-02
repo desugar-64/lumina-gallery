@@ -14,7 +14,7 @@ import javax.inject.Singleton
 
 /**
  * High-performance photo scaling using Android's hardware-accelerated bilinear filtering.
- * 
+ *
  * Design Decision: Uses Bitmap.createScaledBitmap with filter=true for hardware-accelerated
  * bilinear filtering instead of Lanczos. While Lanczos provides higher theoretical quality,
  * it is computationally expensive and impractical for pure Kotlin implementation.
@@ -37,7 +37,7 @@ class PhotoScaler @Inject constructor() {
             if (source.width == targetSize.width && source.height == targetSize.height) {
                 return@trace source
             }
-            
+
             val scaledSize = trace(PHOTO_SCALER_CALCULATE_DIMENSIONS) {
                 calculateScaledSize(
                     originalSize = IntSize(source.width, source.height),
@@ -45,17 +45,14 @@ class PhotoScaler @Inject constructor() {
                     strategy = strategy
                 )
             }
-            
+
             when (strategy) {
                 ScaleStrategy.FIT_CENTER -> scaleWithAspectRatio(source, scaledSize)
                 ScaleStrategy.CENTER_CROP -> scaleAndCrop(source, targetSize)
             }
         }
     }
-    
-    /**
-     * Scales bitmap maintaining aspect ratio using hardware-accelerated filtering
-     */
+
     private fun scaleWithAspectRatio(source: Bitmap, targetSize: IntSize): Bitmap {
         return trace(PHOTO_SCALER_CREATE_SCALED_BITMAP) {
             trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
@@ -68,14 +65,14 @@ class PhotoScaler @Inject constructor() {
             }
         }
     }
-    
+
     /**
      * Scales and crops bitmap to fill target size completely
      */
     private fun scaleAndCrop(source: Bitmap, targetSize: IntSize): Bitmap {
         val sourceAspectRatio = source.width.toFloat() / source.height
         val targetAspectRatio = targetSize.width.toFloat() / targetSize.height
-        
+
         // Calculate intermediate size to fill target completely
         val intermediateSize = if (sourceAspectRatio > targetAspectRatio) {
             // Source is wider - scale to target height, then crop width
@@ -90,7 +87,7 @@ class PhotoScaler @Inject constructor() {
                 height = (targetSize.width / sourceAspectRatio).toInt()
             )
         }
-        
+
         // First scale to intermediate size
         val scaledBitmap = trace(PHOTO_SCALER_CREATE_SCALED_BITMAP) {
             trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
@@ -102,11 +99,11 @@ class PhotoScaler @Inject constructor() {
                 )
             }
         }
-        
+
         // Then crop to exact target size from center
         val cropX = (scaledBitmap.width - targetSize.width) / 2
         val cropY = (scaledBitmap.height - targetSize.height) / 2
-        
+
         val croppedBitmap = trace(PHOTO_SCALER_CREATE_CROPPED_BITMAP) {
             trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
                 Bitmap.createBitmap(
@@ -118,17 +115,17 @@ class PhotoScaler @Inject constructor() {
                 )
             }
         }
-        
+
         // Clean up intermediate bitmap if different from result
         if (scaledBitmap != croppedBitmap) {
             trace(ATLAS_MEMORY_BITMAP_RECYCLE) {
                 scaledBitmap.recycle()
             }
         }
-        
+
         return croppedBitmap
     }
-    
+
     /**
      * Calculates scaled dimensions based on target size and scaling strategy
      */
@@ -142,7 +139,7 @@ class PhotoScaler @Inject constructor() {
                 // Scale to fit within target while preserving aspect ratio
                 val aspectRatio = originalSize.width.toFloat() / originalSize.height
                 val targetAspectRatio = targetSize.width.toFloat() / targetSize.height
-                
+
                 if (aspectRatio > targetAspectRatio) {
                     // Source is wider - scale to target width
                     IntSize(
@@ -163,16 +160,16 @@ class PhotoScaler @Inject constructor() {
             }
         }
     }
-    
+
     /**
      * Downscales a bitmap by a specific factor for memory optimization
      */
     fun downscale(source: Bitmap, scaleFactor: Float): Bitmap {
         if (scaleFactor >= 1.0f) return source
-        
+
         val targetWidth = (source.width * scaleFactor).toInt()
         val targetHeight = (source.height * scaleFactor).toInt()
-        
+
         return trace(PHOTO_SCALER_CREATE_SCALED_BITMAP) {
             trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
                 Bitmap.createScaledBitmap(
@@ -184,7 +181,7 @@ class PhotoScaler @Inject constructor() {
             }
         }
     }
-    
+
     /**
      * Creates a thumbnail with maximum dimension constraint
      */
@@ -194,11 +191,11 @@ class PhotoScaler @Inject constructor() {
         strategy: ScaleStrategy = ScaleStrategy.FIT_CENTER
     ): Bitmap {
         val maxCurrentDimension = maxOf(source.width, source.height)
-        
+
         if (maxCurrentDimension <= maxDimension) {
             return source
         }
-        
+
         val aspectRatio = source.width.toFloat() / source.height
         val targetSize = if (source.width > source.height) {
             IntSize(
@@ -211,7 +208,7 @@ class PhotoScaler @Inject constructor() {
                 height = maxDimension
             )
         }
-        
+
         return scale(source, targetSize, strategy)
     }
 }
@@ -225,7 +222,7 @@ enum class ScaleStrategy {
      * Scales to fit entirely within target dimensions.
      */
     FIT_CENTER,
-    
+
     /**
      * Fill target dimensions completely, may crop edges.
      * Scales to fill target size, cropping excess content.
