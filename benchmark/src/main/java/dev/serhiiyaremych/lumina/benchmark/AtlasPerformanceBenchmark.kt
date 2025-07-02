@@ -26,11 +26,11 @@ class AtlasPerformanceBenchmark {
 
     private val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
-    private fun awaitAtlasIdle(timeout: Long = 4000) {
+    private fun awaitAtlasIdle(timeout: Long = 15000) {
         device.wait(Until.findObject(By.desc(BenchmarkLabels.ATLAS_STATE_IDLE)), timeout)
     }
 
-    private fun awaitComposeIdle(timeout: Long = 2000) {
+    private fun awaitComposeIdle(timeout: Long = 4000) {
         device.wait(Until.findObject(By.desc(BenchmarkLabels.COMPOSE_STATE_IDLE)), timeout)
     }
 
@@ -137,7 +137,7 @@ class AtlasPerformanceBenchmark {
         println("Waiting for automatic zoom sequence to complete...")
 
         // Wait for the full auto-zoom sequence (about 17 seconds total based on delays in App.kt)
-        Thread.sleep(2_000)
+        awaitAtlasIdle()
 
         println("Automatic zoom benchmark sequence completed")
     }

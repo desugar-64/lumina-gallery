@@ -60,9 +60,9 @@ LuminaGallery is a modern Android Compose application focused on advanced image 
 # Track optimization improvements
 ./gradlew :benchmark:benchmarkAtlasOptimization -Poptimization.name="your_optimization_name"
 
-# View performance timeline and generate reports
+# View performance metrics in CLI table
+./gradlew :benchmark:showAtlasMetrics
 ./gradlew :benchmark:listAtlasTimeline
-./gradlew :benchmark:generateAtlasReport
 
 # Baseline management
 ./gradlew :benchmark:updateAtlasBaseline -Pbaseline.name="baseline_v2"
@@ -165,8 +165,8 @@ The app features a sophisticated benchmarking system with detailed performance t
 
 **Benchmarking Infrastructure:**
 - **Timeline Management**: `atlas_benchmark_collector.py` with git integration and dirty flag handling
-- **HTML Reports**: `atlas_timeline_chart.py` generates comprehensive performance visualization
-- **Performance Targets**: 300ms aggressive target (down from 1600ms baseline)
+- **CLI Metrics Table**: `atlas_metrics_table.py` shows color-coded performance improvements
+- **Performance Targets**: 300ms aggressive target (down from 9465ms baseline)
 - **Automated Analysis**: Bottleneck identification and regression detection
 - **Gradle Integration**: Comprehensive task workflow for baseline management and optimization tracking
 
@@ -245,7 +245,7 @@ This project includes comprehensive documentation in `docs/` that should be refe
   - Software canvas drawing instrumentation with hardware-accelerated operations
   - Atlas texture pipeline performance analysis (25+ detailed metrics)
   - Timeline management and profile-based optimization tracking (300ms aggressive target)
-  - Collector script commands, HTML report generation, and git integration
+  - Collector script commands, CLI metrics display, and git integration
   - Automated performance regression detection and bottleneck identification
 - **macrobenchmark/**: Android Macrobenchmark testing documentation
   - **macrobenchmark-sample.md**: Sample macrobenchmark implementation
@@ -303,12 +303,12 @@ Think hard to understand the true nature of a problem, not just to find a soluti
 # Step 5: Benchmark optimization  
 ./gradlew :benchmark:benchmarkAtlasOptimization -Poptimization.name="hardware_canvas"
 
-# Step 6: View progress
-./gradlew :benchmark:listAtlasTimeline
-# Expected output shows progression: 1600ms → 1200ms → 800ms
+# Step 6: View progress in simple CLI table
+./gradlew :benchmark:showAtlasMetrics
+# Shows color-coded improvements: green 📉 for faster, red 📈 for slower
 
-# Step 7: Generate HTML report
-./gradlew :benchmark:generateAtlasReport
+# Step 7: View timeline entries 
+./gradlew :benchmark:listAtlasTimeline
 ```
 
 ### Task Reference
@@ -317,6 +317,7 @@ Think hard to understand the true nature of a problem, not just to find a soluti
 |------|-------------|----------------|
 | `initAtlasBaseline` | Start fresh timeline with new baseline | `-Pbaseline.name="name"` |
 | `benchmarkAtlasOptimization` | Track each optimization improvement | `-Poptimization.name="name"` |
+| `showAtlasMetrics` | View performance metrics in color-coded CLI table | None |
 | `updateAtlasBaseline` | Update baseline while keeping optimization history | `-Pbaseline.name="new_name"` |
 | `listAtlasTimeline` | View current progress and performance trends | None |
 | `cleanAtlasTimeline` | Complete restart (removes all data) | `-Pforce` (skip confirmation) |
@@ -375,6 +376,5 @@ Think hard to understand the true nature of a problem, not just to find a soluti
 
 **Files tracked in benchmarking:**
 - `scripts/atlas_benchmark_collector.py` - Collection and timeline management
-- `scripts/atlas_timeline_chart.py` - HTML report generation (if available)
+- `scripts/atlas_metrics_table.py` - CLI metrics display with color-coded improvements
 - `benchmark_results/atlas_timeline.json` - Timeline database
-- `benchmark_results/atlas_performance_report.html` - Generated reports

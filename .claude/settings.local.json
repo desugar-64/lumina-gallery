@@ -4,7 +4,8 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(rg:*)",
-      "Bash(gemini:*)"
+      "Bash(gemini:*)",
+      "Bash(python3:*)"
     ],
     "deny": []
   }

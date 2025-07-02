@@ -67,10 +67,9 @@ tasks.register("initAtlasBaseline") {
         println("🎯 Initializing fresh atlas baseline: $baselineName")
         
         executePythonCollector("init", baselineConfig.benchmarkFile, baselineName, allowDirty)
-        generateAtlasReport()
+        showAtlasMetrics()
         
         println("✅ Atlas baseline initialization complete!")
-        printReportLocation()
     }
 }
 
@@ -87,10 +86,9 @@ tasks.register("updateAtlasBaseline") {
         println("🔄 Updating atlas baseline: $baselineName")
         
         executePythonCollector("collect", baselineConfig.benchmarkFile, baselineName, allowDirty, "update_baseline")
-        generateAtlasReport()
+        showAtlasMetrics()
         
         println("✅ Atlas baseline update complete!")
-        printReportLocation()
     }
 }
 
@@ -108,10 +106,9 @@ tasks.register("benchmarkAtlasOptimization") {
         println("📈 Tracking atlas optimization: $optimizationName")
         
         executePythonCollector("collect", optimizationConfig.benchmarkFile, optimizationName, allowDirty, "optimization")
-        generateAtlasReport()
+        showAtlasMetrics()
         
         println("✅ Atlas optimization tracking complete!")
-        printReportLocation()
     }
 }
 
@@ -138,7 +135,7 @@ tasks.register("listAtlasTimeline") {
     
     doLast {
         println("📊 Atlas Timeline Entries:")
-        println("=" * 60)
+        println("=" + "=".repeat(59))
         
         executePythonCollector("list")
     }
@@ -160,19 +157,18 @@ tasks.register("cleanAtlasExperimental") {
     }
 }
 
-tasks.register("generateAtlasReport") {
+tasks.register("showAtlasMetrics") {
     group = "atlas-benchmarking"
-    description = "Generate HTML performance report from timeline data"
+    description = "Show atlas performance metrics in CLI table format"
     
     doLast {
-        generateAtlasReport()
-        printReportLocation()
+        showAtlasMetrics()
     }
 }
 
 // Helper functions for atlas benchmarking
 fun findLatestBenchmarkResult(): BenchmarkConfig {
-    val outputDir = File(buildDir, "outputs/connected_android_test_additional_output/benchmarkAndroidTest/connected")
+    val outputDir = File(buildDir, "outputs/connected_android_test_additional_output/benchmark/connected")
     
     if (!outputDir.exists()) {
         throw GradleException("❌ Benchmark output directory not found: ${outputDir.absolutePath}")
@@ -180,13 +176,12 @@ fun findLatestBenchmarkResult(): BenchmarkConfig {
     
     val benchmarkFiles = outputDir.walkTopDown()
         .filter { 
-            it.name.contains("AtlasPerformanceBenchmark") && 
-            it.extension == "json" &&
-            it.name.contains("atlasGenerationThroughZoomInteractions")
+            it.name.contains("benchmarkData") && 
+            it.extension == "json"
         }
         .sortedByDescending { it.lastModified() }
     
-    if (benchmarkFiles.isEmpty()) {
+    if (!benchmarkFiles.iterator().hasNext()) {
         throw GradleException("❌ No atlas benchmark results found in ${outputDir.absolutePath}")
     }
     
@@ -238,19 +233,18 @@ fun executePythonCollector(command: String, benchmarkFile: String? = null, name:
     }
 }
 
-fun generateAtlasReport() {
+fun showAtlasMetrics() {
     val scriptsDir = File(project.rootProject.projectDir, "scripts")
-    val chartScript = File(scriptsDir, "atlas_timeline_chart.py")
+    val metricsScript = File(scriptsDir, "atlas_metrics_table.py")
     
-    if (chartScript.exists()) {
-        println("📈 Generating atlas performance report...")
+    if (metricsScript.exists()) {
+        println("\n📊 Atlas Performance Metrics:")
         exec {
             workingDir = project.rootProject.projectDir
-            commandLine("python3", chartScript.absolutePath)
+            commandLine("python3", metricsScript.absolutePath)
         }
     } else {
-        println("⚠️  Chart generator not found: ${chartScript.absolutePath}")
-        println("   Report generation skipped - only timeline data collected")
+        println("⚠️  Metrics script not found: ${metricsScript.absolutePath}")
     }
 }
 
