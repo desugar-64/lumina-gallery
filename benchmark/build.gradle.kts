@@ -53,116 +53,51 @@ androidComponents {
     }
 }
 
-// Atlas Benchmarking Tasks - Comprehensive Timeline Management
-tasks.register("initAtlasBaseline") {
-    group = "atlas-benchmarking"
-    description = "Initialize atlas benchmarking with new baseline"
+// Optimization Tracking Tasks
+tasks.register("trackOptimization") {
+    group = "benchmarking"
+    description = "Track optimization progress with iterative benchmark collection"
     dependsOn("connectedBenchmarkAndroidTest")
     
     doLast {
-        val baselineConfig = findLatestBenchmarkResult()
-        val baselineName = project.findProperty("baseline.name")?.toString() ?: "baseline"
-        val allowDirty = project.hasProperty("allow.dirty")
-        
-        println("🎯 Initializing fresh atlas baseline: $baselineName")
-        
-        executePythonCollector("init", baselineConfig.benchmarkFile, baselineName, allowDirty)
-        showAtlasMetrics()
-        
-        println("✅ Atlas baseline initialization complete!")
-    }
-}
-
-tasks.register("updateAtlasBaseline") {
-    group = "atlas-benchmarking"
-    description = "Update baseline while preserving optimization timeline"
-    dependsOn("connectedBenchmarkAndroidTest")
-    
-    doLast {
-        val baselineConfig = findLatestBenchmarkResult()
-        val baselineName = project.findProperty("baseline.name")?.toString() ?: "baseline_updated"
-        val allowDirty = project.hasProperty("allow.dirty")
-        
-        println("🔄 Updating atlas baseline: $baselineName")
-        
-        executePythonCollector("collect", baselineConfig.benchmarkFile, baselineName, allowDirty, "update_baseline")
-        showAtlasMetrics()
-        
-        println("✅ Atlas baseline update complete!")
-    }
-}
-
-tasks.register("benchmarkAtlasOptimization") {
-    group = "atlas-benchmarking"
-    description = "Benchmark specific optimization and add to timeline"
-    dependsOn("connectedBenchmarkAndroidTest")
-    
-    doLast {
-        val optimizationConfig = findLatestBenchmarkResult()
+        val benchmarkConfig = findLatestBenchmarkResult()
         val optimizationName = project.findProperty("optimization.name")?.toString()
-            ?: throw GradleException("❌ Please specify optimization name: -Poptimization.name='your_optimization'")
-        val allowDirty = project.hasProperty("allow.dirty")
+            ?: throw GradleException("❌ Please specify optimization name: -Poptimization.name='bitmap_pooling'")
         
-        println("📈 Tracking atlas optimization: $optimizationName")
+        println("📈 Tracking optimization progress: $optimizationName")
         
-        executePythonCollector("collect", optimizationConfig.benchmarkFile, optimizationName, allowDirty, "optimization")
-        showAtlasMetrics()
+        executeOptimizationTracker("collect", optimizationName, benchmarkConfig.benchmarkFile)
+        executeOptimizationTracker("compare", optimizationName)
         
-        println("✅ Atlas optimization tracking complete!")
+        println("✅ Optimization tracking complete!")
     }
 }
 
-tasks.register("cleanAtlasTimeline") {
-    group = "atlas-benchmarking"
-    description = "Remove all benchmark results and start fresh"
+tasks.register("compareOptimization") {
+    group = "benchmarking"
+    description = "Compare all runs within a specific optimization"
     
     doLast {
-        val force = project.hasProperty("force")
-        val noBackup = project.hasProperty("no.backup")
+        val optimizationName = project.findProperty("optimization.name")?.toString()
+            ?: throw GradleException("❌ Please specify optimization name: -Poptimization.name='bitmap_pooling'")
+        val showAllMetrics = project.hasProperty("all.metrics")
         
-        println("🗑️  Cleaning all atlas timeline data...")
-        
-        executePythonCollector("clean-all", force = force, noBackup = noBackup)
-        
-        println("✅ Atlas timeline cleaned!")
-        println("🎯 Ready for fresh baseline initialization with 'initAtlasBaseline'")
-    }
-}
-
-tasks.register("listAtlasTimeline") {
-    group = "atlas-benchmarking"
-    description = "List all timeline entries with performance summary"
-    
-    doLast {
-        println("📊 Atlas Timeline Entries:")
+        println("📊 Comparing optimization runs: $optimizationName")
         println("=" + "=".repeat(59))
         
-        executePythonCollector("list")
+        executeOptimizationTracker("compare", optimizationName, showAllMetrics = showAllMetrics)
     }
 }
 
-tasks.register("cleanAtlasExperimental") {
-    group = "atlas-benchmarking"
-    description = "Remove experimental (-dirty) entries from timeline"
+tasks.register("listOptimizationRuns") {
+    group = "benchmarking" 
+    description = "List all runs for a specific optimization"
     
     doLast {
-        val force = project.hasProperty("force")
-        val noBackup = project.hasProperty("no.backup")
+        val optimizationName = project.findProperty("optimization.name")?.toString()
+            ?: throw GradleException("❌ Please specify optimization name: -Poptimization.name='bitmap_pooling'")
         
-        println("🧪 Cleaning experimental atlas entries...")
-        
-        executePythonCollector("clean", force = force, noBackup = noBackup)
-        
-        println("✅ Experimental entries cleaned!")
-    }
-}
-
-tasks.register("showAtlasMetrics") {
-    group = "atlas-benchmarking"
-    description = "Show atlas performance metrics in CLI table format"
-    
-    doLast {
-        showAtlasMetrics()
+        executeOptimizationTracker("list", optimizationName)
     }
 }
 
@@ -191,37 +126,29 @@ fun findLatestBenchmarkResult(): BenchmarkConfig {
     return BenchmarkConfig(latestResult.absolutePath, latestResult.name)
 }
 
-fun executePythonCollector(command: String, benchmarkFile: String? = null, name: String? = null, 
-                          allowDirty: Boolean = false, mode: String? = null, force: Boolean = false, 
-                          noBackup: Boolean = false) {
+// Optimization tracking functions
+fun executeOptimizationTracker(command: String, optimizationName: String, benchmarkFile: String? = null, 
+                              showAllMetrics: Boolean = false) {
     val scriptsDir = File(project.rootProject.projectDir, "scripts")
-    val collectorScript = File(scriptsDir, "atlas_benchmark_collector.py")
+    val trackerScript = File(scriptsDir, "optimization_tracker.py")
     
-    if (!collectorScript.exists()) {
-        throw GradleException("❌ Collector script not found: ${collectorScript.absolutePath}")
+    if (!trackerScript.exists()) {
+        throw GradleException("❌ Optimization tracker script not found: ${trackerScript.absolutePath}")
     }
     
-    val cmdArgs = mutableListOf("python3", collectorScript.absolutePath, command)
+    val cmdArgs = mutableListOf("python3", trackerScript.absolutePath, command, optimizationName)
     
     // Add command-specific arguments
     when (command) {
         "collect" -> {
-            if (benchmarkFile != null && name != null) {
-                cmdArgs.addAll(listOf(benchmarkFile, name))
-                if (allowDirty) cmdArgs.add("--allow-dirty")
-                if (mode != null) cmdArgs.addAll(listOf("--mode", mode))
-            }
-        }
-        "init" -> {
             if (benchmarkFile != null) {
                 cmdArgs.add(benchmarkFile)
-                if (name != null) cmdArgs.addAll(listOf("--baseline-name", name))
-                if (allowDirty) cmdArgs.add("--allow-dirty")
             }
         }
-        "clean-all", "clean" -> {
-            if (noBackup) cmdArgs.add("--no-backup")
-            if (force) cmdArgs.add("--force")
+        "compare" -> {
+            if (showAllMetrics) {
+                cmdArgs.add("--all-metrics")
+            }
         }
     }
     
@@ -230,21 +157,6 @@ fun executePythonCollector(command: String, benchmarkFile: String? = null, name:
     exec {
         workingDir = project.rootProject.projectDir
         commandLine = cmdArgs
-    }
-}
-
-fun showAtlasMetrics() {
-    val scriptsDir = File(project.rootProject.projectDir, "scripts")
-    val metricsScript = File(scriptsDir, "atlas_metrics_table.py")
-    
-    if (metricsScript.exists()) {
-        println("\n📊 Atlas Performance Metrics:")
-        exec {
-            workingDir = project.rootProject.projectDir
-            commandLine("python3", metricsScript.absolutePath)
-        }
-    } else {
-        println("⚠️  Metrics script not found: ${metricsScript.absolutePath}")
     }
 }
 

@@ -163,12 +163,12 @@ The app features a sophisticated benchmarking system with detailed performance t
 - **Algorithm Performance**: Texture packing shelf algorithm, image sorting, shelf fitting
 - **Atlas Pipeline**: Photo processing, texture packing, atlas bitmap creation
 
-**Benchmarking Infrastructure:**
-- **Timeline Management**: `atlas_benchmark_collector.py` with git integration and dirty flag handling
-- **CLI Metrics Table**: `atlas_metrics_table.py` shows color-coded performance improvements
-- **Performance Targets**: 300ms aggressive target (down from 9465ms baseline)
-- **Automated Analysis**: Bottleneck identification and regression detection
-- **Gradle Integration**: Comprehensive task workflow for baseline management and optimization tracking
+**Benchmarking System:**
+- **Iterative Optimization Tracking**: Track progress within single optimization tasks
+- **Professional Table Output**: Color-coded performance improvements with perfect alignment
+- **Device Consistency Checking**: Warns when switching hardware mid-optimization
+- **Git Integration**: Automatic commit tracking and dirty state detection
+- **Simple Gradle Tasks**: Easy-to-use commands for optimization workflow
 
 ### Gesture System
 
@@ -240,13 +240,10 @@ This project includes comprehensive documentation in `docs/` that should be refe
   - **shared-media.md**: Shared storage and media handling documentation
 
 ### Performance & Testing Documentation
-- **benchmarking-system-guide.md**: Complete guide to the performance benchmarking system
-  - Comprehensive I/O separation tracking (Disk I/O vs Memory I/O operations)
-  - Software canvas drawing instrumentation with hardware-accelerated operations
-  - Atlas texture pipeline performance analysis (25+ detailed metrics)
-  - Timeline management and profile-based optimization tracking (300ms aggressive target)
-  - Collector script commands, CLI metrics display, and git integration
-  - Automated performance regression detection and bottleneck identification
+- **benchmarking.md**: Simple benchmarking guide for iterative optimization tracking
+  - Track progress within single optimization tasks with professional table output
+  - Color-coded performance improvements with device consistency checking
+  - Easy Gradle task commands for optimization workflow
 - **macrobenchmark/**: Android Macrobenchmark testing documentation
   - **macrobenchmark-sample.md**: Sample macrobenchmark implementation
   - **macrobenchmark-capture-metrics.md**: Guide for capturing performance metrics
@@ -270,111 +267,27 @@ Think hard to understand the true nature of a problem, not just to find a soluti
 - Troubleshooting problems following docs/five.md
 - When documenting code read docs/create-docs.md
 
-## Atlas Benchmarking Workflow
+## Benchmarking Workflow
 
-### Quick Reference Commands
+**Simple iterative optimization tracking. See `docs/benchmarking.md` for complete guide.**
 
-**Essential benchmarking tasks for atlas performance optimization:**
-
-```bash
-# 1. Start with baseline measurement
-./gradlew :benchmark:initAtlasBaseline
-
-# 2. After each optimization implementation  
-./gradlew :benchmark:benchmarkAtlasOptimization -Poptimization.name="descriptive_name"
-
-# 3. Monitor progress
-./gradlew :benchmark:listAtlasTimeline
-```
-
-### Complete Workflow Example
+### Quick Commands
 
 ```bash
-# Step 1: Initialize baseline (fresh start)
-./gradlew :benchmark:initAtlasBaseline -Pbaseline.name="baseline_v1"
+# Start optimization tracking
+./gradlew trackOptimization -Poptimization.name="bitmap_pooling"
 
-# Step 2: Implement bitmap pool optimization in code...
+# Continue tracking after code changes  
+./gradlew trackOptimization -Poptimization.name="bitmap_pooling"
 
-# Step 3: Benchmark optimization
-./gradlew :benchmark:benchmarkAtlasOptimization -Poptimization.name="bitmap_pool"
-
-# Step 4: Implement hardware canvas optimization in code...
-
-# Step 5: Benchmark optimization  
-./gradlew :benchmark:benchmarkAtlasOptimization -Poptimization.name="hardware_canvas"
-
-# Step 6: View progress in simple CLI table
-./gradlew :benchmark:showAtlasMetrics
-# Shows color-coded improvements: green 📉 for faster, red 📈 for slower
-
-# Step 7: View timeline entries 
-./gradlew :benchmark:listAtlasTimeline
+# View detailed comparison
+./gradlew compareOptimization -Poptimization.name="bitmap_pooling"
 ```
 
-### Task Reference
+### Features
 
-| Task | When to Use | Key Parameters |
-|------|-------------|----------------|
-| `initAtlasBaseline` | Start fresh timeline with new baseline | `-Pbaseline.name="name"` |
-| `benchmarkAtlasOptimization` | Track each optimization improvement | `-Poptimization.name="name"` |
-| `showAtlasMetrics` | View performance metrics in color-coded CLI table | None |
-| `updateAtlasBaseline` | Update baseline while keeping optimization history | `-Pbaseline.name="new_name"` |
-| `listAtlasTimeline` | View current progress and performance trends | None |
-| `cleanAtlasTimeline` | Complete restart (removes all data) | `-Pforce` (skip confirmation) |
-| `cleanAtlasExperimental` | Remove only experimental (-dirty) entries | `-Pforce` |
-
-### Experimental Development
-
-**For rapid iteration with uncommitted changes:**
-
-```bash
-# Allow dirty commits during development
-./gradlew :benchmark:benchmarkAtlasOptimization -Poptimization.name="experimental_fix" -Pallow.dirty
-
-# Clean experimental entries when done
-./gradlew :benchmark:cleanAtlasExperimental -Pforce
-```
-
-### Performance Target Tracking
-
-**Current Performance Baseline: ~1600ms**  
-**Aggressive Target: 300ms (80% improvement needed)**
-
-**Primary optimization areas:**
-1. **Bitmap Scaling** (~900ms): Target <100ms via bitmap pooling
-2. **Software Canvas** (~450ms): Target <50ms via hardware acceleration  
-3. **Memory Management** (~200MB): Target <150MB via efficient allocation
-
-### Expected Output Examples
-
-**Baseline establishment:**
-```
-🎯 Initializing fresh atlas baseline: baseline_v1
-📊 Atlas Performance (Zoom Test):
-   Total Generation Time: 1623.4ms
-   Bitmap Scaling: 892.1ms
-   Canvas Rendering: 456.8ms
-```
-
-**Optimization tracking:**
-```
-📈 Improvement since baseline (baseline_v1):
-   Atlas Generation: 1623.4ms → 876.2ms
-   Improvement: +46.0%
-   Bitmap Scaling: +23.4%
-   Canvas Rendering: +67.8%
-```
-
-### Integration with Development Workflow
-
-**When implementing atlas optimizations:**
-
-1. **Before optimization**: Establish baseline or use existing
-2. **During optimization**: Use `-Pallow.dirty` for rapid iteration
-3. **After optimization**: Commit changes and run clean benchmark
-4. **Documentation**: Results automatically tracked with git commits
-
-**Files tracked in benchmarking:**
-- `scripts/atlas_benchmark_collector.py` - Collection and timeline management
-- `scripts/atlas_metrics_table.py` - CLI metrics display with color-coded improvements
-- `benchmark_results/atlas_timeline.json` - Timeline database
+- **Iterative tracking** within single optimization tasks
+- **Perfect table alignment** with color-coded improvements
+- **Device consistency warnings** when switching hardware
+- **Git integration** with automatic commit tracking
+- **Professional output** suitable for performance reports
