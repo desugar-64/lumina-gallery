@@ -87,13 +87,14 @@ class GalleryViewModel @Inject constructor(
      * Updates atlas manager with current visible cells.
      */
     fun onVisibleCellsChanged(visibleCells: List<HexCellWithMedia>, currentZoom: Float) {
+
         viewModelScope.launch {
-            _isAtlasGenerating.value = true // Mark as generating
+            _isAtlasGenerating.value = true
             try {
                 val result = atlasManager.updateVisibleCells(visibleCells, currentZoom)
                 _atlasState.value = result
             } finally {
-                _isAtlasGenerating.value = false // Mark as complete
+                _isAtlasGenerating.value = false
             }
         }
     }

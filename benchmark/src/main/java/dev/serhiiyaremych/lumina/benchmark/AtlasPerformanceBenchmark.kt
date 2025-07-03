@@ -95,15 +95,42 @@ class AtlasPerformanceBenchmark {
         packageName = TARGET_PACKAGE,
         metrics = listOf(
             // Primary optimization targets
-            TraceSectionMetric(BenchmarkLabels.PHOTO_LOD_SCALE_BITMAP), // Bitmap pool optimization
-            TraceSectionMetric(BenchmarkLabels.ATLAS_GENERATOR_SOFTWARE_CANVAS), // Hardware canvas optimization
+            TraceSectionMetric(BenchmarkLabels.PHOTO_LOD_SCALE_BITMAP, mode = TraceSectionMetric.Mode.Max), // Bitmap pool optimization
+            TraceSectionMetric(BenchmarkLabels.ATLAS_GENERATOR_SOFTWARE_CANVAS, mode = TraceSectionMetric.Mode.Max), // Hardware canvas optimization
 
             // Supporting metrics
-            TraceSectionMetric(BenchmarkLabels.PHOTO_LOD_LOAD_BITMAP),
-            TraceSectionMetric(BenchmarkLabels.ATLAS_GENERATOR_CREATE_ATLAS_BITMAP),
-            TraceSectionMetric(BenchmarkLabels.ATLAS_MANAGER_UPDATE_VISIBLE_CELLS),
-            TraceSectionMetric(BenchmarkLabels.ATLAS_MANAGER_SELECT_LOD_LEVEL),
-            TraceSectionMetric(BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS),
+            TraceSectionMetric(BenchmarkLabels.PHOTO_LOD_LOAD_BITMAP, mode = TraceSectionMetric.Mode.Max),
+            TraceSectionMetric(BenchmarkLabels.ATLAS_GENERATOR_CREATE_ATLAS_BITMAP, mode = TraceSectionMetric.Mode.Max),
+            TraceSectionMetric(BenchmarkLabels.ATLAS_MANAGER_UPDATE_VISIBLE_CELLS, mode = TraceSectionMetric.Mode.Max),
+            TraceSectionMetric(BenchmarkLabels.ATLAS_MANAGER_SELECT_LOD_LEVEL, mode = TraceSectionMetric.Mode.Max),
+            TraceSectionMetric(BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS, mode = TraceSectionMetric.Mode.Max),
+
+            // Disk I/O Operations (Critical for identifying bottleneck)
+            TraceSectionMetric(BenchmarkLabels.PHOTO_LOD_DISK_OPEN_INPUT_STREAM, mode = TraceSectionMetric.Mode.Max),
+
+            // Memory I/O Operations (Bitmap processing breakdown)
+            TraceSectionMetric(BenchmarkLabels.PHOTO_LOD_MEMORY_DECODE_BOUNDS, mode = TraceSectionMetric.Mode.Max),
+            TraceSectionMetric(BenchmarkLabels.PHOTO_LOD_MEMORY_DECODE_BITMAP, mode = TraceSectionMetric.Mode.Max),
+            TraceSectionMetric(BenchmarkLabels.PHOTO_LOD_MEMORY_SAMPLE_SIZE_CALC, mode = TraceSectionMetric.Mode.Max),
+
+            // PhotoScaler operations (Hardware-accelerated scaling)
+            TraceSectionMetric(BenchmarkLabels.PHOTO_SCALER_SCALE, mode = TraceSectionMetric.Mode.Max),
+            TraceSectionMetric(BenchmarkLabels.PHOTO_SCALER_CREATE_SCALED_BITMAP, mode = TraceSectionMetric.Mode.Max),
+            TraceSectionMetric(BenchmarkLabels.PHOTO_SCALER_CREATE_CROPPED_BITMAP, mode = TraceSectionMetric.Mode.Max),
+            TraceSectionMetric(BenchmarkLabels.PHOTO_SCALER_CALCULATE_DIMENSIONS, mode = TraceSectionMetric.Mode.Max),
+
+            // Memory Management (Allocation/deallocation tracking)
+            TraceSectionMetric(BenchmarkLabels.ATLAS_MEMORY_BITMAP_ALLOCATE, mode = TraceSectionMetric.Mode.Max),
+            TraceSectionMetric(BenchmarkLabels.ATLAS_MEMORY_BITMAP_RECYCLE, mode = TraceSectionMetric.Mode.Max),
+
+            // AtlasGenerator pipeline operations
+            TraceSectionMetric(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS, mode = TraceSectionMetric.Mode.Max),
+            TraceSectionMetric(BenchmarkLabels.ATLAS_GENERATOR_PROCESS_PHOTOS, mode = TraceSectionMetric.Mode.Max),
+            TraceSectionMetric(BenchmarkLabels.ATLAS_GENERATOR_PACK_TEXTURES, mode = TraceSectionMetric.Mode.Max),
+
+            // TexturePacker algorithm operations
+            TraceSectionMetric(BenchmarkLabels.TEXTURE_PACKER_PACK_ALGORITHM, mode = TraceSectionMetric.Mode.Max),
+            TraceSectionMetric(BenchmarkLabels.TEXTURE_PACKER_SORT_IMAGES, mode = TraceSectionMetric.Mode.Max),
 
             // System metrics
 //            FrameTimingMetric(), // TODO: Enable for physical devices - requires GPU profiling in developer settings
@@ -111,7 +138,7 @@ class AtlasPerformanceBenchmark {
         ),
         compilationMode = CompilationMode.Partial(),
         startupMode = StartupMode.WARM,
-        iterations = 2, // Small number for faster feedback
+        iterations = 4, // Small number for faster feedback
         setupBlock = {
             // Grant permissions before starting the app
             grantPermissionsIfNeeded()
