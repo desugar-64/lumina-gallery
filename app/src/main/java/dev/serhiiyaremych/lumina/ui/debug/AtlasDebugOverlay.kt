@@ -33,44 +33,28 @@ fun AtlasDebugOverlay(
     atlasState?.let { state ->
         when (state) {
             is AtlasUpdateResult.Success -> {
-                // Safety check: only render if bitmap is not recycled
-                if (!state.atlas.bitmap.isRecycled) {
-                    Box(
-                        modifier = modifier
-                            .fillMaxWidth()
-                            .aspectRatio(1.0f)
-                            .border(0.5.dp, Color.Magenta),
-                    ) {
-                        Image(
-                            bitmap = state.atlas.bitmap.asImageBitmap(),
-                            contentDescription = "Debug Atlas",
-                            modifier = Modifier.matchParentSize()
+                // Show atlas info without rendering the bitmap to avoid recycling issues
+                val atlasBitmap = state.atlas.bitmap
+                val isRecycled = atlasBitmap.isRecycled
+                
+                Box(
+                    modifier = modifier
+                        .background(
+                            if (isRecycled) Color.Yellow.copy(alpha = 0.7f) 
+                            else Color.Green.copy(alpha = 0.7f)
                         )
-                        
-                        // Atlas info overlay
-                        Text(
-                            text = "Atlas Ready\n${state.atlas.regions.size} regions",
-                            color = Color.White,
-                            fontSize = 10.sp,
-                            modifier = Modifier
-                                .background(Color.Black.copy(alpha = 0.7f))
-                                .padding(4.dp)
-                                .align(Alignment.TopStart)
-                        )
-                    }
-                } else {
-                    // Fallback when bitmap is recycled
-                    Box(
-                        modifier = modifier
-                            .background(Color.Yellow.copy(alpha = 0.7f))
-                            .padding(8.dp)
-                    ) {
-                        Text(
-                            text = "Atlas Recycled",
-                            color = Color.Black,
-                            fontSize = 10.sp
-                        )
-                    }
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = if (isRecycled) {
+                            "Atlas Recycled\n${state.atlas.regions.size} regions"
+                        } else {
+                            "Atlas Ready\n${state.atlas.regions.size} regions\n${atlasBitmap.width}x${atlasBitmap.height}"
+                        },
+                        color = if (isRecycled) Color.Black else Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
             is AtlasUpdateResult.GenerationFailed -> {

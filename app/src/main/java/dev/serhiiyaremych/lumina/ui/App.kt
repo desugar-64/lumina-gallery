@@ -229,7 +229,7 @@ fun App(
                         currentZoom = transformableState.zoom,
                         modifier = Modifier.align(Alignment.TopEnd)
                     )
-                    
+
                     // Debug: Atlas generation status with LOD level
                     AtlasGenerationStatusOverlay(
                         isAtlasGenerating = isAtlasGenerating,

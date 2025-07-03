@@ -254,25 +254,31 @@ private fun DrawScope.drawMediaFromAtlas(
                 // Draw from atlas texture
                 val atlasBitmap = atlasState.atlas.bitmap.asImageBitmap()
 
-                drawImage(
-                    image = atlasBitmap,
-                    srcOffset = androidx.compose.ui.unit.IntOffset(
-                        atlasRegion.atlasRect.left.toInt(),
-                        atlasRegion.atlasRect.top.toInt()
-                    ),
-                    srcSize = androidx.compose.ui.unit.IntSize(
-                        atlasRegion.atlasRect.width.toInt(),
-                        atlasRegion.atlasRect.height.toInt()
-                    ),
-                    dstOffset = androidx.compose.ui.unit.IntOffset(
-                        bounds.left.toInt(),
-                        bounds.top.toInt()
-                    ),
-                    dstSize = androidx.compose.ui.unit.IntSize(
-                        bounds.width.toInt(),
-                        bounds.height.toInt()
+                // Double-check bitmap is not recycled before drawing
+                if (!atlasState.atlas.bitmap.isRecycled) {
+                    drawImage(
+                        image = atlasBitmap,
+                        srcOffset = androidx.compose.ui.unit.IntOffset(
+                            atlasRegion.atlasRect.left.toInt(),
+                            atlasRegion.atlasRect.top.toInt()
+                        ),
+                        srcSize = androidx.compose.ui.unit.IntSize(
+                            atlasRegion.atlasRect.width.toInt(),
+                            atlasRegion.atlasRect.height.toInt()
+                        ),
+                        dstOffset = androidx.compose.ui.unit.IntOffset(
+                            bounds.left.toInt(),
+                            bounds.top.toInt()
+                        ),
+                        dstSize = androidx.compose.ui.unit.IntSize(
+                            bounds.width.toInt(),
+                            bounds.height.toInt()
+                        )
                     )
-                )
+                } else {
+                    // Bitmap was recycled between checks, fall back to placeholder
+                    drawPlaceholderRect(media, bounds, Color.Gray)
+                }
             } else {
                 // Fallback: Atlas exists but photo not found in it
                 drawPlaceholderRect(media, bounds, Color.Gray)
