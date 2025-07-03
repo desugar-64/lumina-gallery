@@ -11,6 +11,8 @@ import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.measureTimedValue
@@ -50,6 +52,12 @@ class AtlasManager @Inject constructor(
     private var currentCellIds: Set<String> = emptySet()
     private var currentLODLevel: LODLevel = LODLevel.LEVEL_2
     private var lastReportedZoom: Float = 1.0f
+    
+    // Generation ID counter for preventing stale results
+    private var generationIdCounter: Long = 0
+    
+    // Mutex for atomic atlas state updates
+    private val atlasMutex = Mutex()
 
     /**
      * Main entry point: Update visible cells and generate atlas if needed.
@@ -61,8 +69,11 @@ class AtlasManager @Inject constructor(
         marginRings: Int = DEFAULT_MARGIN_RINGS
     ): AtlasUpdateResult = trace(BenchmarkLabels.ATLAS_MANAGER_UPDATE_VISIBLE_CELLS) {
         withContext(Dispatchers.Default) {
+            // Generate unique ID for this request
+            val generationId = ++generationIdCounter
+            
             try {
-                Log.d(TAG, "updateVisibleCells: ${visibleCells.size} cells, zoom=$currentZoom")
+                Log.d(TAG, "updateVisibleCells: ${visibleCells.size} cells, zoom=$currentZoom, generationId=$generationId")
 
                 val lodLevel = trace(BenchmarkLabels.ATLAS_MANAGER_SELECT_LOD_LEVEL) {
                     selectLODLevel(currentZoom)
@@ -80,13 +91,20 @@ class AtlasManager @Inject constructor(
                     }
 
                 if (atlasResult.atlas != null) {
-                    // Recycle old atlas before replacing it
-                    currentAtlas?.bitmap?.recycle()
-                    
-                    currentAtlas = atlasResult.atlas
-                    currentCellIds = cellSetKey
-                    currentLODLevel = lodLevel
-                    lastReportedZoom = currentZoom
+                    // Atomically replace atlas state to prevent race conditions
+                    atlasMutex.withLock {
+                        // Recycle old atlas before replacing it
+                        val oldAtlas = currentAtlas
+                        
+                        // Update all state atomically
+                        currentAtlas = atlasResult.atlas
+                        currentCellIds = cellSetKey
+                        currentLODLevel = lodLevel
+                        lastReportedZoom = currentZoom
+                        
+                        // Recycle old atlas after state update
+                        oldAtlas?.bitmap?.recycle()
+                    }
 
                     val message = if (atlasResult.failed.isEmpty()) {
                         "Atlas generated successfully ${duration.inWholeMilliseconds}ms: ${atlasResult.atlas.regions.size} regions"
@@ -94,18 +112,18 @@ class AtlasManager @Inject constructor(
                         "Atlas partial success ${duration.inWholeMilliseconds}ms: ${atlasResult.atlas.regions.size} regions, ${atlasResult.failed.size} failed"
                     }
                     Log.d(TAG, message)
-                    AtlasUpdateResult.Success(atlasResult.atlas)
+                    AtlasUpdateResult.Success(atlasResult.atlas, generationId)
                     } else {
                         Log.w(TAG, "Atlas generation failed completely: ${atlasResult.failed.size} failed photos")
-                        AtlasUpdateResult.GenerationFailed("Atlas generation failed completely")
+                        AtlasUpdateResult.GenerationFailed("Atlas generation failed completely", generationId)
                     }
                 } else {
                     Log.d(TAG, "Using existing atlas (no regeneration needed)")
-                    AtlasUpdateResult.Success(currentAtlas!!)
+                    AtlasUpdateResult.Success(currentAtlas!!, generationId)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error updating visible cells", e)
-                AtlasUpdateResult.Error(e)
+                AtlasUpdateResult.Error(e, generationId)
             }
         }
     }
@@ -114,26 +132,26 @@ class AtlasManager @Inject constructor(
      * Get current atlas for rendering.
      * Returns null if no atlas is available.
      */
-    fun getCurrentAtlas(): TextureAtlas? = currentAtlas
+    suspend fun getCurrentAtlas(): TextureAtlas? = atlasMutex.withLock { currentAtlas }
 
     /**
      * Get atlas region for a specific photo.
      * Used by UI to map photos to texture coordinates.
      */
-    fun getPhotoRegion(photoId: String): AtlasRegion? {
-        return currentAtlas?.regions?.get(photoId)
+    suspend fun getPhotoRegion(photoId: String): AtlasRegion? = atlasMutex.withLock {
+        currentAtlas?.regions?.get(photoId)
     }
 
     /**
      * Check if atlas is available and ready for rendering.
      */
-    fun hasAtlas(): Boolean = currentAtlas != null
+    suspend fun hasAtlas(): Boolean = atlasMutex.withLock { currentAtlas != null }
 
     /**
      * Clear current atlas and free memory.
      * Called when viewport changes significantly or on memory pressure.
      */
-    fun clearAtlas() {
+    suspend fun clearAtlas() = atlasMutex.withLock {
         Log.d(TAG, "Clearing current atlas")
         currentAtlas?.bitmap?.recycle()
         currentAtlas = null
@@ -219,7 +237,9 @@ class AtlasManager @Inject constructor(
  * Result of atlas update operation.
  */
 sealed class AtlasUpdateResult {
-    data class Success(val atlas: TextureAtlas) : AtlasUpdateResult()
-    data class GenerationFailed(val error: String) : AtlasUpdateResult()
-    data class Error(val exception: Exception) : AtlasUpdateResult()
+    abstract val generationId: Long
+    
+    data class Success(val atlas: TextureAtlas, override val generationId: Long) : AtlasUpdateResult()
+    data class GenerationFailed(val error: String, override val generationId: Long) : AtlasUpdateResult()
+    data class Error(val exception: Exception, override val generationId: Long) : AtlasUpdateResult()
 }

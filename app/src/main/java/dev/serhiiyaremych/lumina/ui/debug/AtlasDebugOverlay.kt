@@ -36,15 +36,16 @@ fun AtlasDebugOverlay(
                 // Show atlas info without rendering the bitmap to avoid recycling issues
                 val atlasBitmap = state.atlas.bitmap
                 val isRecycled = atlasBitmap.isRecycled
-                
+
                 Box(
                     modifier = modifier
                         .background(
-                            if (isRecycled) Color.Yellow.copy(alpha = 0.7f) 
+                            if (isRecycled) Color.Yellow.copy(alpha = 0.7f)
                             else Color.Green.copy(alpha = 0.7f)
                         )
                         .padding(8.dp)
                 ) {
+                    Image(bitmap = atlasBitmap.asImageBitmap(), contentDescription = null)
                     Text(
                         text = if (isRecycled) {
                             "Atlas Recycled\n${state.atlas.regions.size} regions"
@@ -102,7 +103,7 @@ fun AtlasGenerationStatusOverlay(
             currentZoom <= 2.0f -> "LOD_2 (128px)"
             else -> "LOD_4 (512px)"
         }
-        
+
         Box(
             modifier = modifier
                 .background(Color.Blue.copy(alpha = 0.8f))

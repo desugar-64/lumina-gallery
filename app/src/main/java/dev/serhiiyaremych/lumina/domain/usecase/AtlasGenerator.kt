@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.net.Uri
+import android.util.Log
 import androidx.compose.ui.unit.IntSize
 import androidx.core.graphics.createBitmap
 import androidx.tracing.trace
@@ -15,6 +16,8 @@ import dev.serhiiyaremych.lumina.data.ShelfTexturePacker
 import dev.serhiiyaremych.lumina.domain.model.AtlasRegion
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -57,6 +60,9 @@ class AtlasGenerator @Inject constructor(
         // Step 1: Process all photos for the specified LOD level
         trace(BenchmarkLabels.ATLAS_GENERATOR_PROCESS_PHOTOS) {
             for (uri in photoUris) {
+                // Check for cancellation before processing each photo
+                currentCoroutineContext().ensureActive()
+                
                 try {
                     val processed = photoLODProcessor.processPhotoForLOD(uri, lodLevel, scaleStrategy)
                     if (processed != null) {
@@ -66,6 +72,7 @@ class AtlasGenerator @Inject constructor(
                     }
                 } catch (e: Exception) {
                     // Log error and add to failed list
+                    Log.e("AtlasGenerator", "Failed to process photo: $uri", e)
                     failed.add(uri)
                 }
             }
@@ -152,7 +159,7 @@ class AtlasGenerator @Inject constructor(
     /**
      * Creates the atlas bitmap and draws all packed photos onto it
      */
-    private fun createAtlasBitmap(
+    private suspend fun createAtlasBitmap(
         processedPhotos: List<ProcessedPhoto>,
         packResult: PackResult,
         atlasSize: IntSize
@@ -167,7 +174,10 @@ class AtlasGenerator @Inject constructor(
             }
 
             // Draw each packed photo onto the atlas
-            packResult.packedImages.forEach { packedImage ->
+            for (packedImage in packResult.packedImages) {
+                // Check for cancellation before drawing each bitmap
+                currentCoroutineContext().ensureActive()
+                
                 val index = packedImage.id.toIntOrNull()
                 if (index != null && index < processedPhotos.size) {
                     val processedPhoto = processedPhotos[index]

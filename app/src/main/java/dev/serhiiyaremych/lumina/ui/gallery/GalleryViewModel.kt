@@ -16,6 +16,8 @@ import dev.serhiiyaremych.lumina.domain.usecase.GroupMediaUseCase
 import dev.serhiiyaremych.lumina.domain.usecase.GroupingPeriod
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,6 +52,12 @@ class GalleryViewModel @Inject constructor(
     // Atlas generation state for benchmarking
     private val _isAtlasGenerating = MutableStateFlow(false)
     val isAtlasGenerating: StateFlow<Boolean> = _isAtlasGenerating.asStateFlow()
+    
+    // Job tracker for atlas generation cancellation
+    private var atlasGenerationJob: Job? = null
+    
+    // Track current generation ID to prevent stale results
+    private var currentGenerationId: Long = 0
 
     init {
         loadMedia()
@@ -85,16 +93,32 @@ class GalleryViewModel @Inject constructor(
     /**
      * Handle visible cells changed from UI callback.
      * Updates atlas manager with current visible cells.
+     * Cancels any previous atlas generation to prevent race conditions.
      */
     fun onVisibleCellsChanged(visibleCells: List<HexCellWithMedia>, currentZoom: Float) {
-
-        viewModelScope.launch {
+        // Cancel previous atlas generation job if still running
+        atlasGenerationJob?.cancel()
+        
+        atlasGenerationJob = viewModelScope.launch {
             _isAtlasGenerating.value = true
             try {
                 val result = atlasManager.updateVisibleCells(visibleCells, currentZoom)
-                _atlasState.value = result
-            } finally {
+                
+                // Only update UI state if this result is not stale
+                if (result.generationId > currentGenerationId) {
+                    currentGenerationId = result.generationId
+                    _atlasState.value = result
+                }
+                
+                // Only set to false if we completed successfully (not cancelled)
                 _isAtlasGenerating.value = false
+            } catch (e: CancellationException) {
+                // Don't update isAtlasGenerating on cancellation - let the new job handle it
+                throw e
+            } catch (e: Exception) {
+                // Handle other errors and set generating to false
+                _isAtlasGenerating.value = false
+                throw e
             }
         }
     }
