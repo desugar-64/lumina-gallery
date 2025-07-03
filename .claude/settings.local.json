@@ -5,7 +5,9 @@
       "Bash(git commit:*)",
       "Bash(rg:*)",
       "Bash(gemini:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(./gradlew:*)",
+      "Bash(adb shell am start:*)"
     ],
     "deny": []
   }

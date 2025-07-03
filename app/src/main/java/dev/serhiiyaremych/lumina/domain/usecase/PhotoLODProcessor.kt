@@ -44,9 +44,12 @@ class PhotoLODProcessor @Inject constructor(
                     loadOriginalPhoto(photoUri)
                 } ?: return@trace null
 
+                // Store original dimensions before any processing
+                val originalSize = IntSize(originalBitmap.width, originalBitmap.height)
+                
                 // Scale bitmap to LOD resolution using PhotoScaler
                 val targetSize = calculateTargetSize(
-                    originalSize = IntSize(originalBitmap.width, originalBitmap.height),
+                    originalSize = originalSize,
                     lodResolution = lodLevel.resolution,
                     strategy = scaleStrategy
                 )
@@ -68,7 +71,7 @@ class PhotoLODProcessor @Inject constructor(
 
                 ProcessedPhoto(
                     bitmap = scaledBitmap,
-                    originalSize = IntSize(originalBitmap.width, originalBitmap.height),
+                    originalSize = originalSize,
                     scaledSize = targetSize,
                     aspectRatio = targetSize.width.toFloat() / targetSize.height,
                     lodLevel = lodLevel.level

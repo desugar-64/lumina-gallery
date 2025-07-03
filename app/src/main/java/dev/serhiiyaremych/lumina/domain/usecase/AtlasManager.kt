@@ -49,6 +49,7 @@ class AtlasManager @Inject constructor(
     private var currentAtlas: TextureAtlas? = null
     private var currentCellIds: Set<String> = emptySet()
     private var currentLODLevel: LODLevel = LODLevel.LEVEL_2
+    private var lastReportedZoom: Float = 1.0f
 
     /**
      * Main entry point: Update visible cells and generate atlas if needed.
@@ -71,7 +72,7 @@ class AtlasManager @Inject constructor(
 
                 val cellSetKey = generateCellSetKey(expandedCells, lodLevel)
 
-                if (shouldRegenerateAtlas(cellSetKey, lodLevel)) {
+                if (shouldRegenerateAtlas(cellSetKey, lodLevel, currentZoom)) {
                     Log.d(TAG, "Regenerating atlas for ${expandedCells.size} cells at $lodLevel")
 
                     val (atlasResult, duration) = trace(BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS) {
@@ -79,9 +80,13 @@ class AtlasManager @Inject constructor(
                     }
 
                 if (atlasResult.atlas != null) {
+                    // Recycle old atlas before replacing it
+                    currentAtlas?.bitmap?.recycle()
+                    
                     currentAtlas = atlasResult.atlas
                     currentCellIds = cellSetKey
                     currentLODLevel = lodLevel
+                    lastReportedZoom = currentZoom
 
                     val message = if (atlasResult.failed.isEmpty()) {
                         "Atlas generated successfully ${duration.inWholeMilliseconds}ms: ${atlasResult.atlas.regions.size} regions"
@@ -137,10 +142,8 @@ class AtlasManager @Inject constructor(
 
     // Private helper methods
 
-    private fun selectLODLevel(zoom: Float): LODLevel = when {
-        zoom <= 0.5f -> LODLevel.LEVEL_0  // 32px - far overview
-        zoom <= 2.0f -> LODLevel.LEVEL_2  // 128px - medium detail
-        else -> LODLevel.LEVEL_4          // 512px - high detail
+    private fun selectLODLevel(zoom: Float): LODLevel {
+        return LODLevel.values().first { zoom in it.zoomRange }
     }
 
     private fun expandCellsByRings(
@@ -164,11 +167,31 @@ class AtlasManager @Inject constructor(
 
     private fun shouldRegenerateAtlas(
         cellSetKey: Set<String>,
-        lodLevel: LODLevel
+        lodLevel: LODLevel,
+        currentZoom: Float
     ): Boolean {
-        return currentAtlas == null ||
-               currentCellIds != cellSetKey ||
-               currentLODLevel != lodLevel
+        return when {
+            // First time or no atlas available
+            currentAtlas == null -> {
+                Log.d(TAG, "shouldRegenerateAtlas: No atlas available, need to generate")
+                true
+            }
+            
+            // Cell set has changed (different visible cells)
+            currentCellIds != cellSetKey -> {
+                Log.d(TAG, "shouldRegenerateAtlas: Cell set changed, need to regenerate")
+                true
+            }
+            
+            // LOD level boundary crossing detection
+            currentLODLevel != lodLevel -> {
+                Log.d(TAG, "shouldRegenerateAtlas: LOD level changed from $currentLODLevel to $lodLevel (zoom: $lastReportedZoom -> $currentZoom)")
+                true
+            }
+            
+            // Same LOD level, same cells - no regeneration needed
+            else -> false
+        }
     }
 
     private suspend fun generateAtlasForCells(

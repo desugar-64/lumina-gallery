@@ -27,29 +27,35 @@ LuminaGallery is a modern Android Compose application focused on advanced image 
 
 ### Building and Running
 ```bash
-# Build debug APK
-./gradlew assembleDebug
+# Build debug APK (quiet output)
+./gradlew -q assembleDebug
 
-# Build and install debug on device
-./gradlew installDebug
+# Build and install debug on device (quiet output)
+./gradlew -q installDebug
 
-# Build release APK
-./gradlew assembleRelease
+# Build release APK (quiet output)
+./gradlew -q assembleRelease
 
-# Clean build
-./gradlew clean
+# Clean build (quiet output)
+./gradlew -q clean
+
+# If build fails, re-run with stacktrace for debugging:
+# ./gradlew assembleDebug --stacktrace
 ```
 
 ### Testing
 ```bash
-# Run unit tests
-./gradlew test
+# Run unit tests (quiet output)
+./gradlew -q test
 
-# Run instrumented tests on connected device
-./gradlew connectedAndroidTest
+# Run instrumented tests on connected device (quiet output)
+./gradlew -q connectedAndroidTest
 
-# Run UI tests
-./gradlew app:connectedDebugAndroidTest
+# Run UI tests (quiet output)
+./gradlew -q app:connectedDebugAndroidTest
+
+# If tests fail, re-run with stacktrace for debugging:
+# ./gradlew test --stacktrace
 ```
 
 ### Atlas Performance Benchmarking
@@ -76,10 +82,13 @@ LuminaGallery is a modern Android Compose application focused on advanced image 
 ### Development
 ```bash
 # Run lint checks
-./gradlew lint
+./gradlew -q lint
 
 # Start app on connected device (assumes debug build installed)
 adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity
+
+# Install and run in one command
+./gradlew -q installDebug && adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity
 ```
 
 ## Architecture Details
@@ -169,6 +178,27 @@ The app features a sophisticated benchmarking system with detailed performance t
 - **Device Consistency Checking**: Warns when switching hardware mid-optimization
 - **Git Integration**: Automatic commit tracking and dirty state detection
 - **Simple Gradle Tasks**: Easy-to-use commands for optimization workflow
+
+### Atlas System Optimizations
+
+The app implements advanced LOD (Level-of-Detail) optimizations for atlas texture generation:
+
+**LOD Boundary Detection**:
+- **LOD_0**: 0.0f-0.5f zoom (32px thumbnails for overview)
+- **LOD_2**: 0.5f-2.0f zoom (128px standard quality)  
+- **LOD_4**: 2.0f-10.0f zoom (512px high quality)
+- Atlas regeneration **only** occurs when crossing these boundaries (0.5f, 2.0f)
+- Prevents frequent regeneration during smooth zoom operations
+
+**Memory Management**:
+- Proper bitmap recycling with safety checks to prevent crashes
+- Old atlas bitmaps are recycled before replacement during regeneration
+- UI rendering includes `isRecycled` checks to avoid drawing recycled bitmaps
+
+**Debug Visualization** (`/ui/debug/AtlasDebugOverlay.kt`):
+- **AtlasDebugOverlay**: Shows atlas bitmap, region count, and error states
+- **AtlasGenerationStatusOverlay**: Displays current LOD level and generation status
+- Real-time feedback during atlas transitions with color-coded states
 
 ### Gesture System
 

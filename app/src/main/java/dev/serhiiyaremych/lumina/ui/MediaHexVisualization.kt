@@ -250,7 +250,7 @@ private fun DrawScope.drawMediaFromAtlas(
             val photoId = media.uri.toString()
             val atlasRegion = atlasState.atlas.regions[photoId]
 
-            if (atlasRegion != null) {
+            if (atlasRegion != null && !atlasState.atlas.bitmap.isRecycled) {
                 // Draw from atlas texture
                 val atlasBitmap = atlasState.atlas.bitmap.asImageBitmap()
 
