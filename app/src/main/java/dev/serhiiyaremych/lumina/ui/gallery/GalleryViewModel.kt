@@ -20,9 +20,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class GalleryViewModel @Inject constructor(
@@ -68,45 +70,44 @@ class GalleryViewModel @Inject constructor(
         viewModelScope.launch {
             updateAtlasFlow
                 .filter { it.first.isNotEmpty() }
-                .distinctUntilChanged { old, new ->
-                    old == new
-                }
-                // todo: filter out events when already generating for the same LODLevel.
-                // todo: handle backpressure
-                .collect { (visibleCells, currentZoom) ->
+                .distinctUntilChanged()
+                .collectLatest { (visibleCells, currentZoom) ->
                     _isAtlasGenerating.value = true
-                    try {
-                        val result = atlasManager.updateVisibleCells(
+                    
+                    runCatching {
+                        atlasManager.updateVisibleCells(
                             visibleCells = visibleCells,
                             currentZoom = currentZoom
                         )
-
-                        android.util.Log.d(
-                            "GalleryViewModel",
-                            "Atlas result received: ${result::class.simpleName}, sequence=${result.requestSequence}, current=$currentRequestSequence"
-                        )
-
-                        // Only update UI state if this result is not stale
-                        if (result.requestSequence > currentRequestSequence) {
+                    }.fold(
+                        onSuccess = { result ->
                             android.util.Log.d(
                                 "GalleryViewModel",
-                                "Updating atlas state with sequence ${result.requestSequence}"
+                                "Atlas result received: ${result::class.simpleName}, sequence=${result.requestSequence}, current=$currentRequestSequence"
                             )
-                            currentRequestSequence = result.requestSequence
-                            _atlasState.value = result
-                        } else {
-                            android.util.Log.d(
-                                "GalleryViewModel",
-                                "Ignoring stale atlas result: ${result.requestSequence} <= $currentRequestSequence"
-                            )
+
+                            // Only update UI state if this result is not stale
+                            if (result.requestSequence > currentRequestSequence) {
+                                android.util.Log.d(
+                                    "GalleryViewModel",
+                                    "Updating atlas state with sequence ${result.requestSequence}"
+                                )
+                                currentRequestSequence = result.requestSequence
+                                _atlasState.value = result
+                            } else {
+                                android.util.Log.d(
+                                    "GalleryViewModel",
+                                    "Ignoring stale atlas result: ${result.requestSequence} <= $currentRequestSequence"
+                                )
+                            }
+                        },
+                        onFailure = { e ->
+                            android.util.Log.e("GalleryViewModel", "Atlas generation failed", e)
+                            if (e is CancellationException) throw e
                         }
-
-                        // Always reset generating state on completion
-                        android.util.Log.d("GalleryViewModel", "Atlas generation job completed successfully")
-                        _isAtlasGenerating.value = false
-                    } finally {
-                        _isAtlasGenerating.value = false
-                    }
+                    )
+                    
+                    _isAtlasGenerating.value = false
                 }
         }
     }

@@ -96,7 +96,7 @@ class AtlasManager @Inject constructor(
             // Generate unique sequence number for this atlas request
             val requestSequence = ++atlasRequestSequence
 
-            try {
+            runCatching {
                 Log.d(TAG, "updateVisibleCells: ${visibleCells.size} cells, zoom=$currentZoom, requestSequence=$requestSequence")
 
                 val lodLevel = trace(BenchmarkLabels.ATLAS_MANAGER_SELECT_LOD_LEVEL) {
@@ -156,11 +156,14 @@ class AtlasManager @Inject constructor(
                     Log.w(TAG, "Atlas generation failed completely: ${atlasResult.failed.size} failed photos")
                     AtlasUpdateResult.GenerationFailed("Atlas generation failed completely", requestSequence)
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error updating visible cells", e)
-                if (e is CancellationException) throw e
-                AtlasUpdateResult.Error(e, requestSequence)
-            }
+            }.fold(
+                onSuccess = { result -> result },
+                onFailure = { e ->
+                    Log.e(TAG, "Error updating visible cells", e)
+                    if (e is CancellationException) throw e
+                    AtlasUpdateResult.Error(e, requestSequence)
+                }
+            )
         }
     }
 
@@ -343,5 +346,5 @@ sealed class AtlasUpdateResult {
 
     data class Success(val atlas: TextureAtlas, override val requestSequence: Long) : AtlasUpdateResult()
     data class GenerationFailed(val error: String, override val requestSequence: Long) : AtlasUpdateResult()
-    data class Error(val exception: Exception, override val requestSequence: Long) : AtlasUpdateResult()
+    data class Error(val exception: Throwable, override val requestSequence: Long) : AtlasUpdateResult()
 }
