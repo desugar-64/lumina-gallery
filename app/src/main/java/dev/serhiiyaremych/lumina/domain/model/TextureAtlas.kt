@@ -1,6 +1,7 @@
 package dev.serhiiyaremych.lumina.domain.model
 
 import android.graphics.Bitmap
+import android.net.Uri
 import androidx.compose.ui.unit.IntSize
 
 /**
@@ -12,22 +13,22 @@ data class TextureAtlas(
      * The atlas bitmap containing packed photos
      */
     val bitmap: Bitmap,
-    
+
     /**
      * Map of photo ID to atlas region information
      */
-    val regions: Map<String, AtlasRegion>,
-    
+    val regions: Map<Uri, AtlasRegion>,
+
     /**
      * LOD level this atlas represents
      */
     val lodLevel: Int,
-    
+
     /**
      * Size of the atlas bitmap
      */
     val size: IntSize,
-    
+
     /**
      * Timestamp when this atlas was created
      */
@@ -37,7 +38,7 @@ data class TextureAtlas(
      * Memory usage of this atlas in bytes (ARGB_8888)
      */
     val memoryUsage: Long get() = size.width.toLong() * size.height * 4
-    
+
     /**
      * Atlas utilization efficiency (used pixels / total pixels)
      */
@@ -48,19 +49,19 @@ data class TextureAtlas(
         val totalPixels = size.width * size.height
         if (totalPixels > 0) usedPixels.toFloat() / totalPixels else 0f
     }
-    
+
     /**
      * Number of photos packed in this atlas
      */
     val photoCount: Int get() = regions.size
-    
+
     /**
      * Get atlas region for a specific photo
      */
-    fun getRegion(photoId: String): AtlasRegion? = regions[photoId]
-    
+    fun getRegion(photoId: Uri): AtlasRegion? = regions[photoId]
+
     /**
      * Check if this atlas contains a specific photo
      */
-    fun containsPhoto(photoId: String): Boolean = regions.containsKey(photoId)
+    fun containsPhoto(photoId: Uri): Boolean = regions.containsKey(photoId)
 }

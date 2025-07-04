@@ -61,8 +61,6 @@ object AppModule {
     @Singleton
     @Provides
     fun provideAtlasManager(
-        @ApplicationContext context: Context,
-        atlasGenerator: AtlasGenerator,
-        photoLODProcessor: PhotoLODProcessor
-    ): AtlasManager = AtlasManager(context, atlasGenerator, photoLODProcessor)
+        atlasGenerator: AtlasGenerator
+    ): AtlasManager = AtlasManager(atlasGenerator)
 }

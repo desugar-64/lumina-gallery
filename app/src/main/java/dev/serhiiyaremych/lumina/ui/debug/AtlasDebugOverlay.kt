@@ -41,7 +41,7 @@ fun AtlasDebugOverlay(
                     modifier = modifier
                         .background(
                             if (isRecycled) Color.Yellow.copy(alpha = 0.7f)
-                            else Color.Green.copy(alpha = 0.7f)
+                            else Color.Green.copy(alpha = 0.5f)
                         )
                         .padding(8.dp)
                 ) {

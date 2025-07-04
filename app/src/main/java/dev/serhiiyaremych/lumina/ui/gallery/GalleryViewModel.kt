@@ -16,11 +16,12 @@ import dev.serhiiyaremych.lumina.domain.usecase.GroupMediaUseCase
 import dev.serhiiyaremych.lumina.domain.usecase.GroupingPeriod
 import java.time.LocalDate
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -52,15 +53,62 @@ class GalleryViewModel @Inject constructor(
     // Atlas generation state for benchmarking
     private val _isAtlasGenerating = MutableStateFlow(false)
     val isAtlasGenerating: StateFlow<Boolean> = _isAtlasGenerating.asStateFlow()
-    
+
     // Job tracker for atlas generation cancellation
     private var atlasGenerationJob: Job? = null
-    
-    // Track current request sequence to prevent stale results  
+
+    // Track current request sequence to prevent stale results
     private var currentRequestSequence: Long = 0
+
+    private val updateAtlasFlow = MutableStateFlow<Pair<List<HexCellWithMedia>, Float>>(Pair(emptyList(), 1.0f))
 
     init {
         loadMedia()
+
+        viewModelScope.launch {
+            updateAtlasFlow
+                .filter { it.first.isNotEmpty() }
+                .distinctUntilChanged { old, new ->
+                    old == new
+                }
+                // todo: filter out events when already generating for the same LODLevel.
+                // todo: handle backpressure
+                .collect { (visibleCells, currentZoom) ->
+                    _isAtlasGenerating.value = true
+                    try {
+                        val result = atlasManager.updateVisibleCells(
+                            visibleCells = visibleCells,
+                            currentZoom = currentZoom
+                        )
+
+                        android.util.Log.d(
+                            "GalleryViewModel",
+                            "Atlas result received: ${result::class.simpleName}, sequence=${result.requestSequence}, current=$currentRequestSequence"
+                        )
+
+                        // Only update UI state if this result is not stale
+                        if (result.requestSequence > currentRequestSequence) {
+                            android.util.Log.d(
+                                "GalleryViewModel",
+                                "Updating atlas state with sequence ${result.requestSequence}"
+                            )
+                            currentRequestSequence = result.requestSequence
+                            _atlasState.value = result
+                        } else {
+                            android.util.Log.d(
+                                "GalleryViewModel",
+                                "Ignoring stale atlas result: ${result.requestSequence} <= $currentRequestSequence"
+                            )
+                        }
+
+                        // Always reset generating state on completion
+                        android.util.Log.d("GalleryViewModel", "Atlas generation job completed successfully")
+                        _isAtlasGenerating.value = false
+                    } finally {
+                        _isAtlasGenerating.value = false
+                    }
+                }
+        }
     }
 
     private fun loadMedia() {
@@ -92,40 +140,15 @@ class GalleryViewModel @Inject constructor(
 
     /**
      * Handle visible cells changed from UI callback.
-     * Updates atlas manager with current visible cells.
+     * Updates atlas manager with current visible cells and viewport dimensions.
      * Cancels any previous atlas generation to prevent race conditions.
      */
-    fun onVisibleCellsChanged(visibleCells: List<HexCellWithMedia>, currentZoom: Float) {
-        // Check if regeneration is needed before launching coroutine
-        if (!atlasManager.shouldRegenerateAtlas(visibleCells, currentZoom)) {
-            return
-        }
-        
-        // Cancel previous atlas generation job if still running
-        atlasGenerationJob?.cancel()
-        
-        atlasGenerationJob = viewModelScope.launch {
-            _isAtlasGenerating.value = true
-            try {
-                val result = atlasManager.updateVisibleCells(visibleCells, currentZoom)
-                
-                // Only update UI state if this result is not stale
-                if (result.requestSequence > currentRequestSequence) {
-                    currentRequestSequence = result.requestSequence
-                    _atlasState.value = result
-                }
-                
-                // Only set to false if we completed successfully (not cancelled)
-                _isAtlasGenerating.value = false
-            } catch (e: CancellationException) {
-                // Don't update isAtlasGenerating on cancellation - let the new job handle it
-                throw e
-            } catch (e: Exception) {
-                // Handle other errors and set generating to false
-                _isAtlasGenerating.value = false
-                throw e
-            }
-        }
+    fun onVisibleCellsChanged(
+        visibleCells: List<HexCellWithMedia>,
+        currentZoom: Float
+    ) {
+        android.util.Log.d("GalleryViewModel", "onVisibleCellsChanged: ${visibleCells.size} cells, zoom=$currentZoom")
+        updateAtlasFlow.value = Pair(visibleCells, currentZoom)
     }
 
     /**

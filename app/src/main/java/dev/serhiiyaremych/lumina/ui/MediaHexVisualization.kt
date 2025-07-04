@@ -224,7 +224,7 @@ fun MediaHexVisualization(
 
 /**
  * Calculates which hex cells are visible in the current viewport.
- * This is called from UI thread and has access to current zoom/offset state.
+ * This is called from LaunchedEffect and has access to current zoom/offset/viewport state.
  */
 private fun calculateVisibleCells(
     hexGridLayout: dev.serhiiyaremych.lumina.domain.model.HexGridLayout,
@@ -247,7 +247,7 @@ private fun DrawScope.drawMediaFromAtlas(
     when (atlasState) {
         is AtlasUpdateResult.Success -> {
             // Try to get atlas region for this media
-            val photoId = media.uri.toString()
+            val photoId = media.uri
             val atlasRegion = atlasState.atlas.regions[photoId]
 
             if (atlasRegion != null && !atlasState.atlas.bitmap.isRecycled) {

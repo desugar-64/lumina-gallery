@@ -18,6 +18,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import dev.serhiiyaremych.lumina.data.PhotoScaler
 import dev.serhiiyaremych.lumina.data.ScaleStrategy
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withTimeout
 
 /**
  * Processes photos for Level-of-Detail (LOD) atlas system.
@@ -38,93 +41,111 @@ class PhotoLODProcessor @Inject constructor(
         scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER
     ): ProcessedPhoto? {
         return trace(BenchmarkLabels.PHOTO_LOD_PROCESS_PHOTO) {
-            try {
-                // Load original photo with efficient memory usage
-                val originalBitmap = trace(BenchmarkLabels.PHOTO_LOD_LOAD_BITMAP) {
-                    loadOriginalPhoto(photoUri)
-                } ?: return@trace null
+            // Load original photo with efficient memory usage
+            val originalBitmap = trace(BenchmarkLabels.PHOTO_LOD_LOAD_BITMAP) {
+                loadOriginalPhoto(photoUri)
+            } ?: return@trace null
 
-                // Store original dimensions before any processing
-                val originalSize = IntSize(originalBitmap.width, originalBitmap.height)
-                
-                // Scale bitmap to LOD resolution using PhotoScaler
-                val targetSize = calculateTargetSize(
-                    originalSize = originalSize,
-                    lodResolution = lodLevel.resolution,
+            // Store original dimensions before any processing
+            val originalSize = IntSize(originalBitmap.width, originalBitmap.height)
+
+            // Scale bitmap to LOD resolution using PhotoScaler
+            val targetSize = calculateTargetSize(
+                originalSize = originalSize,
+                lodResolution = lodLevel.resolution,
+                strategy = scaleStrategy
+            )
+
+            val scaledBitmap = trace(BenchmarkLabels.PHOTO_LOD_SCALE_BITMAP) {
+                photoScaler.scale(
+                    source = originalBitmap,
+                    targetSize = targetSize,
                     strategy = scaleStrategy
                 )
-                
-                val scaledBitmap = trace(BenchmarkLabels.PHOTO_LOD_SCALE_BITMAP) {
-                    photoScaler.scale(
-                        source = originalBitmap,
-                        targetSize = targetSize,
-                        strategy = scaleStrategy
-                    )
-                }
-
-                // Clean up original bitmap if different from scaled
-                if (scaledBitmap != originalBitmap) {
-                    trace(ATLAS_MEMORY_BITMAP_RECYCLE) {
-                        originalBitmap.recycle()
-                    }
-                }
-
-                ProcessedPhoto(
-                    bitmap = scaledBitmap,
-                    originalSize = originalSize,
-                    scaledSize = targetSize,
-                    aspectRatio = targetSize.width.toFloat() / targetSize.height,
-                    lodLevel = lodLevel.level
-                )
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
             }
+
+            // Clean up original bitmap if different from scaled
+            if (scaledBitmap != originalBitmap) {
+                trace(ATLAS_MEMORY_BITMAP_RECYCLE) {
+                    originalBitmap.recycle()
+                }
+            }
+
+            ProcessedPhoto(
+                id = photoUri,
+                bitmap = scaledBitmap,
+                originalSize = originalSize,
+                scaledSize = targetSize,
+                aspectRatio = targetSize.width.toFloat() / targetSize.height,
+                lodLevel = lodLevel.level
+            )
         }
     }
 
     /**
-     * Loads original photo from URI with memory optimization
+     * Loads original photo from URI with memory optimization and timeout protection
      */
-    private fun loadOriginalPhoto(uri: Uri): Bitmap? {
-        return try {
+    private suspend fun loadOriginalPhoto(uri: Uri): Bitmap? {
+        return             withTimeout(10_000) { // 10 second timeout per photo
+            android.util.Log.d("PhotoLODProcessor", "Loading photo: $uri")
+
+            // Check cancellation before starting
+            currentCoroutineContext().ensureActive()
+
             // DISK I/O: File system access via ContentResolver
             trace(PHOTO_LOD_DISK_OPEN_INPUT_STREAM) {
                 contentResolver.openInputStream(uri)
             }?.use { inputStream ->
+                // Check cancellation after stream opening
+                currentCoroutineContext().ensureActive()
+
                 // MEMORY I/O: Decode image header for dimensions (no full decode)
                 val options = BitmapFactory.Options().apply {
                     inJustDecodeBounds = true
                 }
+
+                android.util.Log.d("PhotoLODProcessor", "Decoding bounds for: $uri")
                 trace(PHOTO_LOD_MEMORY_DECODE_BOUNDS) {
                     BitmapFactory.decodeStream(inputStream, null, options)
                 }
+
+                // Check cancellation after bounds decode
+                currentCoroutineContext().ensureActive()
+
+                android.util.Log.d("PhotoLODProcessor", "Photo dimensions: ${options.outWidth}x${options.outHeight} for $uri")
 
                 // MEMORY I/O: Calculate optimal sample size for memory efficiency
                 val sampleSize = trace(PHOTO_LOD_MEMORY_SAMPLE_SIZE_CALC) {
                     calculateInSampleSize(options, 2048, 2048) // Max 2048px
                 }
 
+                android.util.Log.d("PhotoLODProcessor", "Sample size: $sampleSize for $uri")
+
                 // DISK I/O: Reset stream and read again for full decode
                 trace(PHOTO_LOD_DISK_OPEN_INPUT_STREAM) {
                     contentResolver.openInputStream(uri)
                 }?.use { inputStream2 ->
+                    // Check cancellation before full decode
+                    currentCoroutineContext().ensureActive()
+
                     val decodeOptions = BitmapFactory.Options().apply {
                         inJustDecodeBounds = false
                         inPreferredConfig = Bitmap.Config.ARGB_8888
                         inSampleSize = sampleSize
                     }
+
+                    android.util.Log.d("PhotoLODProcessor", "Starting full bitmap decode for: $uri")
                     // MEMORY I/O: Full bitmap decode and memory allocation
-                    trace(PHOTO_LOD_MEMORY_DECODE_BITMAP) {
+                    val bitmap = trace(PHOTO_LOD_MEMORY_DECODE_BITMAP) {
                         trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
                             BitmapFactory.decodeStream(inputStream2, null, decodeOptions)
                         }
                     }
+
+                    android.util.Log.d("PhotoLODProcessor", "Successfully loaded photo: $uri, bitmap: ${bitmap?.width}x${bitmap?.height}")
+                    bitmap
                 }
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
         }
     }
 
@@ -141,11 +162,13 @@ class PhotoLODProcessor @Inject constructor(
         var inSampleSize = 1
 
         if (height > reqHeight || width > reqWidth) {
-            val halfHeight = height / 2
-            val halfWidth = width / 2
+            // Calculate how much we need to shrink by
+            val heightRatio = height.toFloat() / reqHeight
+            val widthRatio = width.toFloat() / reqWidth
+            val maxRatio = maxOf(heightRatio, widthRatio)
 
-            while ((halfHeight / inSampleSize) >= reqHeight &&
-                (halfWidth / inSampleSize) >= reqWidth) {
+            // Find the smallest power of 2 that is >= maxRatio
+            while (inSampleSize.toFloat() < maxRatio) {
                 inSampleSize *= 2
             }
         }
@@ -190,6 +213,7 @@ class PhotoLODProcessor @Inject constructor(
  * Result of photo processing for LOD level
  */
 data class ProcessedPhoto(
+    val id: Uri,
     val bitmap: Bitmap,
     val originalSize: IntSize,
     val scaledSize: IntSize,

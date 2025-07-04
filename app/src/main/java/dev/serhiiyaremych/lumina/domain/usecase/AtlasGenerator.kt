@@ -20,6 +20,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Generates texture atlases by coordinating photo processing and packing algorithms.
@@ -62,7 +63,7 @@ class AtlasGenerator @Inject constructor(
             for (uri in photoUris) {
                 // Check for cancellation before processing each photo
                 currentCoroutineContext().ensureActive()
-                
+
                 try {
                     val processed = photoLODProcessor.processPhotoForLOD(uri, lodLevel, scaleStrategy)
                     if (processed != null) {
@@ -74,6 +75,7 @@ class AtlasGenerator @Inject constructor(
                     // Log error and add to failed list
                     Log.e("AtlasGenerator", "Failed to process photo: $uri", e)
                     failed.add(uri)
+                    if (e is CancellationException) throw e
                 }
             }
         }
@@ -89,11 +91,8 @@ class AtlasGenerator @Inject constructor(
         }
 
         // Step 2: Create packing input from processed photos
-        val imagesToPack = processedPhotos.mapIndexed { index, processedPhoto ->
-            ImageToPack(
-                id = index.toString(), // Simple index-based ID
-                size = processedPhoto.scaledSize
-            )
+        val imagesToPack = processedPhotos.map { processedPhoto ->
+            ImageToPack(processedPhoto)
         }
 
         // Step 3: Calculate optimal packing layout
@@ -113,13 +112,14 @@ class AtlasGenerator @Inject constructor(
             )
         }
 
+        val photos = processedPhotos.associateBy { it.id }
         // Step 4: Create atlas bitmap and draw photos
         val atlasBitmap = trace(BenchmarkLabels.ATLAS_GENERATOR_CREATE_ATLAS_BITMAP) {
-            createAtlasBitmap(processedPhotos, packResult, atlasSize)
+            createAtlasBitmap(photos, packResult, atlasSize)
         }
 
         // Step 5: Create atlas regions from packed images
-        val atlasRegions = createAtlasRegions(processedPhotos, packResult, lodLevel, photoUris)
+        val atlasRegions = createAtlasRegions(photos, packResult, lodLevel)
 
         // Step 6: Clean up processed photo bitmaps
         processedPhotos.forEach { processedPhoto ->
@@ -129,13 +129,8 @@ class AtlasGenerator @Inject constructor(
         }
 
         // Step 7: Add failed photos from packing stage
-        val packingFailed = packResult.failed.mapNotNull { failedPack ->
-            val index = failedPack.id.toIntOrNull()
-            if (index != null && index < photoUris.size) {
-                photoUris[index]
-            } else {
-                null
-            }
+        val packingFailed = packResult.failed.map { failedPack ->
+            failedPack.id
         }
 
         val allFailed = failed + packingFailed
@@ -160,7 +155,7 @@ class AtlasGenerator @Inject constructor(
      * Creates the atlas bitmap and draws all packed photos onto it
      */
     private suspend fun createAtlasBitmap(
-        processedPhotos: List<ProcessedPhoto>,
+        processedPhotos: Map<Uri, ProcessedPhoto>,
         packResult: PackResult,
         atlasSize: IntSize
     ): Bitmap {
@@ -177,24 +172,22 @@ class AtlasGenerator @Inject constructor(
             for (packedImage in packResult.packedImages) {
                 // Check for cancellation before drawing each bitmap
                 currentCoroutineContext().ensureActive()
-                
-                val index = packedImage.id.toIntOrNull()
-                if (index != null && index < processedPhotos.size) {
-                    val processedPhoto = processedPhotos[index]
 
-                    if (!processedPhoto.bitmap.isRecycled) {
-                        canvas.drawBitmap(
-                            processedPhoto.bitmap,
-                            null, // source rect (entire bitmap)
-                            android.graphics.RectF(
-                                packedImage.rect.left,
-                                packedImage.rect.top,
-                                packedImage.rect.right,
-                                packedImage.rect.bottom
-                            ),
-                            paint
-                        )
-                    }
+                val id = packedImage.id
+                val processedPhoto = processedPhotos[id]
+
+                if (processedPhoto != null && !processedPhoto.bitmap.isRecycled) {
+                    canvas.drawBitmap(
+                        processedPhoto.bitmap,
+                        null, // source rect (entire bitmap)
+                        android.graphics.RectF(
+                            packedImage.rect.left,
+                            packedImage.rect.top,
+                            packedImage.rect.right,
+                            packedImage.rect.bottom
+                        ),
+                        paint
+                    )
                 }
             }
         }
@@ -206,19 +199,16 @@ class AtlasGenerator @Inject constructor(
      * Creates AtlasRegion objects from packed images and processed photos
      */
     private fun createAtlasRegions(
-        processedPhotos: List<ProcessedPhoto>,
+        processedPhotos: Map<Uri, ProcessedPhoto>,
         packResult: PackResult,
-        lodLevel: LODLevel,
-        originalUris: List<Uri>
+        lodLevel: LODLevel
     ): List<AtlasRegion> {
         return packResult.packedImages.mapNotNull { packedImage ->
-            val index = packedImage.id.toIntOrNull()
-            if (index != null && index < processedPhotos.size && index < originalUris.size) {
-                val processedPhoto = processedPhotos[index]
-                val originalUri = originalUris[index]
-
+            val uri = packedImage.id
+            val processedPhoto = processedPhotos[uri]
+            if (processedPhoto != null) {
                 AtlasRegion(
-                    photoId = originalUri.toString(), // Use URI as photo ID
+                    photoId = uri,
                     atlasRect = packedImage.rect,
                     originalSize = processedPhoto.originalSize,
                     scaledSize = processedPhoto.scaledSize,

@@ -1,5 +1,6 @@
 package dev.serhiiyaremych.lumina.data
 
+import android.net.Uri
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.IntSize
 import androidx.tracing.trace
@@ -8,6 +9,7 @@ import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_SORT_IMAG
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_PACK_SINGLE_IMAGE
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_FIND_SHELF_FIT
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_CREATE_NEW_SHELF
+import dev.serhiiyaremych.lumina.domain.usecase.ProcessedPhoto
 
 /**
  * Shelf packing algorithm for texture atlas generation.
@@ -17,7 +19,7 @@ class ShelfTexturePacker(
     private val atlasSize: IntSize,
     private val padding: Int = 2
 ) {
-    
+
     /**
      * Pack images into atlas using shelf packing algorithm
      */
@@ -26,12 +28,12 @@ class ShelfTexturePacker(
             val shelves = mutableListOf<Shelf>()
             val packedImages = mutableListOf<PackedImage>()
             val failedImages = mutableListOf<ImageToPack>()
-            
+
             // Sort images by height (descending) for better packing
             val sortedImages = trace(TEXTURE_PACKER_SORT_IMAGES) {
                 images.sortedByDescending { it.size.height }
             }
-            
+
             for (image in sortedImages) {
                 val packedImage = trace(TEXTURE_PACKER_PACK_SINGLE_IMAGE) {
                     packImage(image, shelves)
@@ -42,9 +44,9 @@ class ShelfTexturePacker(
                     failedImages.add(image)
                 }
             }
-            
+
             val utilization = calculateUtilization(packedImages)
-            
+
             PackResult(
                 packedImages = packedImages,
                 utilization = utilization,
@@ -52,7 +54,7 @@ class ShelfTexturePacker(
             )
         }
     }
-    
+
     /**
      * Try to pack a single image into existing shelves or create a new shelf
      */
@@ -61,12 +63,12 @@ class ShelfTexturePacker(
             width = image.size.width + padding * 2,
             height = image.size.height + padding * 2
         )
-        
+
         // Check if image fits in atlas at all
         if (imageWithPadding.width > atlasSize.width || imageWithPadding.height > atlasSize.height) {
             return null
         }
-        
+
         // Try to fit in existing shelves
         for (shelf in shelves) {
             val position = trace(TEXTURE_PACKER_FIND_SHELF_FIT) {
@@ -85,7 +87,7 @@ class ShelfTexturePacker(
                 )
             }
         }
-        
+
         // Create new shelf if possible
         val nextShelfY = shelves.sumOf { it.height }
         if (nextShelfY + imageWithPadding.height <= atlasSize.height) {
@@ -97,7 +99,7 @@ class ShelfTexturePacker(
                 )
             }
             shelves.add(newShelf)
-            
+
             val position = trace(TEXTURE_PACKER_FIND_SHELF_FIT) {
                 newShelf.tryFit(imageWithPadding)
             }
@@ -114,10 +116,10 @@ class ShelfTexturePacker(
                 )
             }
         }
-        
+
         return null
     }
-    
+
     /**
      * Calculate atlas utilization efficiency
      */
@@ -128,7 +130,7 @@ class ShelfTexturePacker(
         val totalArea = atlasSize.width.toDouble() * atlasSize.height
         return if (totalArea > 0) (usedArea / totalArea).toFloat() else 0f
     }
-    
+
     /**
      * Represents a horizontal shelf in the atlas
      */
@@ -138,20 +140,20 @@ class ShelfTexturePacker(
         private val atlasWidth: Int
     ) {
         private var currentX = 0
-        
+
         /**
          * Try to fit an image in this shelf
          */
         fun tryFit(imageSize: IntSize): Position? {
             if (imageSize.height > height) return null
             if (currentX + imageSize.width > atlasWidth) return null
-            
+
             val position = Position(currentX, y)
             currentX += imageSize.width
             return position
         }
     }
-    
+
     /**
      * Position within the atlas
      */
@@ -161,10 +163,11 @@ class ShelfTexturePacker(
 /**
  * Input image to be packed
  */
-data class ImageToPack(
-    val id: String,
-    val size: IntSize
-)
+@JvmInline
+value class ImageToPack(val media: ProcessedPhoto) {
+    val id get() = media.id
+    val size get() = media.scaledSize
+}
 
 /**
  * Result of packing operation
@@ -179,7 +182,7 @@ data class PackResult(
  * Successfully packed image with position in atlas
  */
 data class PackedImage(
-    val id: String,
+    val id: Uri,
     val rect: Rect,
     val originalSize: IntSize
 )
