@@ -229,6 +229,12 @@ class AtlasManager @Inject constructor(
                 true
             }
             
+            // Atlas bitmap has been recycled (app restoration scenario)
+            currentAtlas?.bitmap?.isRecycled == true -> {
+                Log.d(TAG, "shouldRegenerateAtlas: Atlas bitmap is recycled, need to regenerate")
+                true
+            }
+            
             // Cell set has changed (different visible cells)
             currentCellIds != cellSetKey -> {
                 Log.d(TAG, "shouldRegenerateAtlas: Cell set changed, need to regenerate")
