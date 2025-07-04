@@ -64,19 +64,22 @@ class AtlasGenerator @Inject constructor(
                 // Check for cancellation before processing each photo
                 currentCoroutineContext().ensureActive()
 
-                try {
-                    val processed = photoLODProcessor.processPhotoForLOD(uri, lodLevel, scaleStrategy)
-                    if (processed != null) {
-                        processedPhotos.add(processed)
-                    } else {
+                runCatching {
+                    photoLODProcessor.processPhotoForLOD(uri, lodLevel, scaleStrategy)
+                }.fold(
+                    onSuccess = { processed ->
+                        if (processed != null) {
+                            processedPhotos.add(processed)
+                        } else {
+                            failed.add(uri)
+                        }
+                    },
+                    onFailure = { e ->
+                        Log.e("AtlasGenerator", "Failed to process photo: $uri", e)
                         failed.add(uri)
+                        if (e is CancellationException) throw e
                     }
-                } catch (e: Exception) {
-                    // Log error and add to failed list
-                    Log.e("AtlasGenerator", "Failed to process photo: $uri", e)
-                    failed.add(uri)
-                    if (e is CancellationException) throw e
-                }
+                )
             }
         }
 
