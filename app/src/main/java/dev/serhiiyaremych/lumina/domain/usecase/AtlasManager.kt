@@ -53,8 +53,29 @@ class AtlasManager @Inject constructor(
     private var currentLODLevel: LODLevel = LODLevel.LEVEL_2
     private var lastReportedZoom: Float = 1.0f
     
-    // Generation ID counter for preventing stale results
-    private var generationIdCounter: Long = 0
+    /**
+     * Atlas Request Sequence Counter - Race Condition Protection
+     * 
+     * This monotonically increasing sequence number ensures "latest wins" semantics
+     * when multiple atlas generation requests happen in rapid succession.
+     * 
+     * Problem: When users zoom/pan quickly, multiple coroutines can be launched.
+     * Even with job.cancel(), some may complete due to:
+     * - Timing edge cases where cancellation happens too late
+     * - CPU-intensive atlas generation between suspension points  
+     * - Non-cooperative code that doesn't check for cancellation
+     * 
+     * Solution: Each request gets a unique, increasing sequence number.
+     * The UI only accepts results with sequence numbers higher than the current one,
+     * automatically ignoring any stale/out-of-order completions.
+     * 
+     * Example:
+     * - Request A (seq=1) starts, user zooms again
+     * - Request B (seq=2) starts, A gets cancelled  
+     * - If A somehow completes first: A ignored (1 < 2), B updates UI
+     * - Normal case: B completes, updates UI, A is already cancelled
+     */
+    private var atlasRequestSequence: Long = 0
     
     // Mutex for atomic atlas state updates
     private val atlasMutex = Mutex()
@@ -69,11 +90,11 @@ class AtlasManager @Inject constructor(
         marginRings: Int = DEFAULT_MARGIN_RINGS
     ): AtlasUpdateResult = trace(BenchmarkLabels.ATLAS_MANAGER_UPDATE_VISIBLE_CELLS) {
         withContext(Dispatchers.Default) {
-            // Generate unique ID for this request
-            val generationId = ++generationIdCounter
+            // Generate unique sequence number for this atlas request
+            val requestSequence = ++atlasRequestSequence
             
             try {
-                Log.d(TAG, "updateVisibleCells: ${visibleCells.size} cells, zoom=$currentZoom, generationId=$generationId")
+                Log.d(TAG, "updateVisibleCells: ${visibleCells.size} cells, zoom=$currentZoom, requestSequence=$requestSequence")
 
                 val lodLevel = trace(BenchmarkLabels.ATLAS_MANAGER_SELECT_LOD_LEVEL) {
                     selectLODLevel(currentZoom)
@@ -83,12 +104,12 @@ class AtlasManager @Inject constructor(
 
                 val cellSetKey = generateCellSetKey(expandedCells, lodLevel)
 
-                if (shouldRegenerateAtlas(cellSetKey, lodLevel, currentZoom)) {
-                    Log.d(TAG, "Regenerating atlas for ${expandedCells.size} cells at $lodLevel")
+                // Caller already verified regeneration is needed, proceed directly
+                Log.d(TAG, "Regenerating atlas for ${expandedCells.size} cells at $lodLevel")
 
-                    val (atlasResult, duration) = trace(BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS) {
-                        measureTimedValue { generateAtlasForCells(expandedCells, lodLevel) }
-                    }
+                val (atlasResult, duration) = trace(BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS) {
+                    measureTimedValue { generateAtlasForCells(expandedCells, lodLevel) }
+                }
 
                 if (atlasResult.atlas != null) {
                     // Atomically replace atlas state to prevent race conditions
@@ -112,18 +133,14 @@ class AtlasManager @Inject constructor(
                         "Atlas partial success ${duration.inWholeMilliseconds}ms: ${atlasResult.atlas.regions.size} regions, ${atlasResult.failed.size} failed"
                     }
                     Log.d(TAG, message)
-                    AtlasUpdateResult.Success(atlasResult.atlas, generationId)
-                    } else {
-                        Log.w(TAG, "Atlas generation failed completely: ${atlasResult.failed.size} failed photos")
-                        AtlasUpdateResult.GenerationFailed("Atlas generation failed completely", generationId)
-                    }
+                    AtlasUpdateResult.Success(atlasResult.atlas, requestSequence)
                 } else {
-                    Log.d(TAG, "Using existing atlas (no regeneration needed)")
-                    AtlasUpdateResult.Success(currentAtlas!!, generationId)
+                    Log.w(TAG, "Atlas generation failed completely: ${atlasResult.failed.size} failed photos")
+                    AtlasUpdateResult.GenerationFailed("Atlas generation failed completely", requestSequence)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error updating visible cells", e)
-                AtlasUpdateResult.Error(e, generationId)
+                AtlasUpdateResult.Error(e, requestSequence)
             }
         }
     }
@@ -146,6 +163,23 @@ class AtlasManager @Inject constructor(
      * Check if atlas is available and ready for rendering.
      */
     suspend fun hasAtlas(): Boolean = atlasMutex.withLock { currentAtlas != null }
+
+    /**
+     * Check if atlas regeneration is needed without launching coroutine.
+     * This is a synchronous check that can be called from UI thread to avoid
+     * unnecessary coroutine launches.
+     */
+    fun shouldRegenerateAtlas(
+        visibleCells: List<HexCellWithMedia>,
+        currentZoom: Float,
+        marginRings: Int = DEFAULT_MARGIN_RINGS
+    ): Boolean {
+        val lodLevel = selectLODLevel(currentZoom)
+        val expandedCells = expandCellsByRings(visibleCells, marginRings)
+        val cellSetKey = generateCellSetKey(expandedCells, lodLevel)
+        
+        return isRegenerationNeeded(cellSetKey, lodLevel, currentZoom)
+    }
 
     /**
      * Clear current atlas and free memory.
@@ -183,7 +217,7 @@ class AtlasManager @Inject constructor(
         return cells.map { "${it.hexCell.q},${it.hexCell.r}-${lodLevel.name}" }.toSet()
     }
 
-    private fun shouldRegenerateAtlas(
+    private fun isRegenerationNeeded(
         cellSetKey: Set<String>,
         lodLevel: LODLevel,
         currentZoom: Float
@@ -237,9 +271,9 @@ class AtlasManager @Inject constructor(
  * Result of atlas update operation.
  */
 sealed class AtlasUpdateResult {
-    abstract val generationId: Long
+    abstract val requestSequence: Long
     
-    data class Success(val atlas: TextureAtlas, override val generationId: Long) : AtlasUpdateResult()
-    data class GenerationFailed(val error: String, override val generationId: Long) : AtlasUpdateResult()
-    data class Error(val exception: Exception, override val generationId: Long) : AtlasUpdateResult()
+    data class Success(val atlas: TextureAtlas, override val requestSequence: Long) : AtlasUpdateResult()
+    data class GenerationFailed(val error: String, override val requestSequence: Long) : AtlasUpdateResult()
+    data class Error(val exception: Exception, override val requestSequence: Long) : AtlasUpdateResult()
 }

@@ -56,8 +56,8 @@ class GalleryViewModel @Inject constructor(
     // Job tracker for atlas generation cancellation
     private var atlasGenerationJob: Job? = null
     
-    // Track current generation ID to prevent stale results
-    private var currentGenerationId: Long = 0
+    // Track current request sequence to prevent stale results  
+    private var currentRequestSequence: Long = 0
 
     init {
         loadMedia()
@@ -96,6 +96,11 @@ class GalleryViewModel @Inject constructor(
      * Cancels any previous atlas generation to prevent race conditions.
      */
     fun onVisibleCellsChanged(visibleCells: List<HexCellWithMedia>, currentZoom: Float) {
+        // Check if regeneration is needed before launching coroutine
+        if (!atlasManager.shouldRegenerateAtlas(visibleCells, currentZoom)) {
+            return
+        }
+        
         // Cancel previous atlas generation job if still running
         atlasGenerationJob?.cancel()
         
@@ -105,8 +110,8 @@ class GalleryViewModel @Inject constructor(
                 val result = atlasManager.updateVisibleCells(visibleCells, currentZoom)
                 
                 // Only update UI state if this result is not stale
-                if (result.generationId > currentGenerationId) {
-                    currentGenerationId = result.generationId
+                if (result.requestSequence > currentRequestSequence) {
+                    currentRequestSequence = result.requestSequence
                     _atlasState.value = result
                 }
                 
