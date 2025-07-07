@@ -22,9 +22,10 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.dp
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.Media
-import dev.serhiiyaremych.lumina.domain.usecase.AtlasUpdateResult
+import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
 
 
 @Composable
@@ -33,7 +34,7 @@ fun MediaHexVisualization(
     hexGridRenderer: HexGridRenderer,
     provideZoom: () -> Float,
     provideOffset: () -> Offset,
-    atlasState: AtlasUpdateResult? = null,
+    atlasState: MultiAtlasUpdateResult? = null,
     onMediaClicked: (Media) -> Unit = {},
     onHexCellClicked: (HexCell) -> Unit = {},
     /**
@@ -138,17 +139,14 @@ fun MediaHexVisualization(
 
             geometryReader.debugDrawHexCellBounds(this)
 
-            // Draw media using pre-computed positions (world coordinates, same as before)
             hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
                 hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
-                    // Store world coordinates for hit testing (preserves current approach)
                     geometryReader.storeMediaBounds(
                         media = mediaWithPosition.media,
                         bounds = mediaWithPosition.absoluteBounds, // World coordinates
                         hexCell = hexCellWithMedia.hexCell
                     )
 
-                    // Render from atlas or fallback to colored rectangle
                     drawMediaFromAtlas(
                         media = mediaWithPosition.media,
                         bounds = mediaWithPosition.absoluteBounds,
@@ -160,15 +158,10 @@ fun MediaHexVisualization(
             clickedMedia?.let { media ->
                 geometryReader.getMediaBounds(media)?.let { bounds ->
                     drawRect(
-                        color = Color.Yellow.copy(alpha = 0.5f),
-                        topLeft = bounds.topLeft,
-                        size = bounds.size
-                    )
-                    drawRect(
                         color = Color.Red,
                         topLeft = bounds.topLeft,
                         size = bounds.size,
-                        style = Stroke(width = 4f)
+                        style = Stroke(width = 1.dp.toPx() / zoom)
                     )
                 }
             }
@@ -185,21 +178,8 @@ fun MediaHexVisualization(
                             }
                             close()
                         },
-                        color = Color.Green.copy(alpha = 0.3f),
-                        style = Fill
-                    )
-                    drawPath(
-                        path = Path().apply {
-                            hexCell.vertices.firstOrNull()?.let { first ->
-                                moveTo(first.x, first.y)
-                            }
-                            hexCell.vertices.forEach { vertex ->
-                                lineTo(vertex.x, vertex.y)
-                            }
-                            close()
-                        },
                         color = Color.Green,
-                        style = Stroke(width = 4f)
+                        style = Stroke(width = 1.dp.toPx() / zoom)
                     )
                 }
             }
@@ -242,29 +222,33 @@ private fun calculateVisibleCells(
 private fun DrawScope.drawMediaFromAtlas(
     media: Media,
     bounds: Rect,
-    atlasState: AtlasUpdateResult?
+    atlasState: MultiAtlasUpdateResult?
 ) {
     when (atlasState) {
-        is AtlasUpdateResult.Success -> {
-            // Try to get atlas region for this media
+        is MultiAtlasUpdateResult.Success -> {
+            // Search across all atlases for this photo
             val photoId = media.uri
-            val atlasRegion = atlasState.atlas.regions[photoId]
+            val atlasAndRegion = atlasState.atlases.firstNotNullOfOrNull { atlas ->
+                atlas.regions[photoId]?.let { region ->
+                    atlas to region
+                }
+            }
 
-            if (atlasRegion != null && !atlasState.atlas.bitmap.isRecycled) {
-                // Draw from atlas texture
-                val atlasBitmap = atlasState.atlas.bitmap.asImageBitmap()
+            if (atlasAndRegion != null) {
+                val (foundAtlas, foundRegion) = atlasAndRegion
+                if (!foundAtlas.bitmap.isRecycled) {
+                    // Draw from atlas texture
+                    val atlasBitmap = foundAtlas.bitmap.asImageBitmap()
 
-                // Double-check bitmap is not recycled before drawing
-                if (!atlasState.atlas.bitmap.isRecycled) {
                     drawImage(
                         image = atlasBitmap,
                         srcOffset = androidx.compose.ui.unit.IntOffset(
-                            atlasRegion.atlasRect.left.toInt(),
-                            atlasRegion.atlasRect.top.toInt()
+                            foundRegion.atlasRect.left.toInt(),
+                            foundRegion.atlasRect.top.toInt()
                         ),
                         srcSize = androidx.compose.ui.unit.IntSize(
-                            atlasRegion.atlasRect.width.toInt(),
-                            atlasRegion.atlasRect.height.toInt()
+                            foundRegion.atlasRect.width.toInt(),
+                            foundRegion.atlasRect.height.toInt()
                         ),
                         dstOffset = androidx.compose.ui.unit.IntOffset(
                             bounds.left.toInt(),
@@ -276,11 +260,11 @@ private fun DrawScope.drawMediaFromAtlas(
                         )
                     )
                 } else {
-                    // Bitmap was recycled between checks, fall back to placeholder
+                    // Bitmap was recycled, fall back to placeholder
                     drawPlaceholderRect(media, bounds, Color.Gray)
                 }
             } else {
-                // Fallback: Atlas exists but photo not found in it
+                // Fallback: No atlas contains this photo
                 drawPlaceholderRect(media, bounds, Color.Gray)
             }
         }

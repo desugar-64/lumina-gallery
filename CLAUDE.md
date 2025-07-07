@@ -91,27 +91,85 @@ adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity
 ./gradlew -q installDebug && adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity
 ```
 
+## Project Structure
+
+### Key File Locations
+
+**Main Application:**
+- `app/src/main/java/dev/serhiiyaremych/lumina/MainActivity.kt` - Single activity entry point
+- `app/src/main/java/dev/serhiiyaremych/lumina/LuminaApplication.kt` - Application class with Hilt
+- `app/src/main/java/dev/serhiiyaremych/lumina/di/AppModule.kt` - Hilt dependency injection
+
+**Data Classes (`data/`):**
+- `PhotoScaler.kt` - Hardware-accelerated bitmap scaling
+- `TexturePacker.kt` - Shelf packing algorithm (implements `ShelfTexturePacker` class)
+- `datasource/MediaStoreDataSource.kt` - Real media data from Android MediaStore
+- `datasource/FakeMediaDataSource.kt` - Test data source
+- `repository/MediaRepositoryImpl.kt` - Repository implementation
+
+**Domain Models (`domain/model/`):**
+- `Media.kt` - Core media entity (Image, Video)
+- `TextureAtlas.kt` - Atlas container with bitmap and regions
+- `AtlasRegion.kt` - Individual photo region within atlas
+- `LODLevel.kt` - 6-level LOD system (LEVEL_0 to LEVEL_5)
+- `HexGrid.kt`, `HexGridGenerator.kt` - Hexagonal grid system
+- `HexCellWithMedia.kt` - Hex cell containing grouped media
+
+**Use Cases (`domain/usecase/`):**
+- `EnhancedAtlasGenerator.kt` - **Primary atlas generator** (current system)
+- `DynamicAtlasPool.kt` - Multi-atlas management with 2K/4K/8K support
+- `AtlasManager.kt` - High-level atlas lifecycle coordinator
+- `PhotoLODProcessor.kt` - Photo processing for LOD levels
+- `SmartMemoryManager.kt` - Memory pressure monitoring
+- `DeviceCapabilities.kt` - Device performance detection
+- `AtlasGenerator.kt` - Legacy single-atlas generator (**deprecated**)
+- `GetMediaUseCase.kt`, `GroupMediaUseCase.kt` - Media business logic
+- `GenerateHexGridUseCase.kt`, `GenerateHexGridLayoutUseCase.kt` - Grid generation
+
+**UI Components (`ui/`):**
+- `App.kt` - Main application composable
+- `MediaHexVisualization.kt` - **Primary renderer** for media on hex grid
+- `TransformableContent.kt` - Gesture handling and matrix transformations
+- `GridCanvas.kt` - Custom canvas with optimized drawing
+- `HexGridRenderer.kt`, `GridRenderer.kt` - Grid rendering utilities
+- `GeometryReader.kt` - Hit testing and coordinate mapping
+- `gallery/GalleryViewModel.kt` - Main screen state management
+- `components/MediaPermissionManager.kt` - Permission system
+- `debug/AtlasDebugOverlay.kt` - Atlas visualization for debugging
+
+**Benchmarking:**
+- `benchmark/src/main/java/dev/serhiiyaremych/lumina/benchmark/AtlasPerformanceBenchmark.kt` - Performance testing
+- `common/src/main/java/dev/serhiiyaremych/lumina/common/BenchmarkLabels.kt` - Tracing labels
+
+**Important:** When referencing files in code or documentation, always use the full path from the project root. The data classes are in `data/`, not `data/texture/` or similar subdirectories.
+
 ## Architecture Details
 
 ### Clean Architecture Layers
 
 The app follows Clean Architecture principles with clear separation of concerns:
 
-1. **Domain Layer** (`domain/`):
-   - `model/`: Core entities (Media, HexGrid, HexGridGenerator)
+1. **Domain Layer** (`app/src/main/java/dev/serhiiyaremych/lumina/domain/`):
+   - `model/`: Core entities (Media, HexGrid, HexGridGenerator, TextureAtlas, AtlasRegion, LODLevel, HexCellWithMedia)
    - `repository/`: Abstract repository interfaces (MediaRepository)
-   - `usecase/`: Business logic (GetMediaUseCase, GroupMediaUseCase, GenerateHexGridUseCase, GetHexGridParametersUseCase)
+   - `usecase/`: Business logic and atlas system components:
+     - **Core Use Cases**: GetMediaUseCase, GroupMediaUseCase, GenerateHexGridUseCase, GenerateHexGridLayoutUseCase, GetHexGridParametersUseCase
+     - **Atlas System**: EnhancedAtlasGenerator, DynamicAtlasPool, AtlasManager, PhotoLODProcessor, SmartMemoryManager, DeviceCapabilities
+     - **Legacy**: AtlasGenerator (deprecated), EnhancedAtlasAdapter (compatibility)
 
-2. **Data Layer** (`data/`):
-   - `datasource/`: Data source implementations (currently FakeMediaDataSource)
+2. **Data Layer** (`app/src/main/java/dev/serhiiyaremych/lumina/data/`):
+   - `datasource/`: Data source implementations (FakeMediaDataSource, MediaStoreDataSource)
    - `repository/`: Repository implementations (MediaRepositoryImpl)
+   - **Atlas Support**: PhotoScaler (hardware-accelerated scaling), TexturePacker (shelf packing algorithm)
 
-3. **UI Layer** (`ui/`):
-   - Root composables (App.kt)
-   - Custom UI components (TransformableContent, GridCanvas, HexGridRenderer, MediaHexVisualization)
-   - Permission system (MediaPermissionManager, MediaPermissionFlow)
-   - Feature-specific ViewModels (GalleryViewModel)
-   - Theme system (theme/)
+3. **UI Layer** (`app/src/main/java/dev/serhiiyaremych/lumina/ui/`):
+   - **Root Composables**: App.kt (main application), MainActivity.kt
+   - **Canvas System**: TransformableContent (gesture handling), GridCanvas (optimized drawing), GridRenderer, HexGridRenderer
+   - **Visualization**: MediaHexVisualization (primary renderer), GeometryReader (hit testing), CoordinateTransformUtils
+   - **Components**: MediaPermissionManager, MediaPermissionFlow, PermissionSelectionBottomSheet (permission system)
+   - **Features**: gallery/GalleryViewModel (state management)
+   - **Debug**: debug/AtlasDebugOverlay (atlas visualization)
+   - **Theme**: theme/ (Color, Theme, Type)
 
 ### Dependency Injection with Hilt
 
@@ -128,15 +186,26 @@ The app follows Clean Architecture principles with clear separation of concerns:
 5. **MediaHexVisualization** - Renders media groups on hexagonal grid layout
 6. **GalleryViewModel** - Manages media state and grouping logic using StateFlow
 
-### Texture Atlas System Components
+### Ultra Atlas System Components
 
-The app implements a sophisticated texture atlas system for efficient photo rendering:
+The app implements a sophisticated multi-atlas texture system for efficient photo rendering with 6-level LOD support:
 
-7. **PhotoScaler** - Hardware-accelerated bitmap scaling using bilinear filtering
-8. **PhotoLODProcessor** - Processes photos for Level-of-Detail (LOD) atlas system
-9. **TexturePacker** - Shelf packing algorithm for efficient atlas generation
-10. **AtlasGenerator** - Coordinates photo processing and packing into complete texture atlases
-11. **TextureAtlas, AtlasRegion, LODLevel** - Core data models for atlas system
+**Core Atlas Components:**
+7. **PhotoScaler** (`data/PhotoScaler.kt`) - Hardware-accelerated bitmap scaling using bilinear filtering
+8. **PhotoLODProcessor** (`domain/usecase/PhotoLODProcessor.kt`) - Processes photos for Level-of-Detail (LOD) atlas system
+9. **TexturePacker** (`data/TexturePacker.kt`) - Shelf packing algorithm for efficient atlas generation (renamed from ShelfTexturePacker)
+10. **TextureAtlas, AtlasRegion, LODLevel** (`domain/model/`) - Core data models for atlas system
+
+**Multi-Atlas System:**
+11. **EnhancedAtlasGenerator** (`domain/usecase/EnhancedAtlasGenerator.kt`) - Primary atlas generation coordinator using multi-atlas system
+12. **DynamicAtlasPool** (`domain/usecase/DynamicAtlasPool.kt`) - Manages multiple atlas sizes (2K/4K/8K) based on device capabilities
+13. **AtlasManager** (`domain/usecase/AtlasManager.kt`) - High-level atlas lifecycle management with LOD transitions
+14. **SmartMemoryManager** (`domain/usecase/SmartMemoryManager.kt`) - Memory pressure monitoring and emergency cleanup
+15. **DeviceCapabilities** (`domain/usecase/DeviceCapabilities.kt`) - Device-aware atlas size selection and performance tier detection
+
+**Legacy Components (Deprecated):**
+16. **AtlasGenerator** (`domain/usecase/AtlasGenerator.kt`) - Original single-atlas generator (deprecated, replaced by EnhancedAtlasGenerator)
+17. **EnhancedAtlasAdapter** (`domain/usecase/EnhancedAtlasAdapter.kt`) - Compatibility adapter for migration (may be deprecated soon)
 
 ### Performance Optimizations & Instrumentation
 

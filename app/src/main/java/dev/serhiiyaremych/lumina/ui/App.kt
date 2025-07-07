@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -14,7 +13,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -26,10 +24,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.ui.components.MediaPermissionFlow
-import dev.serhiiyaremych.lumina.ui.debug.AtlasDebugOverlay
-import dev.serhiiyaremych.lumina.ui.debug.AtlasGenerationStatusOverlay
+import dev.serhiiyaremych.lumina.ui.debug.EnhancedDebugOverlay
 import dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel
 import dev.serhiiyaremych.lumina.ui.theme.LuminaGalleryTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -46,7 +44,6 @@ import kotlinx.coroutines.launch
  * @param modifier Compose modifier for layout
  * @param galleryViewModel Gallery view model instance (passed from MainActivity)
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(
     modifier: Modifier = Modifier,
@@ -60,6 +57,7 @@ fun App(
         val hexGridLayout by galleryViewModel.hexGridLayoutState.collectAsState()
         val atlasState by galleryViewModel.atlasState.collectAsState()
         val isAtlasGenerating by galleryViewModel.isAtlasGenerating.collectAsState()
+        val memoryStatus by galleryViewModel.memoryStatus.collectAsState()
         val density = LocalDensity.current
 
         // Permission state management
@@ -207,19 +205,13 @@ fun App(
                         }
                     }
 
-                    // Debug: Atlas state visualization
-                    AtlasDebugOverlay(
+                    // Enhanced debug overlay with toggle button and comprehensive information
+                    EnhancedDebugOverlay(
                         atlasState = atlasState,
                         isAtlasGenerating = isAtlasGenerating,
                         currentZoom = transformableState.zoom,
-                        modifier = Modifier.align(Alignment.TopEnd)
-                    )
-
-                    // Debug: Atlas generation status with LOD level
-                    AtlasGenerationStatusOverlay(
-                        isAtlasGenerating = isAtlasGenerating,
-                        currentZoom = transformableState.zoom,
-                        modifier = Modifier.align(Alignment.TopCenter)
+                        memoryStatus = memoryStatus,
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
             } else {

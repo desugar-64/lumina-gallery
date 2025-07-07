@@ -9,7 +9,7 @@ import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.domain.model.HexGridLayout
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.usecase.AtlasManager
-import dev.serhiiyaremych.lumina.domain.usecase.AtlasUpdateResult
+import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
 import dev.serhiiyaremych.lumina.domain.usecase.GenerateHexGridLayoutUseCase
 import dev.serhiiyaremych.lumina.domain.usecase.GetMediaUseCase
 import dev.serhiiyaremych.lumina.domain.usecase.GroupMediaUseCase
@@ -17,6 +17,7 @@ import dev.serhiiyaremych.lumina.domain.usecase.GroupingPeriod
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,12 +50,15 @@ class GalleryViewModel @Inject constructor(
     private val _hexGridLayoutState = MutableStateFlow<HexGridLayout?>(null)
     val hexGridLayoutState: StateFlow<HexGridLayout?> = _hexGridLayoutState.asStateFlow()
 
-    private val _atlasState = MutableStateFlow<AtlasUpdateResult?>(null)
-    val atlasState: StateFlow<AtlasUpdateResult?> = _atlasState.asStateFlow()
+    private val _atlasState = MutableStateFlow<MultiAtlasUpdateResult?>(null)
+    val atlasState: StateFlow<MultiAtlasUpdateResult?> = _atlasState.asStateFlow()
 
     // Atlas generation state for benchmarking
     private val _isAtlasGenerating = MutableStateFlow(false)
     val isAtlasGenerating: StateFlow<Boolean> = _isAtlasGenerating.asStateFlow()
+
+    private val _memoryStatus = MutableStateFlow<dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager.MemoryStatus?>(null)
+    val memoryStatus: StateFlow<dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager.MemoryStatus?> = _memoryStatus.asStateFlow()
 
     // Job tracker for atlas generation cancellation
     private var atlasGenerationJob: Job? = null
@@ -66,6 +70,17 @@ class GalleryViewModel @Inject constructor(
 
     init {
         loadMedia()
+        
+        // Initialize memory status
+        updateMemoryStatus()
+
+        // Periodic memory status updates for debug overlay responsiveness
+        viewModelScope.launch {
+            while (true) {
+                delay(500) // Update every 500ms when debug panel might be visible
+                updateMemoryStatus()
+            }
+        }
 
         viewModelScope.launch {
             updateAtlasFlow
@@ -94,6 +109,9 @@ class GalleryViewModel @Inject constructor(
                                 )
                                 currentRequestSequence = result.requestSequence
                                 _atlasState.value = result
+                                
+                                // Update memory status immediately after atlas state change
+                                updateMemoryStatus()
                             } else {
                                 android.util.Log.d(
                                     "GalleryViewModel",
@@ -104,10 +122,16 @@ class GalleryViewModel @Inject constructor(
                         onFailure = { e ->
                             android.util.Log.e("GalleryViewModel", "Atlas generation failed", e)
                             if (e is CancellationException) throw e
+                            
+                            // Update memory status even on failure to reflect current state
+                            updateMemoryStatus()
                         }
                     )
                     
                     _isAtlasGenerating.value = false
+                    
+                    // Final memory status update after generation completes
+                    updateMemoryStatus()
                 }
         }
     }
@@ -150,6 +174,23 @@ class GalleryViewModel @Inject constructor(
     ) {
         android.util.Log.d("GalleryViewModel", "onVisibleCellsChanged: ${visibleCells.size} cells, zoom=$currentZoom")
         updateAtlasFlow.value = Pair(visibleCells, currentZoom)
+        
+        // Update memory status for debug panel
+        updateMemoryStatus()
+    }
+
+    /**
+     * Update memory status from atlas manager.
+     */
+    private fun updateMemoryStatus() {
+        _memoryStatus.value = atlasManager.getMemoryStatus()
+    }
+
+    /**
+     * Manually refresh memory status (for debug purposes).
+     */
+    fun refreshMemoryStatus() {
+        updateMemoryStatus()
     }
 
     /**

@@ -26,13 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import kotlinx.coroutines.launch
 import kotlin.math.min
 
-private const val MIN_ZOOM = 0.1f
-private const val MAX_ZOOM = 10f
+// Import zoom constants from shared location
+import dev.serhiiyaremych.lumina.ui.ZoomConstants.MIN_ZOOM
+import dev.serhiiyaremych.lumina.ui.ZoomConstants.MAX_ZOOM
 
 private data class TransformValues(val zoom: Float, val offset: Offset)
 
@@ -244,7 +244,7 @@ fun TransformableContent(
                                 val wasZoomClamped = state.updateMatrix {
                                     postScale(zoom, zoom, centroid.x, centroid.y)
                                 }
-                                
+
                                 // Only apply pan if zoom wasn't clamped
                                 if (!wasZoomClamped) {
                                     state.updateMatrix {

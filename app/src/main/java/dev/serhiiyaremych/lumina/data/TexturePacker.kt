@@ -66,6 +66,8 @@ class ShelfTexturePacker(
 
         // Check if image fits in atlas at all
         if (imageWithPadding.width > atlasSize.width || imageWithPadding.height > atlasSize.height) {
+            android.util.Log.w("TexturePacker", 
+                "Photo ${image.id} too large for atlas: ${imageWithPadding.width}x${imageWithPadding.height} > ${atlasSize.width}x${atlasSize.height}")
             return null
         }
 
@@ -115,8 +117,13 @@ class ShelfTexturePacker(
                     originalSize = image.size
                 )
             }
+        } else {
+            android.util.Log.w("TexturePacker", 
+                "Photo ${image.id} cannot fit: need shelf height ${imageWithPadding.height} but only ${atlasSize.height - nextShelfY} available")
         }
 
+        android.util.Log.w("TexturePacker", 
+            "Photo ${image.id} failed to pack in ${atlasSize.width}x${atlasSize.height} atlas with ${shelves.size} shelves")
         return null
     }
 

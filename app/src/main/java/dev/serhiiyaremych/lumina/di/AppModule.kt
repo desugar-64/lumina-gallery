@@ -11,10 +11,13 @@ import dev.serhiiyaremych.lumina.data.datasource.MediaDataSource
 import dev.serhiiyaremych.lumina.data.datasource.MediaStoreDataSource
 import dev.serhiiyaremych.lumina.data.repository.MediaRepositoryImpl
 import dev.serhiiyaremych.lumina.domain.repository.MediaRepository
-import dev.serhiiyaremych.lumina.domain.usecase.AtlasGenerator
 import dev.serhiiyaremych.lumina.domain.usecase.AtlasManager
+import dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities
+import dev.serhiiyaremych.lumina.domain.usecase.DynamicAtlasPool
+import dev.serhiiyaremych.lumina.domain.usecase.EnhancedAtlasGenerator
 import dev.serhiiyaremych.lumina.domain.usecase.GetMediaUseCase
 import dev.serhiiyaremych.lumina.domain.usecase.PhotoLODProcessor
+import dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import javax.inject.Singleton
@@ -56,11 +59,8 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideAtlasGenerator(photoLODProcessor: PhotoLODProcessor): AtlasGenerator = AtlasGenerator(photoLODProcessor)
-
-    @Singleton
-    @Provides
     fun provideAtlasManager(
-        atlasGenerator: AtlasGenerator
-    ): AtlasManager = AtlasManager(atlasGenerator)
+        enhancedAtlasGenerator: EnhancedAtlasGenerator,
+        smartMemoryManager: SmartMemoryManager
+    ): AtlasManager = AtlasManager(enhancedAtlasGenerator, smartMemoryManager)
 }

@@ -84,20 +84,20 @@ class MediaStoreDataSource @Inject constructor(
                         )
                     )
                 } else if (mediaType == MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO) {
-                    val duration = cursor.getLong(durationColumn)
-                    media.add(
-                        Media.Video(
-                            id = id,
-                            uri = uri,
-                            path = path,
-                            displayName = displayName,
-                            dateAdded = dateAdded,
-                            size = size,
-                            width = width,
-                            height = height,
-                            duration = duration
-                        )
-                    )
+//                    val duration = cursor.getLong(durationColumn)
+//                    media.add(
+//                        Media.Video(
+//                            id = id,
+//                            uri = uri,
+//                            path = path,
+//                            displayName = displayName,
+//                            dateAdded = dateAdded,
+//                            size = size,
+//                            width = width,
+//                            height = height,
+//                            duration = duration
+//                        )
+//                    )
                 }
             }
         }
