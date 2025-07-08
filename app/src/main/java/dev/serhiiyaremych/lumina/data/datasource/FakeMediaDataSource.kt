@@ -19,6 +19,7 @@ class FakeMediaDataSource : MediaDataSource {
             val displayName = if (isImage) "Image_$i.jpg" else "Video_$i.mp4"
             val path = "/storage/emulated/0/DCIM/Camera/$displayName"
             val date = System.currentTimeMillis() - Random.nextLong(1000L * 60 * 60 * 24 * 365) // within last year
+            val dateModified = date + Random.nextLong(1000L * 60 * 60 * 24 * 30) // up to 30 days after creation
 
             if (isImage) {
                 Media.Image(
@@ -27,6 +28,7 @@ class FakeMediaDataSource : MediaDataSource {
                     path = path,
                     displayName = displayName,
                     dateAdded = date,
+                    dateModified = dateModified,
                     size = Random.nextLong(1_000_000, 5_000_000), // 1-5 MB
                     width = Random.nextInt(1080, 4032),
                     height = Random.nextInt(1080, 4032)
@@ -38,6 +40,7 @@ class FakeMediaDataSource : MediaDataSource {
                     path = path,
                     displayName = displayName,
                     dateAdded = date,
+                    dateModified = dateModified,
                     size = Random.nextLong(5_000_000, 50_000_000), // 5-50 MB
                     width = 1920,
                     height = 1080,

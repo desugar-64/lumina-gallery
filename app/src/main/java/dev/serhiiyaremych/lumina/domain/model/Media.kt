@@ -8,6 +8,7 @@ sealed class Media(
     open val path: String,
     open val displayName: String,
     open val dateAdded: Long,
+    open val dateModified: Long,
     open val size: Long,
     open val width: Int,
     open val height: Int
@@ -18,10 +19,11 @@ sealed class Media(
         override val path: String,
         override val displayName: String,
         override val dateAdded: Long,
+        override val dateModified: Long,
         override val size: Long,
         override val width: Int,
         override val height: Int
-    ) : Media(id, uri, path, displayName, dateAdded, size, width, height)
+    ) : Media(id, uri, path, displayName, dateAdded, dateModified, size, width, height)
 
     data class Video(
         override val id: Long,
@@ -29,9 +31,10 @@ sealed class Media(
         override val path: String,
         override val displayName: String,
         override val dateAdded: Long,
+        override val dateModified: Long,
         override val size: Long,
         override val width: Int,
         override val height: Int,
         val duration: Long
-    ) : Media(id, uri, path, displayName, dateAdded, size, width, height)
+    ) : Media(id, uri, path, displayName, dateAdded, dateModified, size, width, height)
 }

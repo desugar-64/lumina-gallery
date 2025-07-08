@@ -16,16 +16,16 @@ class GroupMediaUseCase @Inject constructor() {
         period: GroupingPeriod = GroupingPeriod.DAILY
     ): Map<LocalDate, List<Media>> = when (period) {
         GroupingPeriod.DAILY -> mediaList.groupBy {
-            Instant.ofEpochMilli(it.dateAdded).atZone(ZoneId.systemDefault()).toLocalDate()
+            Instant.ofEpochMilli(it.dateModified).atZone(ZoneId.systemDefault()).toLocalDate()
         }
 
         GroupingPeriod.WEEKLY -> mediaList.groupBy {
-            val date = Instant.ofEpochMilli(it.dateAdded).atZone(ZoneId.systemDefault()).toLocalDate()
+            val date = Instant.ofEpochMilli(it.dateModified).atZone(ZoneId.systemDefault()).toLocalDate()
             date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
         }
 
         GroupingPeriod.MONTHLY -> mediaList.groupBy {
-            val date = Instant.ofEpochMilli(it.dateAdded).atZone(ZoneId.systemDefault()).toLocalDate()
+            val date = Instant.ofEpochMilli(it.dateModified).atZone(ZoneId.systemDefault()).toLocalDate()
             date.withDayOfMonth(1)
         }
     }

@@ -21,6 +21,7 @@ class MediaStoreDataSource @Inject constructor(
             MediaStore.Files.FileColumns.DISPLAY_NAME,
             MediaStore.Files.FileColumns.DATA,
             MediaStore.Files.FileColumns.DATE_ADDED,
+            MediaStore.Files.FileColumns.DATE_MODIFIED,
             MediaStore.Files.FileColumns.MEDIA_TYPE,
             MediaStore.Files.FileColumns.MIME_TYPE,
             MediaStore.Files.FileColumns.SIZE,
@@ -53,6 +54,7 @@ class MediaStoreDataSource @Inject constructor(
             val displayNameColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DISPLAY_NAME)
             val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA)
             val dateAddedColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATE_ADDED)
+            val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATE_MODIFIED)
             val mediaTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MEDIA_TYPE)
             val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.SIZE)
             val widthColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.WIDTH)
@@ -65,6 +67,7 @@ class MediaStoreDataSource @Inject constructor(
                 val uri = MediaStore.Files.getContentUri("external", id)
                 val displayName = cursor.getString(displayNameColumn)
                 val dateAdded = cursor.getLong(dateAddedColumn) * 1000
+                val dateModified = cursor.getLong(dateModifiedColumn) * 1000
                 val size = cursor.getLong(sizeColumn)
                 val width = cursor.getInt(widthColumn)
                 val height = cursor.getInt(heightColumn)
@@ -78,6 +81,7 @@ class MediaStoreDataSource @Inject constructor(
                             path = path,
                             displayName = displayName,
                             dateAdded = dateAdded,
+                            dateModified = dateModified,
                             size = size,
                             width = width,
                             height = height
