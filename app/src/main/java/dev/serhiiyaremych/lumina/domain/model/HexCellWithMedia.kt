@@ -54,13 +54,15 @@ data class HexCellWithMedia(
  * @property size Computed size maintaining aspect ratio
  * @property absoluteBounds Absolute bounds in world coordinates for hit testing
  * @property seed Random seed used for positioning (for consistency)
+ * @property rotationAngle Rotation angle in degrees for realistic scattered photo effect
  */
 data class MediaWithPosition(
     val media: Media,
     val relativePosition: Offset,
     val size: Size,
     val absoluteBounds: Rect,
-    val seed: Int
+    val seed: Int,
+    val rotationAngle: Float = 0f
 ) {
     /**
      * Aspect ratio of the media item

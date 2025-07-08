@@ -18,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
@@ -148,7 +147,9 @@ fun MediaHexVisualization(
                     drawMediaFromAtlas(
                         media = mediaWithPosition.media,
                         bounds = mediaWithPosition.absoluteBounds,
-                        atlasState = atlasState
+                        rotationAngle = mediaWithPosition.rotationAngle,
+                        atlasState = atlasState,
+                        zoom = zoom
                     )
                     geometryReader.debugDrawBounds(this, zoom)
                 }
@@ -221,76 +222,186 @@ private fun calculateVisibleCells(
 private fun DrawScope.drawMediaFromAtlas(
     media: Media,
     bounds: Rect,
-    atlasState: MultiAtlasUpdateResult?
+    rotationAngle: Float,
+    atlasState: MultiAtlasUpdateResult?,
+    zoom: Float
 ) {
-    when (atlasState) {
-        is MultiAtlasUpdateResult.Success -> {
-            // Search across all atlases for this photo
-            val photoId = media.uri
-            val atlasAndRegion = atlasState.atlases.firstNotNullOfOrNull { atlas ->
-                atlas.regions[photoId]?.let { region ->
-                    atlas to region
+    // Calculate rotation center (center of the media bounds)
+    val center = bounds.center
+
+    // Apply rotation transformation around the center
+    withTransform({
+        rotate(rotationAngle, center)
+    }) {
+        when (atlasState) {
+            is MultiAtlasUpdateResult.Success -> {
+                // Search across all atlases for this photo
+                val photoId = media.uri
+                val atlasAndRegion = atlasState.atlases.firstNotNullOfOrNull { atlas ->
+                    atlas.regions[photoId]?.let { region ->
+                        atlas to region
+                    }
                 }
-            }
 
-            if (atlasAndRegion != null) {
-                val (foundAtlas, foundRegion) = atlasAndRegion
-                if (!foundAtlas.bitmap.isRecycled) {
-                    // Draw from atlas texture
-                    val atlasBitmap = foundAtlas.bitmap.asImageBitmap()
+                if (atlasAndRegion != null) {
+                    val (foundAtlas, foundRegion) = atlasAndRegion
+                    if (!foundAtlas.bitmap.isRecycled) {
+                        // Draw from atlas texture with photo styling
+                        val atlasBitmap = foundAtlas.bitmap.asImageBitmap()
 
-                    drawImage(
-                        image = atlasBitmap,
-                        srcOffset = androidx.compose.ui.unit.IntOffset(
-                            foundRegion.atlasRect.left.toInt(),
-                            foundRegion.atlasRect.top.toInt()
-                        ),
-                        srcSize = androidx.compose.ui.unit.IntSize(
-                            foundRegion.atlasRect.width.toInt(),
-                            foundRegion.atlasRect.height.toInt()
-                        ),
-                        dstOffset = androidx.compose.ui.unit.IntOffset(
-                            bounds.left.toInt(),
-                            bounds.top.toInt()
-                        ),
-                        dstSize = androidx.compose.ui.unit.IntSize(
-                            bounds.width.toInt(),
-                            bounds.height.toInt()
+                        drawStyledPhoto(
+                            image = atlasBitmap,
+                            srcOffset = androidx.compose.ui.unit.IntOffset(
+                                foundRegion.atlasRect.left.toInt(),
+                                foundRegion.atlasRect.top.toInt()
+                            ),
+                            srcSize = androidx.compose.ui.unit.IntSize(
+                                foundRegion.atlasRect.width.toInt(),
+                                foundRegion.atlasRect.height.toInt()
+                            ),
+                            bounds = bounds,
+                            zoom = zoom
                         )
-                    )
+                    } else {
+                        // Bitmap was recycled, fall back to placeholder
+                        drawPlaceholderRect(media, bounds, Color.Gray, zoom)
+                    }
                 } else {
-                    // Bitmap was recycled, fall back to placeholder
-                    drawPlaceholderRect(media, bounds, Color.Gray)
+                    // Fallback: No atlas contains this photo
+                    drawPlaceholderRect(media, bounds, Color.Gray, zoom)
                 }
-            } else {
-                // Fallback: No atlas contains this photo
-                drawPlaceholderRect(media, bounds, Color.Gray)
             }
-        }
-        else -> {
-            // Fallback: No atlas available, draw colored rectangle
-            drawPlaceholderRect(media, bounds)
+
+            else -> {
+                // Fallback: No atlas available, draw colored rectangle
+                drawPlaceholderRect(media, bounds, zoom = zoom)
+            }
         }
     }
 }
 
 /**
- * Draws a colored placeholder rectangle for media.
+ * Draws a styled placeholder for media with same physical photo appearance.
  */
 private fun DrawScope.drawPlaceholderRect(
     media: Media,
     bounds: Rect,
-    overrideColor: Color? = null
+    overrideColor: Color? = null,
+    zoom: Float = 1f
 ) {
     val color = overrideColor ?: when (media) {
         is Media.Image -> Color(0xFF2196F3)
         is Media.Video -> Color(0xFF4CAF50)
     }
 
-    drawRect(
-        color = color,
+    val borderWidth = 2.dp.toPx()
+    val cornerRadius = 3.dp.toPx()
+    val shadowOffset = 1.dp.toPx()
+
+    // 1. Draw subtle contact shadow
+    drawRoundRect(
+        color = Color.Black.copy(alpha = 0.15f),
+        topLeft = bounds.topLeft + Offset(shadowOffset, shadowOffset),
+        size = bounds.size,
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius)
+    )
+
+    // 2. Draw white border (photo background)
+    drawRoundRect(
+        color = Color.White,
         topLeft = bounds.topLeft,
-        size = bounds.size
+        size = bounds.size,
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius)
+    )
+
+    // 3. Draw the colored placeholder within the border
+    val imageArea = Rect(
+        left = bounds.left + borderWidth,
+        top = bounds.top + borderWidth,
+        right = bounds.right - borderWidth,
+        bottom = bounds.bottom - borderWidth
+    )
+
+    drawRoundRect(
+        color = color,
+        topLeft = imageArea.topLeft,
+        size = imageArea.size,
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius - borderWidth)
+    )
+
+    // 4. Draw hairline dark gray border around the entire photo
+    drawRoundRect(
+        color = Color(0xFF666666),
+        topLeft = bounds.topLeft,
+        size = bounds.size,
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius),
+        style = Stroke(width = Stroke.HairlineWidth / zoom)
+    )
+}
+
+/**
+ * Draws a styled photo with realistic physical photo appearance:
+ * - Subtle contact shadow
+ * - White border
+ * - Rounded corners
+ */
+private fun DrawScope.drawStyledPhoto(
+    image: androidx.compose.ui.graphics.ImageBitmap,
+    srcOffset: androidx.compose.ui.unit.IntOffset,
+    srcSize: androidx.compose.ui.unit.IntSize,
+    bounds: Rect,
+    zoom: Float
+) {
+    val borderWidth = 1.dp.toPx()
+    val cornerRadius = 2.dp.toPx()
+    val shadowOffset = 0.5.dp.toPx()
+
+    // 1. Draw subtle contact shadow
+    val extraCorner = 1.2f
+    drawRoundRect(
+        color = Color.Black.copy(alpha = 0.4f),
+        topLeft = bounds.topLeft + Offset(shadowOffset, shadowOffset),
+        size = bounds.size,
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius * extraCorner)
+    )
+
+    // 2. Draw white border (photo background)
+    drawRoundRect(
+        color = Color.White,
+        topLeft = bounds.topLeft,
+        size = bounds.size,
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius),
+    )
+
+    // 3. Draw the actual image within the border
+    val imageArea = Rect(
+        left = bounds.left + borderWidth,
+        top = bounds.top + borderWidth,
+        right = bounds.right - borderWidth,
+        bottom = bounds.bottom - borderWidth
+    )
+
+    drawImage(
+        image = image,
+        srcOffset = srcOffset,
+        srcSize = srcSize,
+        dstOffset = androidx.compose.ui.unit.IntOffset(
+            imageArea.left.toInt(),
+            imageArea.top.toInt()
+        ),
+        dstSize = androidx.compose.ui.unit.IntSize(
+            imageArea.width.toInt(),
+            imageArea.height.toInt()
+        )
+    )
+
+    // 4. Draw hairline dark gray border around the entire photo
+    drawRoundRect(
+        color = Color(0xFF666666),
+        topLeft = bounds.topLeft,
+        size = bounds.size,
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius),
+        style = Stroke(width = Stroke.HairlineWidth / zoom)
     )
 }
 

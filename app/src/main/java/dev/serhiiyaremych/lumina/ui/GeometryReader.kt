@@ -20,7 +20,7 @@ class GeometryReader {
     private val mediaBounds = mutableMapOf<Media, Rect>()
     private val hexCellBounds = mutableMapOf<HexCell, Rect>()
     private val visibleCells = mutableSetOf<HexCell>()
-    var debugMode: DebugMode = DebugMode.BOUNDS
+    var debugMode: DebugMode = DebugMode.NONE
 
     fun storeMediaBounds(media: Media, bounds: Rect, hexCell: HexCell) {
         mediaBounds[media] = bounds

@@ -189,6 +189,9 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         val seed = (media.id + hexCell.q * 1000000 + hexCell.r * 1000).toInt()
         val random = Random(seed)
 
+        // Generate realistic rotation angle based on aspect ratio
+        val rotationAngle = calculateRealisticRotation(random, aspectRatio)
+
         val availableWidth = hexBounds.width - width
         val availableHeight = hexBounds.height - height
 
@@ -237,7 +240,8 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
             relativePosition = relativePosition,
             size = size,
             absoluteBounds = absoluteBounds,
-            seed = seed
+            seed = seed,
+            rotationAngle = rotationAngle
         )
     }
 
@@ -301,6 +305,27 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         )
 
         return adjustedPosition
+    }
+
+    /**
+     * Calculates realistic rotation angle based on aspect ratio.
+     * Portrait photos tend to fall more upright, landscape photos can rotate more.
+     * 
+     * @param random Random generator with consistent seed
+     * @param aspectRatio Aspect ratio of the media (width/height)
+     * @return Rotation angle in degrees (±15° to ±25° based on aspect ratio)
+     */
+    private fun calculateRealisticRotation(random: Random, aspectRatio: Float): Float {
+        val baseRotationRange = 20f // Base ±20° rotation
+        
+        val rotationVariation = when {
+            aspectRatio < 0.8f -> 0.75f  // Portrait photos: more upright (±15°)
+            aspectRatio > 1.3f -> 1.25f  // Landscape photos: can rotate more (±25°)
+            else -> 1.0f                 // Square-ish photos: normal rotation (±20°)
+        }
+        
+        val maxRotation = baseRotationRange * rotationVariation
+        return (random.nextFloat() * 2 - 1) * maxRotation
     }
 
     /**

@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 LuminaGallery is a modern Android Compose application focused on advanced image gallery functionality with sophisticated touch gesture handling. The app uses a single-activity architecture with Jetpack Compose and implements matrix-based transformations for smooth pan, zoom, and scale operations. It features a unique hexagonal grid visualization system for displaying grouped media on a zoomable, pannable canvas.
 
+**Design Philosophy**: The photo layout simulates the natural behavior of physical photos being scattered onto a table surface. Photos are randomly positioned within hexagonal cells with realistic rotation angles, creating a controlled chaos that mimics turning a bag of printed photos upside down. This design balances randomness with organization through cell-based grouping.
+
+**Future Visualization Ideas**: Alternative physical metaphors to explore include corkboard/pin board with photos pinned at slight angles, polaroid stack effects with realistic shadows, magnetic fridge with rounded corners and curling effects, or artist's table with mixed media scattered organically.
+
 ## Key Technologies
 
 - **Jetpack Compose** with Material 3 design system

@@ -17,6 +17,12 @@
 |   ![Hex Grid Visual](image/hex_grid_visual.apng)    |         ![Permissions Demo](image/permissions_demo.apng)         |
 | *Dynamic, zoomable hexagonal grid layout for media* | *Modern Android 14+ permission flow with Limited Access support* |
 
+<div align="center">
+  <img src="image/demo0.png" height="600" />
+  <img src="image/demo1.png" height="600" />
+  <img src="image/demo2.png" height="600" />
+</div>
+
 ---
 
 Lumina is a modern, offline-first Android gallery application designed with a unique and visually rich user experience in mind. It moves beyond traditional grid layouts, leveraging advanced graphics capabilities, custom animations, and a fluid, gesture-based interface. Lumina is built to be a powerful, private, and beautiful home for your local media.
@@ -24,7 +30,7 @@ Lumina is a modern, offline-first Android gallery application designed with a un
 ## ✨ Key Features
 
 -   **🖼️ Real Photo Rendering**: Advanced atlas texture system displaying actual photo thumbnails instead of placeholders, with hardware-accelerated scaling and GPU optimization.
--   **📐 Hexagonal Grid Visualization**: Unique hexagonal grid layout for displaying grouped media on a zoomable, pannable canvas with ring-based generation.
+-   **📐 Hexagonal Grid Visualization**: Unique hexagonal grid layout for displaying grouped media on a zoomable, pannable canvas with ring-based generation. Photos are randomly positioned within cells with realistic rotation angles, simulating the natural behavior of physical photos being scattered onto a table surface.
 -   **⚡ Atlas Texture System**: Sophisticated Level-of-Detail (LOD) rendering with 2048x2048 texture atlases, shelf packing algorithm, smart fallback mechanisms, and comprehensive performance instrumentation.
 -   **🎯 Smart Permissions**: Modern Android 10-15 permission system with transparent support for Android 14+ "Limited Access" mode.
 -   **🔒 Privacy-First**: Respects user choice - works with full library access or selected photos. Your privacy is paramount.

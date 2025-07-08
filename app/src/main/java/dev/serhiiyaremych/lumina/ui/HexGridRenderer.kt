@@ -10,6 +10,7 @@ import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.HexGrid
 
 class HexGridRenderer {
+    val alpha = 0.1f
     fun drawHexGrid(
         drawScope: DrawScope,
         hexGrid: HexGrid,
@@ -18,9 +19,9 @@ class HexGridRenderer {
         showVertices: Boolean = true,
         showCenters: Boolean = true,
         showConnections: Boolean = true,
-        gridColor: Color = Color.Red,
-        centerColor: Color = Color.Blue,
-        vertexColor: Color = Color.Green
+        gridColor: Color = Color.Gray.copy(alpha = alpha),
+        centerColor: Color = Color.Gray.copy(alpha = alpha),
+        vertexColor: Color = Color.Gray.copy(alpha = alpha)
     ) {
         with(drawScope) {
             // Apply zoom and offset transformations
