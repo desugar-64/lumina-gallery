@@ -22,7 +22,9 @@ import javax.inject.Singleton
  * for thumbnail generation in the atlas system.
  */
 @Singleton
-class PhotoScaler @Inject constructor() {
+class PhotoScaler @Inject constructor(
+    private val bitmapPool: BitmapPool
+) {
 
     /**
      * Scales a bitmap to the target size using hardware-accelerated bilinear filtering
@@ -55,14 +57,28 @@ class PhotoScaler @Inject constructor() {
 
     private fun scaleWithAspectRatio(source: Bitmap, targetSize: IntSize): Bitmap {
         return trace(PHOTO_SCALER_CREATE_SCALED_BITMAP) {
-            trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
-                Bitmap.createScaledBitmap(
-                    source,
-                    targetSize.width,
-                    targetSize.height,
-                    true // Enable bilinear filtering for high quality
-                )
+            // Try to get bitmap from pool first
+            val pooledBitmap = bitmapPool.acquire(
+                targetSize.width,
+                targetSize.height,
+                source.config ?: Bitmap.Config.ARGB_8888
+            )
+            
+            // Use Canvas to draw scaled bitmap into pooled bitmap
+            val canvas = android.graphics.Canvas(pooledBitmap)
+            val paint = android.graphics.Paint().apply {
+                isAntiAlias = true
+                isFilterBitmap = true // Enable bilinear filtering
             }
+            
+            canvas.drawBitmap(
+                source,
+                null,
+                android.graphics.RectF(0f, 0f, targetSize.width.toFloat(), targetSize.height.toFloat()),
+                paint
+            )
+            
+            pooledBitmap
         }
     }
 
@@ -88,16 +104,28 @@ class PhotoScaler @Inject constructor() {
             )
         }
 
-        // First scale to intermediate size
+        // First scale to intermediate size using pool
         val scaledBitmap = trace(PHOTO_SCALER_CREATE_SCALED_BITMAP) {
-            trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
-                Bitmap.createScaledBitmap(
-                    source,
-                    intermediateSize.width,
-                    intermediateSize.height,
-                    true // Enable bilinear filtering
-                )
+            val pooledBitmap = bitmapPool.acquire(
+                intermediateSize.width,
+                intermediateSize.height,
+                source.config ?: Bitmap.Config.ARGB_8888
+            )
+            
+            val canvas = android.graphics.Canvas(pooledBitmap)
+            val paint = android.graphics.Paint().apply {
+                isAntiAlias = true
+                isFilterBitmap = true // Enable bilinear filtering
             }
+            
+            canvas.drawBitmap(
+                source,
+                null,
+                android.graphics.RectF(0f, 0f, intermediateSize.width.toFloat(), intermediateSize.height.toFloat()),
+                paint
+            )
+            
+            pooledBitmap
         }
 
         // Then crop to exact target size from center
@@ -105,23 +133,31 @@ class PhotoScaler @Inject constructor() {
         val cropY = (scaledBitmap.height - targetSize.height) / 2
 
         val croppedBitmap = trace(PHOTO_SCALER_CREATE_CROPPED_BITMAP) {
-            trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
-                Bitmap.createBitmap(
-                    scaledBitmap,
-                    cropX,
-                    cropY,
-                    targetSize.width,
-                    targetSize.height
-                )
+            val pooledBitmap = bitmapPool.acquire(
+                targetSize.width,
+                targetSize.height,
+                scaledBitmap.config ?: Bitmap.Config.ARGB_8888
+            )
+            
+            val canvas = android.graphics.Canvas(pooledBitmap)
+            val paint = android.graphics.Paint().apply {
+                isAntiAlias = true
+                isFilterBitmap = true
             }
+            
+            canvas.drawBitmap(
+                scaledBitmap,
+                android.graphics.Rect(cropX, cropY, 
+                    cropX + targetSize.width, cropY + targetSize.height),
+                android.graphics.Rect(0, 0, targetSize.width, targetSize.height),
+                paint
+            )
+            
+            pooledBitmap
         }
 
-        // Clean up intermediate bitmap if different from result
-        if (scaledBitmap != croppedBitmap) {
-            trace(ATLAS_MEMORY_BITMAP_RECYCLE) {
-                scaledBitmap.recycle()
-            }
-        }
+        // Return intermediate bitmap to pool
+        bitmapPool.release(scaledBitmap)
 
         return croppedBitmap
     }
@@ -171,14 +207,26 @@ class PhotoScaler @Inject constructor() {
         val targetHeight = (source.height * scaleFactor).toInt()
 
         return trace(PHOTO_SCALER_CREATE_SCALED_BITMAP) {
-            trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
-                Bitmap.createScaledBitmap(
-                    source,
-                    targetWidth,
-                    targetHeight,
-                    true // Enable bilinear filtering
-                )
+            val pooledBitmap = bitmapPool.acquire(
+                targetWidth,
+                targetHeight,
+                source.config ?: Bitmap.Config.ARGB_8888
+            )
+            
+            val canvas = android.graphics.Canvas(pooledBitmap)
+            val paint = android.graphics.Paint().apply {
+                isAntiAlias = true
+                isFilterBitmap = true // Enable bilinear filtering
             }
+            
+            canvas.drawBitmap(
+                source,
+                null,
+                android.graphics.RectF(0f, 0f, targetWidth.toFloat(), targetHeight.toFloat()),
+                paint
+            )
+            
+            pooledBitmap
         }
     }
 
@@ -210,6 +258,13 @@ class PhotoScaler @Inject constructor() {
         }
 
         return scale(source, targetSize, strategy)
+    }
+    
+    /**
+     * Release a bitmap back to the pool instead of recycling
+     */
+    fun releaseBitmap(bitmap: Bitmap) {
+        bitmapPool.release(bitmap)
     }
 }
 

@@ -6,7 +6,6 @@ import android.graphics.Paint
 import android.net.Uri
 import android.util.Log
 import androidx.compose.ui.unit.IntSize
-import androidx.core.graphics.createBitmap
 import androidx.tracing.trace
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.data.ImageToPack
@@ -23,6 +22,10 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
@@ -41,7 +44,8 @@ import kotlin.coroutines.cancellation.CancellationException
 class DynamicAtlasPool @Inject constructor(
     private val deviceCapabilities: DeviceCapabilities,
     private val smartMemoryManager: SmartMemoryManager,
-    private val photoLODProcessor: PhotoLODProcessor
+    private val photoLODProcessor: PhotoLODProcessor,
+    private val bitmapPool: dev.serhiiyaremych.lumina.data.BitmapPool
 ) {
 
     companion object {
@@ -56,6 +60,26 @@ class DynamicAtlasPool @Inject constructor(
         // Distribution strategy constants
         private const val UTILIZATION_TARGET = 0.9f // Target 90% utilization
         private const val MIN_PHOTOS_PER_ATLAS_DEFAULT = 4 // Default minimum photos to justify an atlas
+    }
+    
+    // Memory pressure monitoring
+    private val memoryPressureScope = CoroutineScope(SupervisorJob())
+    
+    init {
+        // Monitor memory pressure and clean bitmap pool accordingly
+        smartMemoryManager.memoryPressure
+            .onEach { pressureLevel ->
+                when (pressureLevel) {
+                    SmartMemoryManager.MemoryPressure.LOW,
+                    SmartMemoryManager.MemoryPressure.MEDIUM,
+                    SmartMemoryManager.MemoryPressure.HIGH -> {
+                        bitmapPool.clearOnMemoryPressure(pressureLevel)
+                        Log.d(TAG, "Cleaned bitmap pool due to memory pressure: $pressureLevel")
+                    }
+                    else -> { /* No action needed for NORMAL and CRITICAL pressure */ }
+                }
+            }
+            .launchIn(memoryPressureScope)
     }
 
     /**
@@ -622,7 +646,7 @@ class DynamicAtlasPool @Inject constructor(
         packResult: PackResult,
         atlasSize: IntSize
     ): Bitmap {
-        val atlasBitmap = createBitmap(atlasSize.width, atlasSize.height)
+        val atlasBitmap = bitmapPool.acquire(atlasSize.width, atlasSize.height, Bitmap.Config.ARGB_8888)
         val photosMap = processedPhotos.associateBy { it.id }
 
         trace(BenchmarkLabels.ATLAS_GENERATOR_SOFTWARE_CANVAS) {
@@ -683,13 +707,22 @@ class DynamicAtlasPool @Inject constructor(
     }
 
     /**
-     * Clean up processed photo bitmaps
+     * Clean up processed photo bitmaps by returning them to pool
      */
     private fun cleanupProcessedPhotos(processedPhotos: List<ProcessedPhoto>) {
         processedPhotos.forEach { photo ->
             if (!photo.bitmap.isRecycled) {
-                photo.bitmap.recycle()
+                bitmapPool.release(photo.bitmap)
             }
+        }
+    }
+    
+    /**
+     * Release atlas bitmap back to pool instead of recycling
+     */
+    fun releaseAtlasBitmap(atlasBitmap: Bitmap) {
+        if (!atlasBitmap.isRecycled) {
+            bitmapPool.release(atlasBitmap)
         }
     }
 

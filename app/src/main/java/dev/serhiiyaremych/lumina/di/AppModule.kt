@@ -6,6 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dev.serhiiyaremych.lumina.data.BitmapPool
 import dev.serhiiyaremych.lumina.data.PhotoScaler
 import dev.serhiiyaremych.lumina.data.datasource.MediaDataSource
 import dev.serhiiyaremych.lumina.data.datasource.MediaStoreDataSource
@@ -48,7 +49,12 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun providePhotoScaler(): PhotoScaler = PhotoScaler()
+    fun provideBitmapPool(smartMemoryManager: SmartMemoryManager): BitmapPool = 
+        BitmapPool(smartMemoryManager)
+
+    @Singleton
+    @Provides
+    fun providePhotoScaler(bitmapPool: BitmapPool): PhotoScaler = PhotoScaler(bitmapPool)
 
     @Singleton
     @Provides

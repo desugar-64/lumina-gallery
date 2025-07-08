@@ -37,6 +37,11 @@ object BenchmarkLabels {
     const val ATLAS_MEMORY_ATLAS_CLEANUP = "Atlas.atlasCleanup"
     const val ATLAS_MEMORY_PROCESSED_PHOTO_CLEANUP = "Atlas.processedPhotoCleanup"
     
+    // Bitmap Pool trace labels
+    const val BITMAP_POOL_ACQUIRE = "BitmapPool.acquire"
+    const val BITMAP_POOL_RELEASE = "BitmapPool.release"
+    const val BITMAP_POOL_CLEAR_PRESSURE = "BitmapPool.clearPressure"
+    
     // AtlasGenerator trace labels
     const val ATLAS_GENERATOR_GENERATE_ATLAS = "AtlasGenerator.generateAtlas"
     const val ATLAS_GENERATOR_PROCESS_PHOTOS = "AtlasGenerator.processPhotos"
