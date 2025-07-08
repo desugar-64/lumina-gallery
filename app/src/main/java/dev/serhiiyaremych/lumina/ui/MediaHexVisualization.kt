@@ -137,8 +137,6 @@ fun MediaHexVisualization(
                 offset = Offset.Zero
             )
 
-            geometryReader.debugDrawHexCellBounds(this)
-
             hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
                 hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
                     geometryReader.storeMediaBounds(
@@ -152,6 +150,7 @@ fun MediaHexVisualization(
                         bounds = mediaWithPosition.absoluteBounds,
                         atlasState = atlasState
                     )
+                    geometryReader.debugDrawBounds(this, zoom)
                 }
             }
 
