@@ -5,6 +5,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.dp
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.Media
 
@@ -19,7 +20,7 @@ class GeometryReader {
     private val mediaBounds = mutableMapOf<Media, Rect>()
     private val hexCellBounds = mutableMapOf<HexCell, Rect>()
     private val visibleCells = mutableSetOf<HexCell>()
-    var debugMode: DebugMode = DebugMode.NONE
+    var debugMode: DebugMode = DebugMode.BOUNDS
 
     fun storeMediaBounds(media: Media, bounds: Rect, hexCell: HexCell) {
         mediaBounds[media] = bounds
@@ -73,27 +74,30 @@ class GeometryReader {
         return inside
     }
 
-    fun debugDrawHexCellBounds(drawScope: DrawScope) {
+    fun debugDrawBounds(drawScope: DrawScope, zoom: Float) {
         if (debugMode == DebugMode.NONE) return
 
+        // Draw hex cell bounds
         hexCellBounds.forEach { (hexCell, bounds) ->
             if (debugMode == DebugMode.BOUNDS || visibleCells.contains(hexCell)) {
                 drawScope.drawRect(
-                    color = Color.Magenta.copy(alpha = 0.3f),
+                    color = Color.Magenta,
                     topLeft = bounds.topLeft,
                     size = bounds.size,
-                    style = Stroke(width = 2f)
+                    style = Stroke(width = with(drawScope) { 2.dp.toPx() / zoom })
                 )
+            }
+        }
 
-                if (debugMode == DebugMode.HIT_TESTING) {
-                    hexCell.vertices.forEach { vertex ->
-                        drawScope.drawCircle(
-                            color = Color.Red,
-                            radius = 5f,
-                            center = vertex
-                        )
-                    }
-                }
+        // Draw media bounds
+        mediaBounds.forEach { (_, bounds) ->
+            if (debugMode == DebugMode.BOUNDS) {
+                drawScope.drawRect(
+                    color = Color.Cyan,
+                    topLeft = bounds.topLeft,
+                    size = bounds.size,
+                    style = Stroke(width = with(drawScope) { 2.dp.toPx() / zoom })
+                )
             }
         }
     }

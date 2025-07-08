@@ -366,6 +366,10 @@ Think hard to understand the true nature of a problem, not just to find a soluti
 - Troubleshooting problems following docs/five.md
 - When documenting code read docs/create-docs.md
 
+### Development Workflow
+
+**IMPORTANT**: Before committing any changes, always verify that the project builds successfully by running `./gradlew -q assembleDebug`. This ensures that all modifications compile correctly and don't break the build.
+
 ## Benchmarking Workflow
 
 **Simple iterative optimization tracking. See `docs/benchmarking.md` for complete guide.**
