@@ -13,6 +13,7 @@ import dev.serhiiyaremych.lumina.domain.model.MediaWithPosition
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlin.math.min
+import kotlin.math.sqrt
 import kotlin.random.Random
 
 /**
@@ -182,7 +183,7 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
             thumbnailMaxSize * aspectRatio to thumbnailMaxSize
         }
 
-        val size = androidx.compose.ui.geometry.Size(width, height)
+        val size = Size(width, height)
 
         // Generate consistent random position using seed
         val seed = (media.id + hexCell.q * 1000000 + hexCell.r * 1000).toInt()
@@ -191,7 +192,7 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         val availableWidth = hexBounds.width - width
         val availableHeight = hexBounds.height - height
 
-        val relativePosition = if (availableWidth > 0 && availableHeight > 0) {
+        val initialRelativePosition = if (availableWidth > 0 && availableHeight > 0) {
             Offset(
                 x = random.nextFloat() * availableWidth,
                 y = random.nextFloat() * availableHeight
@@ -203,6 +204,22 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
                 y = (hexBounds.height - height) / 2
             )
         }
+
+        // Calculate hex cell center and radius for circular bounds checking
+        val hexCenter = Offset(
+            x = hexBounds.left + hexBounds.width / 2,
+            y = hexBounds.top + hexBounds.height / 2
+        )
+        val hexRadius = min(hexBounds.width, hexBounds.height) / 2
+
+        // Clamp position to ensure media rectangle stays within circular bounds
+        val relativePosition = clampPositionToCircle(
+            position = initialRelativePosition,
+            hexBounds = hexBounds,
+            hexCenter = hexCenter,
+            hexRadius = hexRadius,
+            mediaSize = size
+        )
 
         // Calculate absolute position in world coordinates
         val absolutePosition = Offset(
@@ -222,6 +239,68 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
             absoluteBounds = absoluteBounds,
             seed = seed
         )
+    }
+
+    /**
+     * Clamps media position to ensure it stays within circular bounds of hex cell.
+     * If the media rectangle extends outside the circle, moves it by the exact difference.
+     */
+    private fun clampPositionToCircle(
+        position: Offset,
+        hexBounds: Rect,
+        hexCenter: Offset,
+        hexRadius: Float,
+        mediaSize: Size
+    ): Offset {
+        val mediaRect = Rect(
+            offset = Offset(
+                x = hexBounds.left + position.x,
+                y = hexBounds.top + position.y
+            ),
+            size = mediaSize
+        )
+
+        // Check all corners and find the one that exceeds the circle the most
+        val corners = listOf(
+            Offset(mediaRect.left, mediaRect.top),
+            Offset(mediaRect.right, mediaRect.top),
+            Offset(mediaRect.left, mediaRect.bottom),
+            Offset(mediaRect.right, mediaRect.bottom)
+        )
+
+        var maxExcess = 0f
+        var excessDirection = Offset.Zero
+
+        corners.forEach { corner ->
+            val distance = sqrt(
+                (corner.x - hexCenter.x) * (corner.x - hexCenter.x) +
+                (corner.y - hexCenter.y) * (corner.y - hexCenter.y)
+            )
+            
+            if (distance > hexRadius) {
+                val excess = distance - hexRadius
+                if (excess > maxExcess) {
+                    maxExcess = excess
+                    excessDirection = Offset(
+                        x = (hexCenter.x - corner.x) / distance,
+                        y = (hexCenter.y - corner.y) / distance
+                    )
+                }
+            }
+        }
+
+        // If no corner exceeds the circle, return original position
+        if (maxExcess == 0f) {
+            return position
+        }
+
+        // Move the media rectangle by the exact excess amount toward the center
+        val adjustedPosition = Offset(
+            x = position.x + excessDirection.x * maxExcess,
+            y = position.y + excessDirection.y * maxExcess
+        )
+
+        return adjustedPosition
     }
 
     /**
