@@ -233,7 +233,7 @@ class AtlasManager @Inject constructor(
 
     /**
      * Selects optimal LOD level based on actual screen pixel size of thumbnails.
-     * Updated for enhanced 6-level LOD system.
+     * Updated for enhanced 8-level LOD system with smoother quality transitions.
      */
     private fun selectOptimalLODLevel(
         visibleCells: List<HexCellWithMedia>,
@@ -252,12 +252,14 @@ class AtlasManager @Inject constructor(
         }.maxOrNull() ?: 128f
 
         val optimalLOD = when {
-            maxScreenPixelSize <= 48f -> LODLevel.LEVEL_0   // 32px for tiny thumbnails
-            maxScreenPixelSize <= 96f -> LODLevel.LEVEL_1   // 64px for small thumbnails
-            maxScreenPixelSize <= 192f -> LODLevel.LEVEL_2  // 128px for medium thumbnails
-            maxScreenPixelSize <= 384f -> LODLevel.LEVEL_3  // 256px for large thumbnails
-            maxScreenPixelSize <= 768f -> LODLevel.LEVEL_4  // 512px for focused view
-            else -> LODLevel.LEVEL_5                        // 1024px for near-fullscreen
+            maxScreenPixelSize <= 48f -> LODLevel.LEVEL_0   // 32px for ultra-tiny thumbnails
+            maxScreenPixelSize <= 96f -> LODLevel.LEVEL_1   // 64px for tiny thumbnails
+            maxScreenPixelSize <= 144f -> LODLevel.LEVEL_2  // 128px for small thumbnails
+            maxScreenPixelSize <= 220f -> LODLevel.LEVEL_3  // 192px for medium thumbnails
+            maxScreenPixelSize <= 320f -> LODLevel.LEVEL_4  // 256px for large thumbnails
+            maxScreenPixelSize <= 450f -> LODLevel.LEVEL_5  // 384px for high-quality thumbnails
+            maxScreenPixelSize <= 640f -> LODLevel.LEVEL_6  // 512px for focused view
+            else -> LODLevel.LEVEL_7                        // 768px for near-fullscreen
         }
 
         Log.d(TAG, "selectOptimalLODLevel: maxScreenSize=${maxScreenPixelSize}px (zoom=$currentZoom) -> $optimalLOD")

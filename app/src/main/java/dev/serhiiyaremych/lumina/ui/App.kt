@@ -137,7 +137,7 @@ fun App(
                                 }
                                 delay(500) // Wait for atlas generation
                                 galleryViewModel.isAtlasGenerating.filter { !it }.first()
-                                // 3. Zoom in more to trigger LOD_4 (512px)
+                                // 3. Zoom in more to trigger LOD_6 (512px)
                                 Log.d("App", "Auto zoom: zooming in to 3.0x")
                                 transformableState.updateMatrix {
                                     val currentZoom = transformableState.zoom
