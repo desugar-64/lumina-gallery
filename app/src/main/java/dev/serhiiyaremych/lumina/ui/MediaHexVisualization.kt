@@ -19,6 +19,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
@@ -295,7 +297,8 @@ private fun DrawScope.drawPlaceholderRect(
     }
 
     val borderWidth = 2.dp.toPx()
-    val cornerRadius = 3.dp.toPx()
+    val innerCornerRadius = 4.dp.toPx()  // Increased for smoother corners
+    val outerCornerRadius = innerCornerRadius + borderWidth
     val shadowOffset = 1.dp.toPx()
 
     // 1. Draw subtle contact shadow
@@ -303,7 +306,7 @@ private fun DrawScope.drawPlaceholderRect(
         color = Color.Black.copy(alpha = 0.15f),
         topLeft = bounds.topLeft + Offset(shadowOffset, shadowOffset),
         size = bounds.size,
-        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius)
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(outerCornerRadius)
     )
 
     // 2. Draw white border (photo background)
@@ -311,7 +314,7 @@ private fun DrawScope.drawPlaceholderRect(
         color = Color.White,
         topLeft = bounds.topLeft,
         size = bounds.size,
-        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius)
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(outerCornerRadius)
     )
 
     // 3. Draw the colored placeholder within the border
@@ -326,7 +329,7 @@ private fun DrawScope.drawPlaceholderRect(
         color = color,
         topLeft = imageArea.topLeft,
         size = imageArea.size,
-        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius - borderWidth)
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(innerCornerRadius)
     )
 
     // 4. Draw hairline dark gray border around the entire photo
@@ -334,7 +337,7 @@ private fun DrawScope.drawPlaceholderRect(
         color = Color(0xFF666666),
         topLeft = bounds.topLeft,
         size = bounds.size,
-        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(outerCornerRadius),
         style = Stroke(width = Stroke.HairlineWidth / zoom)
     )
 }
@@ -352,17 +355,17 @@ private fun DrawScope.drawStyledPhoto(
     bounds: Rect,
     zoom: Float
 ) {
-    val borderWidth = 1.dp.toPx()
-    val cornerRadius = 2.dp.toPx()
-    val shadowOffset = 0.5.dp.toPx()
+    val borderWidth = 2.dp.toPx()
+    val innerCornerRadius = 0.1.dp.toPx()  // Increased for smoother corners
+    val outerCornerRadius = innerCornerRadius + borderWidth
+    val shadowOffset = 0.1.dp.toPx()
 
     // 1. Draw subtle contact shadow
-    val extraCorner = 1.2f
     drawRoundRect(
         color = Color.Black.copy(alpha = 0.4f),
         topLeft = bounds.topLeft + Offset(shadowOffset, shadowOffset),
         size = bounds.size,
-        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius * extraCorner)
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(outerCornerRadius)
     )
 
     // 2. Draw white border (photo background)
@@ -370,10 +373,10 @@ private fun DrawScope.drawStyledPhoto(
         color = Color.White,
         topLeft = bounds.topLeft,
         size = bounds.size,
-        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(outerCornerRadius),
     )
 
-    // 3. Draw the actual image within the border
+    // 3. Draw the actual image within the border with rounded corners
     val imageArea = Rect(
         left = bounds.left + borderWidth,
         top = bounds.top + borderWidth,
@@ -400,7 +403,7 @@ private fun DrawScope.drawStyledPhoto(
         color = Color(0xFF666666),
         topLeft = bounds.topLeft,
         size = bounds.size,
-        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(outerCornerRadius),
         style = Stroke(width = Stroke.HairlineWidth / zoom)
     )
 }

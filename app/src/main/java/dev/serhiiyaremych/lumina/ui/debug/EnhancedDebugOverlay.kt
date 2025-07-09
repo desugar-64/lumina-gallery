@@ -134,7 +134,8 @@ private fun DebugPanel(
             // Zoom and LOD Section
             ZoomAndLODSection(
                 currentZoom = currentZoom,
-                isAtlasGenerating = isAtlasGenerating
+                isAtlasGenerating = isAtlasGenerating,
+                atlasState = atlasState
             )
 
             // Atlas Information Section
@@ -229,7 +230,8 @@ private fun MemorySection(memory: SmartMemoryManager.MemoryStatus) {
 @Composable
 private fun ZoomAndLODSection(
     currentZoom: Float,
-    isAtlasGenerating: Boolean
+    isAtlasGenerating: Boolean,
+    atlasState: MultiAtlasUpdateResult?
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -241,7 +243,7 @@ private fun ZoomAndLODSection(
             fontWeight = FontWeight.Bold
         )
 
-        val currentLOD = LODLevel.forZoom(currentZoom)
+        val currentLOD = atlasState?.lodLevel ?: LODLevel.forZoom(currentZoom)
 
         // Zoom level indicator using shared constants
         val minZoom = ZoomConstants.MIN_ZOOM

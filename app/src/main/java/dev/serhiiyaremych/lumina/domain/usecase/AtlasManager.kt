@@ -97,10 +97,10 @@ class AtlasManager @Inject constructor(
                         if (currentAtlases.isNotEmpty()) {
                             val totalRegions = currentAtlases.sumOf { it.regions.size }
                             Log.d(TAG, "Returning ${currentAtlases.size} existing atlases with $totalRegions total regions")
-                            MultiAtlasUpdateResult.Success(currentAtlases, requestSequence)
+                            MultiAtlasUpdateResult.Success(currentAtlases, requestSequence, currentLODLevel)
                         } else {
                             Log.w(TAG, "No current atlases available but regeneration not needed - this shouldn't happen")
-                            MultiAtlasUpdateResult.GenerationFailed("No atlases available", requestSequence)
+                            MultiAtlasUpdateResult.GenerationFailed("No atlases available", requestSequence, null)
                         }
                     }
                 }
@@ -140,17 +140,17 @@ class AtlasManager @Inject constructor(
                         "Multi-atlas partial success ${duration.inWholeMilliseconds}ms: ${enhancedResult.allAtlases.size} atlases, $totalRegions regions, ${enhancedResult.failed.size} failed"
                     }
                     Log.d(TAG, message)
-                    MultiAtlasUpdateResult.Success(enhancedResult.allAtlases, requestSequence)
+                    MultiAtlasUpdateResult.Success(enhancedResult.allAtlases, requestSequence, lodLevel)
                 } else {
                     Log.w(TAG, "Atlas generation failed completely: ${enhancedResult.failed.size} failed photos")
-                    MultiAtlasUpdateResult.GenerationFailed("Atlas generation failed completely", requestSequence)
+                    MultiAtlasUpdateResult.GenerationFailed("Atlas generation failed completely", requestSequence, lodLevel)
                 }
             }.fold(
                 onSuccess = { result -> result },
                 onFailure = { e ->
                     Log.e(TAG, "Error updating visible cells", e)
                     if (e is CancellationException) throw e
-                    MultiAtlasUpdateResult.Error(e, requestSequence)
+                    MultiAtlasUpdateResult.Error(e, requestSequence, null)
                 }
             )
         }
@@ -204,7 +204,7 @@ class AtlasManager @Inject constructor(
         currentZoom: Float,
         marginRings: Int = DEFAULT_MARGIN_RINGS
     ): Boolean {
-        val lodLevel = selectLODLevel(currentZoom)
+        val lodLevel = selectOptimalLODLevel(visibleCells, currentZoom)
         val expandedCells = expandCellsByRings(visibleCells, marginRings)
         val cellSetKey = generateCellSetKey(expandedCells, lodLevel)
 
@@ -227,9 +227,6 @@ class AtlasManager @Inject constructor(
 
     // Private helper methods
 
-    private fun selectLODLevel(zoom: Float): LODLevel {
-        return LODLevel.entries.first { zoom in it.zoomRange }
-    }
 
     /**
      * Selects optimal LOD level based on actual screen pixel size of thumbnails.
@@ -240,16 +237,16 @@ class AtlasManager @Inject constructor(
         currentZoom: Float
     ): LODLevel {
         if (visibleCells.isEmpty()) {
-            return selectLODLevel(currentZoom)
+            return LODLevel.entries.first { currentZoom in it.zoomRange }
         }
 
-        val maxScreenPixelSize = visibleCells.flatMap { cell ->
-            cell.mediaItems.map { media ->
-                val screenWidth = media.absoluteBounds.width * currentZoom
-                val screenHeight = media.absoluteBounds.height * currentZoom
-                maxOf(screenWidth, screenHeight)
-            }
-        }.maxOrNull() ?: 128f
+        // Use hex cell size as the base for consistent LOD calculation
+        // This prevents hysteresis caused by variable thumbnail sizes
+        val hexCellSize = visibleCells.firstOrNull()?.bounds?.let { 
+            maxOf(it.width, it.height) 
+        } ?: return LODLevel.entries.first { currentZoom in it.zoomRange }
+
+        val maxScreenPixelSize = hexCellSize * currentZoom
 
         val optimalLOD = when {
             maxScreenPixelSize <= 48f -> LODLevel.LEVEL_0   // 32px for ultra-tiny thumbnails
@@ -264,6 +261,7 @@ class AtlasManager @Inject constructor(
 
         Log.d(TAG, "selectOptimalLODLevel: maxScreenSize=${maxScreenPixelSize}px (zoom=$currentZoom) -> $optimalLOD")
         return optimalLOD
+//        return selectLODLevel(currentZoom)
     }
 
     private fun expandCellsByRings(
@@ -401,8 +399,23 @@ class AtlasManager @Inject constructor(
  */
 sealed class MultiAtlasUpdateResult {
     abstract val requestSequence: Long
+    abstract val lodLevel: LODLevel?
 
-    data class Success(val atlases: List<TextureAtlas>, override val requestSequence: Long) : MultiAtlasUpdateResult()
-    data class GenerationFailed(val error: String, override val requestSequence: Long) : MultiAtlasUpdateResult()
-    data class Error(val exception: Throwable, override val requestSequence: Long) : MultiAtlasUpdateResult()
+    data class Success(
+        val atlases: List<TextureAtlas>, 
+        override val requestSequence: Long,
+        override val lodLevel: LODLevel
+    ) : MultiAtlasUpdateResult()
+    
+    data class GenerationFailed(
+        val error: String, 
+        override val requestSequence: Long,
+        override val lodLevel: LODLevel?
+    ) : MultiAtlasUpdateResult()
+    
+    data class Error(
+        val exception: Throwable, 
+        override val requestSequence: Long,
+        override val lodLevel: LODLevel?
+    ) : MultiAtlasUpdateResult()
 }

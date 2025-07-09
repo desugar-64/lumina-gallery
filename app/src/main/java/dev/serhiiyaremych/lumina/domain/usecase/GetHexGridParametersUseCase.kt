@@ -16,10 +16,10 @@ class GetHexGridParametersUseCase @Inject constructor() {
         }
 
         val cellSizeDp = when {
-            gridSize <= 10 -> 230.dp
-            gridSize <= 15 -> 200.dp
-            gridSize <= 20 -> 170.dp
-            else -> 140.dp
+            gridSize <= 10 -> 300.dp
+            gridSize <= 15 -> 270.dp
+            gridSize <= 20 -> 260.dp
+            else -> 250.dp
         }
 
         return gridSize to cellSizeDp

@@ -55,7 +55,7 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         density: Density,
         canvasSize: Size,
         groupingPeriod: GroupingPeriod = GroupingPeriod.DAILY,
-        thumbnailSizeFactor: Float = 0.4f
+        thumbnailSizeFactor: Float = 0.6f
     ): HexGridLayout {
         // Step 1: Fetch all media items
         val allMedia = getMediaUseCase()
@@ -280,7 +280,7 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
                 (corner.x - hexCenter.x) * (corner.x - hexCenter.x) +
                 (corner.y - hexCenter.y) * (corner.y - hexCenter.y)
             )
-            
+
             if (distance > hexRadius) {
                 val excess = distance - hexRadius
                 if (excess > maxExcess) {
@@ -310,20 +310,20 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
     /**
      * Calculates realistic rotation angle based on aspect ratio.
      * Portrait photos tend to fall more upright, landscape photos can rotate more.
-     * 
+     *
      * @param random Random generator with consistent seed
      * @param aspectRatio Aspect ratio of the media (width/height)
      * @return Rotation angle in degrees (±15° to ±25° based on aspect ratio)
      */
     private fun calculateRealisticRotation(random: Random, aspectRatio: Float): Float {
         val baseRotationRange = 20f // Base ±20° rotation
-        
+
         val rotationVariation = when {
             aspectRatio < 0.8f -> 0.75f  // Portrait photos: more upright (±15°)
             aspectRatio > 1.3f -> 1.25f  // Landscape photos: can rotate more (±25°)
             else -> 1.0f                 // Square-ish photos: normal rotation (±20°)
         }
-        
+
         val maxRotation = baseRotationRange * rotationVariation
         return (random.nextFloat() * 2 - 1) * maxRotation
     }
