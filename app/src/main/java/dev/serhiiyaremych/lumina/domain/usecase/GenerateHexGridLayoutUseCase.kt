@@ -10,6 +10,8 @@ import dev.serhiiyaremych.lumina.domain.model.HexGrid
 import dev.serhiiyaremych.lumina.domain.model.HexGridLayout
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.model.MediaWithPosition
+import dev.serhiiyaremych.lumina.domain.model.*
+import dev.serhiiyaremych.lumina.domain.usecase.shape.*
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlin.math.min
@@ -55,7 +57,7 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         density: Density,
         canvasSize: Size,
         groupingPeriod: GroupingPeriod = GroupingPeriod.DAILY,
-        thumbnailSizeFactor: Float = 0.6f
+        thumbnailSizeFactor: Float = 0.45f
     ): HexGridLayout {
         // Step 1: Fetch all media items
         val allMedia = getMediaUseCase()
@@ -135,7 +137,7 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
     }
 
     /**
-     * Generates a hex cell with positioned media items.
+     * Generates a hex cell with positioned media items using organic shape patterns.
      * This encapsulates all the positioning logic previously in the UI layer.
      */
     private fun generateHexCellWithMedia(
@@ -147,9 +149,20 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         val minDimension = min(hexBounds.width, hexBounds.height)
         val thumbnailMaxSize = minDimension * thumbnailSizeFactor
 
-        val mediaWithPositions = mediaList.map { media ->
-            generateMediaWithPosition(
-                media = media,
+        val mediaWithPositions = if (mediaList.size <= 1) {
+            // Single media item - use existing positioning logic
+            mediaList.map { media ->
+                generateMediaWithPosition(
+                    media = media,
+                    hexCell = hexCell,
+                    hexBounds = hexBounds,
+                    thumbnailMaxSize = thumbnailMaxSize
+                )
+            }
+        } else {
+            // Multiple media items - use shape patterns with breathing room
+            generateMediaWithShapePattern(
+                mediaList = mediaList,
                 hexCell = hexCell,
                 hexBounds = hexBounds,
                 thumbnailMaxSize = thumbnailMaxSize
@@ -246,6 +259,233 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
     }
 
     /**
+     * Generates positioned media items using organic shape patterns with breathing room constraints.
+     * This method creates visually appealing arrangements while ensuring all photos remain partially visible.
+     */
+    private fun generateMediaWithShapePattern(
+        mediaList: List<Media>,
+        hexCell: dev.serhiiyaremych.lumina.domain.model.HexCell,
+        hexBounds: Rect,
+        thumbnailMaxSize: Float
+    ): List<MediaWithPosition> {
+        if (mediaList.isEmpty()) return emptyList()
+
+        // Generate consistent seed for this cell
+        val cellSeed = (hexCell.q * 1000000 + hexCell.r * 1000).toInt()
+        val random = Random(cellSeed)
+
+        // Select shape pattern based on media count
+        val shapePattern = selectShapePattern(
+            mediaCount = mediaList.size,
+            random = random
+        )
+
+        // Generate shape pattern configuration
+        val shapeConfig = ShapeGenerationConfig(
+            pattern = shapePattern,
+            intensity = 0.7f,
+            breathingRoomFactor = 0.40f
+        )
+
+        // Generate base positions using shape pattern
+        val patternGenerator = ShapePatternGeneratorFactory.createGenerator(shapePattern)
+        val patternResult = patternGenerator.generatePositions(
+            mediaCount = mediaList.size,
+            hexBounds = hexBounds,
+            random = random,
+            config = shapeConfig
+        )
+
+        // Calculate media sizes and create positioned media items
+        val mediaWithPositions = mutableListOf<MediaWithPosition>()
+
+        for (i in mediaList.indices) {
+            val media = mediaList[i]
+            val basePosition = patternResult.basePositions[i]
+
+            // Calculate size maintaining aspect ratio
+            val aspectRatio = if (media.height != 0) {
+                media.width.toFloat() / media.height.toFloat()
+            } else 1f
+
+            val (width, height) = if (aspectRatio >= 1f) {
+                thumbnailMaxSize to thumbnailMaxSize / aspectRatio
+            } else {
+                thumbnailMaxSize * aspectRatio to thumbnailMaxSize
+            }
+
+            val size = Size(width, height)
+
+            // Generate consistent seed for this specific media item
+            val mediaSeed = (media.id + hexCell.q * 1000000 + hexCell.r * 1000 + i).toInt()
+            val mediaRandom = Random(mediaSeed)
+
+            // Generate realistic rotation angle
+            val rotationAngle = calculateRealisticRotation(mediaRandom, aspectRatio)
+
+            // Apply breathing room constraints
+            val adjustedPosition = applyBreathingRoomConstraints(
+                basePosition = basePosition,
+                currentMediaIndex = i,
+                mediaSize = size,
+                allMediaSizes = mediaList.mapIndexed { index, media ->
+                    val aspectRatio = if (media.height != 0) {
+                        media.width.toFloat() / media.height.toFloat()
+                    } else 1f
+
+                    val (w, h) = if (aspectRatio >= 1f) {
+                        thumbnailMaxSize to thumbnailMaxSize / aspectRatio
+                    } else {
+                        thumbnailMaxSize * aspectRatio to thumbnailMaxSize
+                    }
+
+                    Size(w, h)
+                },
+                allBasePositions = patternResult.basePositions,
+                hexBounds = hexBounds,
+                config = shapeConfig
+            )
+
+            // Calculate hex cell center and radius for circular bounds checking
+            val hexCenter = Offset(
+                x = hexBounds.left + hexBounds.width / 2,
+                y = hexBounds.top + hexBounds.height / 2
+            )
+            val hexRadius = min(hexBounds.width, hexBounds.height) / 2
+
+            // Clamp to circular bounds (existing logic)
+            val finalRelativePosition = clampPositionToCircle(
+                position = adjustedPosition,
+                hexBounds = hexBounds,
+                hexCenter = hexCenter,
+                hexRadius = hexRadius,
+                mediaSize = size
+            )
+
+            // Calculate absolute position
+            val absolutePosition = Offset(
+                x = hexBounds.left + finalRelativePosition.x,
+                y = hexBounds.top + finalRelativePosition.y
+            )
+
+            val absoluteBounds = Rect(
+                offset = absolutePosition,
+                size = size
+            )
+
+            mediaWithPositions.add(
+                MediaWithPosition(
+                    media = media,
+                    relativePosition = finalRelativePosition,
+                    size = size,
+                    absoluteBounds = absoluteBounds,
+                    seed = mediaSeed,
+                    rotationAngle = rotationAngle
+                )
+            )
+        }
+
+        return mediaWithPositions
+    }
+
+    /**
+     * Applies breathing room constraints to ensure media items don't completely obscure each other.
+     * Adjusts positions minimally to maintain at least 25-30% visibility for each photo.
+     */
+    private fun applyBreathingRoomConstraints(
+        basePosition: Offset,
+        currentMediaIndex: Int,
+        mediaSize: Size,
+        allMediaSizes: List<Size>,
+        allBasePositions: List<Offset>,
+        hexBounds: Rect,
+        config: ShapeGenerationConfig
+    ): Offset {
+        var adjustedPosition = basePosition
+        var currentRect = Rect(offset = adjustedPosition, size = mediaSize)
+
+        // Check overlap with previously positioned media items
+        for (attempt in 0 until config.maxAdjustmentAttempts) {
+            var hasSignificantOverlap = false
+
+            // Check against all other media items
+            for (i in allBasePositions.indices) {
+                if (i == currentMediaIndex) continue
+
+                val otherPosition = allBasePositions[i]
+                val otherSize = allMediaSizes[i]
+                val otherRect = Rect(offset = otherPosition, size = otherSize)
+
+                val overlap = currentRect.intersect(otherRect)
+                if (!overlap.isEmpty) {
+                    // Calculate overlap percentage relative to current media
+                    val currentArea = currentRect.width * currentRect.height
+                    val overlapArea = overlap.width * overlap.height
+                    val overlapPercentage = overlapArea / currentArea
+
+                    // If overlap exceeds breathing room threshold, adjust position
+                    if (overlapPercentage > (1 - config.breathingRoomFactor)) {
+                        hasSignificantOverlap = true
+
+                        // Calculate adjustment vector to reduce overlap
+                        val adjustmentVector = calculateAdjustmentVector(
+                            currentRect = currentRect,
+                            otherRect = otherRect
+                        )
+
+                        adjustedPosition = Offset(
+                            x = (adjustedPosition.x + adjustmentVector.x).coerceIn(0f, hexBounds.width - mediaSize.width),
+                            y = (adjustedPosition.y + adjustmentVector.y).coerceIn(0f, hexBounds.height - mediaSize.height)
+                        )
+
+                        // Update current rect for next iteration
+                        currentRect = Rect(offset = adjustedPosition, size = mediaSize)
+                        break
+                    }
+                }
+            }
+
+            // If no significant overlap found, we're done
+            if (!hasSignificantOverlap) {
+                break
+            }
+        }
+
+        return adjustedPosition
+    }
+
+    /**
+     * Calculates adjustment vector to reduce overlap between two rectangles.
+     * Tries to maintain the original shape pattern as much as possible.
+     */
+    private fun calculateAdjustmentVector(
+        currentRect: Rect,
+        otherRect: Rect
+    ): Offset {
+        val overlap = currentRect.intersect(otherRect)
+
+        // Calculate the direction to move away from the overlap
+        val currentCenterX = currentRect.left + currentRect.width / 2
+        val currentCenterY = currentRect.top + currentRect.height / 2
+        val otherCenterX = otherRect.left + otherRect.width / 2
+        val otherCenterY = otherRect.top + otherRect.height / 2
+
+        val directionX = if (currentCenterX < otherCenterX) -1f else 1f
+        val directionY = if (currentCenterY < otherCenterY) -1f else 1f
+
+        // Calculate minimum adjustment needed
+        val adjustmentX = if (overlap.width > 0) {
+            directionX * (overlap.width / 2 + 5f) // 5px padding
+        } else 0f
+
+        val adjustmentY = if (overlap.height > 0) {
+            directionY * (overlap.height / 2 + 5f) // 5px padding
+        } else 0f
+
+        return Offset(adjustmentX, adjustmentY)
+    }
+
+    /**
      * Clamps media position to ensure it stays within circular bounds of hex cell.
      * If the media rectangle extends outside the circle, moves it by the exact difference.
      */
@@ -308,20 +548,20 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
     }
 
     /**
-     * Calculates realistic rotation angle based on aspect ratio.
+     * Calculates realistic rotation angle based on aspect ratio with added randomness.
      * Portrait photos tend to fall more upright, landscape photos can rotate more.
      *
      * @param random Random generator with consistent seed
      * @param aspectRatio Aspect ratio of the media (width/height)
-     * @return Rotation angle in degrees (±15° to ±25° based on aspect ratio)
+     * @return Rotation angle in degrees (±15° to ±30° based on aspect ratio)
      */
     private fun calculateRealisticRotation(random: Random, aspectRatio: Float): Float {
         val baseRotationRange = 20f // Base ±20° rotation
 
         val rotationVariation = when {
-            aspectRatio < 0.8f -> 0.75f  // Portrait photos: more upright (±15°)
-            aspectRatio > 1.3f -> 1.25f  // Landscape photos: can rotate more (±25°)
-            else -> 1.0f                 // Square-ish photos: normal rotation (±20°)
+            aspectRatio < 0.8f -> 0.75f + random.nextFloat() * 0.5f  // Portrait: ±15° to ±25°
+            aspectRatio > 1.3f -> 1.0f + random.nextFloat() * 0.5f   // Landscape: ±20° to ±30°
+            else -> 0.8f + random.nextFloat() * 0.6f                 // Square: ±16° to ±28°
         }
 
         val maxRotation = baseRotationRange * rotationVariation

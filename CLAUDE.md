@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 LuminaGallery is a modern Android Compose application focused on advanced image gallery functionality with sophisticated touch gesture handling. The app uses a single-activity architecture with Jetpack Compose and implements matrix-based transformations for smooth pan, zoom, and scale operations. It features a unique hexagonal grid visualization system for displaying grouped media on a zoomable, pannable canvas.
 
-**Design Philosophy**: The photo layout simulates the natural behavior of physical photos being scattered onto a table surface. Photos are randomly positioned within hexagonal cells with realistic rotation angles, creating a controlled chaos that mimics turning a bag of printed photos upside down. This design balances randomness with organization through cell-based grouping.
+**Design Philosophy**: The photo layout simulates the natural behavior of physical photos being scattered onto a table surface. Photos are positioned using organic shape patterns within hexagonal cells with realistic rotation angles, creating a controlled chaos that mimics turning a bag of printed photos upside down. This design balances randomness with organization through cell-based grouping, while ensuring all photos maintain partial visibility through "breathing room" constraints.
 
 **Future Visualization Ideas**: Alternative physical metaphors to explore include corkboard/pin board with photos pinned at slight angles, polaroid stack effects with realistic shadows, magnetic fridge with rounded corners and curling effects, or artist's table with mixed media scattered organically.
 
@@ -118,6 +118,7 @@ adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity
 - `LODLevel.kt` - 6-level LOD system (LEVEL_0 to LEVEL_5)
 - `HexGrid.kt`, `HexGridGenerator.kt` - Hexagonal grid system
 - `HexCellWithMedia.kt` - Hex cell containing grouped media
+- `CellShapePattern.kt` - **NEW:** Organic shape patterns for photo arrangement (Spiral, Arc, Cluster, Flow, Circle, Fan)
 
 **Use Cases (`domain/usecase/`):**
 - `EnhancedAtlasGenerator.kt` - **Primary atlas generator** (current system)
@@ -128,7 +129,8 @@ adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity
 - `DeviceCapabilities.kt` - Device performance detection
 - `AtlasGenerator.kt` - Legacy single-atlas generator (**deprecated**)
 - `GetMediaUseCase.kt`, `GroupMediaUseCase.kt` - Media business logic
-- `GenerateHexGridUseCase.kt`, `GenerateHexGridLayoutUseCase.kt` - Grid generation
+- `GenerateHexGridUseCase.kt`, `GenerateHexGridLayoutUseCase.kt` - Grid generation with **enhanced shape patterns**
+- `shape/ShapePatternGenerator.kt` - **NEW:** Six organic shape pattern generators with breathing room algorithm
 
 **UI Components (`ui/`):**
 - `App.kt` - Main application composable
@@ -154,11 +156,12 @@ adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity
 The app follows Clean Architecture principles with clear separation of concerns:
 
 1. **Domain Layer** (`app/src/main/java/dev/serhiiyaremych/lumina/domain/`):
-   - `model/`: Core entities (Media, HexGrid, HexGridGenerator, TextureAtlas, AtlasRegion, LODLevel, HexCellWithMedia)
+   - `model/`: Core entities (Media, HexGrid, HexGridGenerator, TextureAtlas, AtlasRegion, LODLevel, HexCellWithMedia, CellShapePattern)
    - `repository/`: Abstract repository interfaces (MediaRepository)
    - `usecase/`: Business logic and atlas system components:
      - **Core Use Cases**: GetMediaUseCase, GroupMediaUseCase, GenerateHexGridUseCase, GenerateHexGridLayoutUseCase, GetHexGridParametersUseCase
      - **Atlas System**: EnhancedAtlasGenerator, DynamicAtlasPool, AtlasManager, PhotoLODProcessor, SmartMemoryManager, DeviceCapabilities
+     - **Shape Pattern System**: shape/ShapePatternGenerator (six organic pattern generators with breathing room algorithm)
      - **Legacy**: AtlasGenerator (deprecated), EnhancedAtlasAdapter (compatibility)
 
 2. **Data Layer** (`app/src/main/java/dev/serhiiyaremych/lumina/data/`):
@@ -210,6 +213,46 @@ The app implements a sophisticated multi-atlas texture system for efficient phot
 **Legacy Components (Deprecated):**
 16. **AtlasGenerator** (`domain/usecase/AtlasGenerator.kt`) - Original single-atlas generator (deprecated, replaced by EnhancedAtlasGenerator)
 17. **EnhancedAtlasAdapter** (`domain/usecase/EnhancedAtlasAdapter.kt`) - Compatibility adapter for migration (may be deprecated soon)
+
+### Enhanced Shape Pattern System
+
+The app implements an organic shape pattern system for photo arrangement within hex cells, ensuring visual appeal while maintaining photo visibility:
+
+**Core Shape Pattern Components:**
+18. **CellShapePattern** (`domain/model/CellShapePattern.kt`) - Enum defining six organic shape patterns:
+   - **LOOSE_SPIRAL**: Photos follow gentle spiral outward from center (energetic, dynamic)
+   - **CURVED_ARC**: Photos arranged in organic C or S-shaped curves (flowing, graceful)
+   - **IRREGULAR_CLUSTER**: Dense center with photos radiating outward (cozy, clustered)
+   - **FLOWING_LINE**: Photos follow wavy, river-like paths (natural, organic)
+   - **SCATTERED_CIRCLE**: Photos loosely form circular boundaries (contained, balanced)
+   - **FAN_PATTERN**: Photos spread like opened hand or flower petals (radiating, expansive)
+
+19. **ShapePatternGenerator** (`domain/usecase/shape/ShapePatternGenerator.kt`) - Interface and implementations for all six patterns:
+   - **SpiralPatternGenerator**: Implements mathematical spiral with configurable tightness
+   - **ArcPatternGenerator**: Creates C-curve and S-curve patterns with amplitude control
+   - **ClusterPatternGenerator**: Generates dense center with radial distribution
+   - **FlowingLinePatternGenerator**: Creates wavy horizontal/vertical flow patterns
+   - **ScatteredCirclePatternGenerator**: Arranges photos in circular boundaries with variation
+   - **FanPatternGenerator**: Creates fan-shaped arrangements with configurable angle
+
+**Breathing Room Algorithm:**
+20. **Enhanced positioning logic** in `GenerateHexGridLayoutUseCase.kt`:
+   - **Overlap detection**: Calculates intersection between photo rectangles
+   - **Visibility enforcement**: Ensures minimum 25-40% of each photo remains visible
+   - **Position adjustment**: Minimally moves photos to maintain shape integrity
+   - **Circular bounds compliance**: Maintains existing hex cell boundary constraints
+
+**Configuration Parameters:**
+- **`breathingRoomFactor`**: Controls minimum photo visibility (0.25f = 25%, 0.40f = 40%)
+- **`intensity`**: Controls pattern strictness (0.7f = 70% pattern adherence)
+- **`maxAdjustmentAttempts`**: Prevents infinite loops in complex overlap scenarios (default: 5)
+
+**Enhanced Rotation System:**
+- **Aspect ratio-based rotation** with added randomness to prevent visual patterns
+- **Portrait photos**: ±15° to ±25° rotation range
+- **Landscape photos**: ±20° to ±30° rotation range  
+- **Square photos**: ±16° to ±28° rotation range
+- **Deterministic seeding**: Same cell/media combination produces identical results
 
 ### Performance Optimizations & Instrumentation
 
