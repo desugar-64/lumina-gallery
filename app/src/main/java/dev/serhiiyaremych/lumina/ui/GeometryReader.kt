@@ -35,7 +35,7 @@ class GeometryReader {
         hexCellBounds[hexCell] = Rect(minX, minY, maxX, maxY)
     }
 
-    fun getMediaAtPosition(position: Offset): Media? = mediaBounds.entries.find { it.value.contains(position) }?.key
+    fun getMediaAtPosition(position: Offset): Media? = mediaBounds.entries.findLast { it.value.contains(position) }?.key
 
     fun getHexCellAtPosition(position: Offset): HexCell? = hexCellBounds.entries.firstOrNull { (hexCell, _) ->
         isPointInHexagon(position, hexCell.vertices)
