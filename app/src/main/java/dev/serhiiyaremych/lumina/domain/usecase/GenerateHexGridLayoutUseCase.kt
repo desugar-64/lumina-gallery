@@ -284,7 +284,7 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         val shapeConfig = ShapeGenerationConfig(
             pattern = shapePattern,
             intensity = 0.7f,
-            breathingRoomFactor = 0.40f
+            breathingRoomFactor = 0.5f
         )
 
         // Generate base positions using shape pattern

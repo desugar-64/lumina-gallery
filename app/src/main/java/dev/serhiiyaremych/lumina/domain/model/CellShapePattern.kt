@@ -15,31 +15,31 @@ enum class CellShapePattern {
      * Creates energetic, dynamic feeling.
      */
     LOOSE_SPIRAL,
-    
+
     /**
      * Photos arranged in organic C or S-shaped curves.
      * Creates flowing, graceful arrangement.
      */
     CURVED_ARC,
-    
+
     /**
      * Dense center with photos radiating outward.
      * Creates cozy, clustered feeling.
      */
     IRREGULAR_CLUSTER,
-    
+
     /**
      * Photos follow wavy, river-like paths.
      * Creates natural, organic flow.
      */
     FLOWING_LINE,
-    
+
     /**
      * Photos loosely form circular or oval boundaries.
      * Creates contained, balanced arrangement.
      */
     SCATTERED_CIRCLE,
-    
+
     /**
      * Photos spread like an opened hand or flower petals.
      * Creates radiating, expansive feeling.
@@ -56,19 +56,19 @@ data class ShapeGenerationConfig(
      * The shape pattern to use for this cell.
      */
     val pattern: CellShapePattern,
-    
+
     /**
      * How strictly to follow the pattern (0.0 = completely random, 1.0 = strict pattern).
      * Default 0.7 provides good balance between pattern and natural randomness.
      */
     val intensity: Float = 0.7f,
-    
+
     /**
      * Minimum visible area fraction for each photo (0.25 = 25% minimum visibility).
      * Ensures "breathing room" so no photo is completely hidden.
      */
     val breathingRoomFactor: Float = 0.25f,
-    
+
     /**
      * Maximum attempts to adjust position for breathing room before giving up.
      * Prevents infinite loops in complex overlapping scenarios.
@@ -92,12 +92,12 @@ data class ShapePatternResult(
      * These positions may be adjusted later to ensure breathing room.
      */
     val basePositions: List<Offset>,
-    
+
     /**
      * The pattern that was used to generate these positions.
      */
     val pattern: CellShapePattern,
-    
+
     /**
      * Metadata about the generation process (for debugging).
      */
@@ -113,17 +113,17 @@ data class ShapePatternMetadata(
      * The random seed used for pattern generation.
      */
     val seed: Int,
-    
+
     /**
      * Number of media items positioned.
      */
     val mediaCount: Int,
-    
+
     /**
      * The hex cell bounds used for positioning.
      */
     val hexBounds: Rect,
-    
+
     /**
      * Pattern-specific parameters (varies by pattern type).
      */

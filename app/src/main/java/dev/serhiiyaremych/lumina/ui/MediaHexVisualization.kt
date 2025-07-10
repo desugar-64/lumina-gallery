@@ -97,15 +97,17 @@ fun MediaHexVisualization(
                     ripplePosition = tapOffset
 
 
-                    geometryReader.getMediaAtPosition(transformedPos)?.let { media ->
-                        onMediaClicked(media)
-                        clickedMedia = media
+                    // Check for media hits with rotation-aware hit testing
+                    val hitMedia = findMediaAtPosition(transformedPos, hexGridLayout)
+                    if (hitMedia != null) {
+                        onMediaClicked(hitMedia)
+                        clickedMedia = hitMedia
                         clickedHexCell = null
                         // Trigger focus request
-                        geometryReader.getMediaBounds(media)?.let { bounds ->
+                        geometryReader.getMediaBounds(hitMedia)?.let { bounds ->
                             onFocusRequested(bounds)
                         }
-                    } ?: run {
+                    } else {
                         geometryReader.getHexCellAtPosition(transformedPos)?.let { cell ->
                             onHexCellClicked(cell)
                             clickedHexCell = cell
@@ -408,3 +410,62 @@ private fun DrawScope.drawStyledPhoto(
     )
 }
 
+/**
+ * Finds media at the given position with rotation-aware hit testing.
+ * This function accounts for the rotation transformation applied during drawing.
+ */
+private fun findMediaAtPosition(
+    position: Offset,
+    hexGridLayout: dev.serhiiyaremych.lumina.domain.model.HexGridLayout
+): Media? {
+    // Iterate through all media items and check if the position hits any rotated bounds
+    for (hexCellWithMedia in hexGridLayout.hexCellsWithMedia) {
+        for (mediaWithPosition in hexCellWithMedia.mediaItems) {
+            val bounds = mediaWithPosition.absoluteBounds
+            val rotationAngle = mediaWithPosition.rotationAngle
+            
+            // If no rotation, use normal bounds checking
+            if (rotationAngle == 0f) {
+                if (bounds.contains(position)) {
+                    return mediaWithPosition.media
+                }
+            } else {
+                // Apply inverse rotation to the position to test against unrotated bounds
+                val center = bounds.center
+                val rotatedPosition = rotatePoint(
+                    point = position,
+                    center = center,
+                    angleInDegrees = -rotationAngle // Inverse rotation
+                )
+                
+                if (bounds.contains(rotatedPosition)) {
+                    return mediaWithPosition.media
+                }
+            }
+        }
+    }
+    return null
+}
+
+/**
+ * Rotates a point around a center point by the given angle in degrees.
+ */
+private fun rotatePoint(point: Offset, center: Offset, angleInDegrees: Float): Offset {
+    val angleInRadians = angleInDegrees * kotlin.math.PI / 180.0
+    val cos = kotlin.math.cos(angleInRadians).toFloat()
+    val sin = kotlin.math.sin(angleInRadians).toFloat()
+    
+    // Translate point to origin
+    val translatedX = point.x - center.x
+    val translatedY = point.y - center.y
+    
+    // Rotate around origin
+    val rotatedX = translatedX * cos - translatedY * sin
+    val rotatedY = translatedX * sin + translatedY * cos
+    
+    // Translate back
+    return Offset(
+        x = rotatedX + center.x,
+        y = rotatedY + center.y
+    )
+}
