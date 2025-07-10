@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import dev.serhiiyaremych.lumina.domain.model.HexCell
@@ -410,35 +411,28 @@ private fun DrawScope.drawStyledPhoto(
     )
 }
 
-/**
- * Finds media at the given position with rotation-aware hit testing.
- * This function accounts for the rotation transformation applied during drawing.
- */
 private fun findMediaAtPosition(
     position: Offset,
     hexGridLayout: dev.serhiiyaremych.lumina.domain.model.HexGridLayout
 ): Media? {
-    // Iterate through all media items and check if the position hits any rotated bounds
     for (hexCellWithMedia in hexGridLayout.hexCellsWithMedia) {
         for (mediaWithPosition in hexCellWithMedia.mediaItems) {
             val bounds = mediaWithPosition.absoluteBounds
             val rotationAngle = mediaWithPosition.rotationAngle
-            
-            // If no rotation, use normal bounds checking
+
             if (rotationAngle == 0f) {
                 if (bounds.contains(position)) {
                     return mediaWithPosition.media
                 }
             } else {
-                // Apply inverse rotation to the position to test against unrotated bounds
                 val center = bounds.center
-                val rotatedPosition = rotatePoint(
+                val transformedPosition = transformPointWithInverseRotation(
                     point = position,
                     center = center,
-                    angleInDegrees = -rotationAngle // Inverse rotation
+                    rotationDegrees = rotationAngle
                 )
-                
-                if (bounds.contains(rotatedPosition)) {
+
+                if (bounds.contains(transformedPosition)) {
                     return mediaWithPosition.media
                 }
             }
@@ -447,25 +441,15 @@ private fun findMediaAtPosition(
     return null
 }
 
-/**
- * Rotates a point around a center point by the given angle in degrees.
- */
-private fun rotatePoint(point: Offset, center: Offset, angleInDegrees: Float): Offset {
-    val angleInRadians = angleInDegrees * kotlin.math.PI / 180.0
-    val cos = kotlin.math.cos(angleInRadians).toFloat()
-    val sin = kotlin.math.sin(angleInRadians).toFloat()
-    
-    // Translate point to origin
-    val translatedX = point.x - center.x
-    val translatedY = point.y - center.y
-    
-    // Rotate around origin
-    val rotatedX = translatedX * cos - translatedY * sin
-    val rotatedY = translatedX * sin + translatedY * cos
-    
-    // Translate back
-    return Offset(
-        x = rotatedX + center.x,
-        y = rotatedY + center.y
-    )
+private fun transformPointWithInverseRotation(
+    point: Offset,
+    center: Offset,
+    rotationDegrees: Float
+): Offset {
+    return with(Matrix()) {
+        translate(center.x, center.y)
+        rotateZ(-rotationDegrees)
+        translate(-center.x, -center.y)
+        map(point)
+    }
 }
