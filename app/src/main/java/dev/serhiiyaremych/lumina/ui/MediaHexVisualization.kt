@@ -535,8 +535,9 @@ private fun findAnimatableMediaAtPosition(
     hexGridLayout: dev.serhiiyaremych.lumina.domain.model.HexGridLayout,
     animationManager: AnimatableMediaManager
 ): AnimatableMediaItem? {
-    for (hexCellWithMedia in hexGridLayout.hexCellsWithMedia) {
-        for (mediaWithPosition in hexCellWithMedia.mediaItems) {
+    // Iterate in reverse order to check topmost (last drawn) items first
+    for (hexCellWithMedia in hexGridLayout.hexCellsWithMedia.reversed()) {
+        for (mediaWithPosition in hexCellWithMedia.mediaItems.reversed()) {
             val animatableItem = animationManager.getOrCreateAnimatable(mediaWithPosition)
             val bounds = animatableItem.mediaWithPosition.absoluteBounds
             val rotationAngle = animatableItem.currentRotation // Use current animated rotation
