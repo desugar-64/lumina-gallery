@@ -1,10 +1,14 @@
 package dev.serhiiyaremych.lumina.ui
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -15,20 +19,80 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
+import kotlinx.coroutines.launch
 
+/**
+ * Wrapper class for media items with animation capabilities.
+ * Manages selection state and provides explicit animation functions.
+ */
+@Stable
+class AnimatableMediaItem(
+    val mediaWithPosition: dev.serhiiyaremych.lumina.domain.model.MediaWithPosition
+) {
+    private val rotationAnimatable = Animatable(mediaWithPosition.rotationAngle)
+
+    // Pure state - no side effects
+    var isSelected: Boolean by mutableStateOf(false)
+        private set
+
+    // Read-only animation state
+    val currentRotation: Float get() = rotationAnimatable.value
+    val isAnimating: Boolean get() = rotationAnimatable.isRunning
+    val originalRotation: Float = mediaWithPosition.rotationAngle
+
+    // Pure state update (no side effects)
+    fun updateSelection(selected: Boolean) {
+        isSelected = selected
+    }
+
+    // Explicit animation function (called from composable)
+    suspend fun animateToSelectionState(
+        animationSpec: AnimationSpec<Float> = tween(350)
+    ) {
+        val targetRotation = if (isSelected) 0f else originalRotation
+        rotationAnimatable.animateTo(targetRotation, animationSpec)
+    }
+}
+
+/**
+ * Manager for AnimatableMediaItem instances.
+ * Handles creation, cleanup, and retrieval of animated media items.
+ */
+@Stable
+class AnimatableMediaManager {
+    private val animatableItems = mutableMapOf<Media, AnimatableMediaItem>()
+
+    fun getOrCreateAnimatable(mediaWithPosition: dev.serhiiyaremych.lumina.domain.model.MediaWithPosition): AnimatableMediaItem {
+        return animatableItems.getOrPut(mediaWithPosition.media) {
+            AnimatableMediaItem(mediaWithPosition)
+        }
+    }
+
+    fun getAnimatable(media: Media): AnimatableMediaItem? = animatableItems[media]
+
+    fun cleanupUnused(currentMedia: Set<Media>) {
+        animatableItems.keys.retainAll(currentMedia)
+    }
+
+    fun hasAnimations(): Boolean = animatableItems.values.any { it.isAnimating }
+
+    fun updateSelection(selectedMedia: Media?) {
+        animatableItems.values.forEach { item ->
+            item.updateSelection(item.mediaWithPosition.media == selectedMedia)
+        }
+    }
+}
 
 @Composable
 fun MediaHexVisualization(
@@ -37,6 +101,7 @@ fun MediaHexVisualization(
     provideZoom: () -> Float,
     provideOffset: () -> Offset,
     atlasState: MultiAtlasUpdateResult? = null,
+    selectedMedia: Media? = null,
     onMediaClicked: (Media) -> Unit = {},
     onHexCellClicked: (HexCell) -> Unit = {},
     /**
@@ -60,6 +125,43 @@ fun MediaHexVisualization(
     val currentOnVisibleCellsChanged by rememberUpdatedState(onVisibleCellsChanged)
 
     if (hexGridLayout.hexCellsWithMedia.isEmpty()) return
+
+    // Animation manager for media items
+    val animationManager = remember { AnimatableMediaManager() }
+
+    // Clean up unused animations when layout changes
+    LaunchedEffect(hexGridLayout) {
+        val currentMediaSet = hexGridLayout.hexCellsWithMedia.flatMap { it.mediaItems.map { it.media } }.toSet()
+        animationManager.cleanupUnused(currentMediaSet)
+    }
+
+    // Track current and previous selected media for targeted animations
+    var currentSelectedItem by remember { mutableStateOf<AnimatableMediaItem?>(null) }
+    var previousSelectedItem by remember { mutableStateOf<AnimatableMediaItem?>(null) }
+
+    // Handle selection changes - only animate affected items
+    LaunchedEffect(selectedMedia) {
+        // Store previous selection
+        previousSelectedItem = currentSelectedItem
+
+        // Update current selection using the animation manager
+        currentSelectedItem = selectedMedia?.let { media ->
+            animationManager.getAnimatable(media)?.apply {
+                updateSelection(true)
+            }
+        }
+
+        // Update previous selection state
+        previousSelectedItem?.updateSelection(false)
+
+        // Animate both items concurrently
+        listOf(currentSelectedItem, previousSelectedItem).forEach { item ->
+            item?.let {
+                launch { it.animateToSelectionState() }
+            }
+        }
+    }
+
 
     LaunchedEffect(hexGridLayout) {
         geometryReader.clear()
@@ -99,13 +201,14 @@ fun MediaHexVisualization(
 
 
                     // Check for media hits with rotation-aware hit testing
-                    val hitMedia = findMediaAtPosition(transformedPos, hexGridLayout)
-                    if (hitMedia != null) {
-                        onMediaClicked(hitMedia)
-                        clickedMedia = hitMedia
+                    val hitAnimatableMedia = findAnimatableMediaAtPosition(transformedPos, hexGridLayout, animationManager)
+                    if (hitAnimatableMedia != null) {
+                        val media = hitAnimatableMedia.mediaWithPosition.media
+                        onMediaClicked(media)
+                        clickedMedia = media
                         clickedHexCell = null
-                        // Trigger focus request
-                        geometryReader.getMediaBounds(hitMedia)?.let { bounds ->
+                        // Trigger focus request with unrotated bounds for selected media
+                        geometryReader.getMediaBounds(media)?.let { bounds ->
                             onFocusRequested(bounds)
                         }
                     } else {
@@ -143,16 +246,17 @@ fun MediaHexVisualization(
 
             hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
                 hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
+                    // Get or create animatable item - this becomes our primary canvas item
+                    val animatableItem = animationManager.getOrCreateAnimatable(mediaWithPosition)
+
                     geometryReader.storeMediaBounds(
-                        media = mediaWithPosition.media,
-                        bounds = mediaWithPosition.absoluteBounds, // World coordinates
+                        media = animatableItem.mediaWithPosition.media,
+                        bounds = animatableItem.mediaWithPosition.absoluteBounds, // World coordinates
                         hexCell = hexCellWithMedia.hexCell
                     )
 
-                    drawMediaFromAtlas(
-                        media = mediaWithPosition.media,
-                        bounds = mediaWithPosition.absoluteBounds,
-                        rotationAngle = mediaWithPosition.rotationAngle,
+                    drawAnimatableMediaFromAtlas(
+                        animatableItem = animatableItem,
                         atlasState = atlasState,
                         zoom = zoom
                     )
@@ -219,6 +323,21 @@ private fun calculateVisibleCells(
     // Simple approach: return all cells for now
     // TODO: Implement actual viewport intersection based on zoom/offset
     return hexGridLayout.hexCellsWithMedia
+}
+
+/**
+ * Draws animatable media from atlas texture or falls back to colored rectangle.
+ */
+private fun DrawScope.drawAnimatableMediaFromAtlas(
+    animatableItem: AnimatableMediaItem,
+    atlasState: MultiAtlasUpdateResult?,
+    zoom: Float
+) {
+    val media = animatableItem.mediaWithPosition.media
+    val bounds = animatableItem.mediaWithPosition.absoluteBounds
+    val rotationAngle = animatableItem.currentRotation
+
+    drawMediaFromAtlas(media, bounds, rotationAngle, atlasState, zoom)
 }
 
 /**
@@ -411,18 +530,20 @@ private fun DrawScope.drawStyledPhoto(
     )
 }
 
-private fun findMediaAtPosition(
+private fun findAnimatableMediaAtPosition(
     position: Offset,
-    hexGridLayout: dev.serhiiyaremych.lumina.domain.model.HexGridLayout
-): Media? {
+    hexGridLayout: dev.serhiiyaremych.lumina.domain.model.HexGridLayout,
+    animationManager: AnimatableMediaManager
+): AnimatableMediaItem? {
     for (hexCellWithMedia in hexGridLayout.hexCellsWithMedia) {
         for (mediaWithPosition in hexCellWithMedia.mediaItems) {
-            val bounds = mediaWithPosition.absoluteBounds
-            val rotationAngle = mediaWithPosition.rotationAngle
+            val animatableItem = animationManager.getOrCreateAnimatable(mediaWithPosition)
+            val bounds = animatableItem.mediaWithPosition.absoluteBounds
+            val rotationAngle = animatableItem.currentRotation // Use current animated rotation
 
             if (rotationAngle == 0f) {
                 if (bounds.contains(position)) {
-                    return mediaWithPosition.media
+                    return animatableItem
                 }
             } else {
                 val center = bounds.center
@@ -433,7 +554,7 @@ private fun findMediaAtPosition(
                 )
 
                 if (bounds.contains(transformedPosition)) {
-                    return mediaWithPosition.media
+                    return animatableItem
                 }
             }
         }

@@ -62,6 +62,9 @@ fun App(
 
         // Permission state management
         var permissionGranted by remember { mutableStateOf(false) }
+        
+        // Selected media state for unrotation
+        var selectedMedia by remember { mutableStateOf<dev.serhiiyaremych.lumina.domain.model.Media?>(null) }
 
         Log.d(
             "App",
@@ -184,11 +187,14 @@ fun App(
                                     provideZoom = { transformableState.zoom },
                                     provideOffset = { transformableState.offset },
                                     atlasState = atlasState,
+                                    selectedMedia = selectedMedia,
                                     onMediaClicked = { media ->
                                         Log.d("App", "Media clicked: ${media.displayName}")
+                                        selectedMedia = media
                                     },
                                     onHexCellClicked = { hexCell ->
                                         Log.d("App", "Hex cell clicked: (${hexCell.q}, ${hexCell.r})")
+                                        selectedMedia = null
                                     },
                                     onFocusRequested = { bounds ->
                                         Log.d("App", "Focus requested: $bounds")
