@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
+import dev.serhiiyaremych.lumina.ui.animation.AnimationConstants
 import dev.serhiiyaremych.lumina.ui.components.MediaPermissionFlow
 import dev.serhiiyaremych.lumina.ui.debug.EnhancedDebugOverlay
 import dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel
@@ -73,7 +74,7 @@ fun App(
 
         val gridState = rememberGridCanvasState()
         val transformableState = rememberTransformableState(
-            animationSpec = tween(durationMillis = 400)
+            animationSpec = tween(durationMillis = AnimationConstants.ANIMATION_DURATION_MS)
         )
         val hexGridRenderer = remember { HexGridRenderer() }
         val coroutineScope = rememberCoroutineScope()

@@ -1,17 +1,14 @@
 package dev.serhiiyaremych.lumina.ui
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -30,69 +27,13 @@ import androidx.compose.ui.unit.dp
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
+import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaItem
+import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaManager
+import dev.serhiiyaremych.lumina.ui.animation.AnimationConstants
+import dev.serhiiyaremych.lumina.ui.animation.PileShuffleRevealStrategy
+import dev.serhiiyaremych.lumina.ui.animation.calculateVisibilityRatio
 import kotlinx.coroutines.launch
 
-/**
- * Wrapper class for media items with animation capabilities.
- * Manages selection state and provides explicit animation functions.
- */
-@Stable
-class AnimatableMediaItem(
-    val mediaWithPosition: dev.serhiiyaremych.lumina.domain.model.MediaWithPosition
-) {
-    private val rotationAnimatable = Animatable(mediaWithPosition.rotationAngle)
-
-    // Pure state - no side effects
-    var isSelected: Boolean by mutableStateOf(false)
-        private set
-
-    // Read-only animation state
-    val currentRotation: Float get() = rotationAnimatable.value
-    val isAnimating: Boolean get() = rotationAnimatable.isRunning
-    val originalRotation: Float = mediaWithPosition.rotationAngle
-
-    // Pure state update (no side effects)
-    fun updateSelection(selected: Boolean) {
-        isSelected = selected
-    }
-
-    // Explicit animation function (called from composable)
-    suspend fun animateToSelectionState(
-        animationSpec: AnimationSpec<Float> = tween(350)
-    ) {
-        val targetRotation = if (isSelected) 0f else originalRotation
-        rotationAnimatable.animateTo(targetRotation, animationSpec)
-    }
-}
-
-/**
- * Manager for AnimatableMediaItem instances.
- * Handles creation, cleanup, and retrieval of animated media items.
- */
-@Stable
-class AnimatableMediaManager {
-    private val animatableItems = mutableMapOf<Media, AnimatableMediaItem>()
-
-    fun getOrCreateAnimatable(mediaWithPosition: dev.serhiiyaremych.lumina.domain.model.MediaWithPosition): AnimatableMediaItem {
-        return animatableItems.getOrPut(mediaWithPosition.media) {
-            AnimatableMediaItem(mediaWithPosition)
-        }
-    }
-
-    fun getAnimatable(media: Media): AnimatableMediaItem? = animatableItems[media]
-
-    fun cleanupUnused(currentMedia: Set<Media>) {
-        animatableItems.keys.retainAll(currentMedia)
-    }
-
-    fun hasAnimations(): Boolean = animatableItems.values.any { it.isAnimating }
-
-    fun updateSelection(selectedMedia: Media?) {
-        animatableItems.values.forEach { item ->
-            item.updateSelection(item.mediaWithPosition.media == selectedMedia)
-        }
-    }
-}
 
 @Composable
 fun MediaHexVisualization(
@@ -120,6 +61,10 @@ fun MediaHexVisualization(
     var clickedMedia by remember { mutableStateOf<Media?>(null) }
     var clickedHexCell by remember { mutableStateOf<HexCell?>(null) }
     var ripplePosition by remember { mutableStateOf<Offset?>(null) }
+    var revealAnimationTarget by remember { mutableStateOf<AnimatableMediaItem?>(null) }
+    
+    // Remember coroutine scope for immediate animation triggering
+    val animationScope = rememberCoroutineScope()
 
     // Capture latest callback to avoid restarting effect when callback changes
     val currentOnVisibleCellsChanged by rememberUpdatedState(onVisibleCellsChanged)
@@ -128,6 +73,9 @@ fun MediaHexVisualization(
 
     // Animation manager for media items
     val animationManager = remember { AnimatableMediaManager() }
+    
+    // Reveal animation strategy for Solution 3
+    val revealStrategy = remember { PileShuffleRevealStrategy() }
 
     // Clean up unused animations when layout changes
     LaunchedEffect(hexGridLayout) {
@@ -167,6 +115,21 @@ fun MediaHexVisualization(
         geometryReader.clear()
         clickedMedia = null
         clickedHexCell = null
+        
+        // Clean up reveal animation immediately on layout change
+        if (revealAnimationTarget != null) {
+            val allAnimatableItems = hexGridLayout.hexCellsWithMedia.flatMap { cell ->
+                cell.mediaItems.map { mediaWithPos ->
+                    animationManager.getOrCreateAnimatable(mediaWithPos)
+                }
+            }
+            
+            allAnimatableItems.forEach { item ->
+                launch { item.resetRevealState() }
+            }
+        }
+        
+        revealAnimationTarget = null
     }
 
     // Monitor zoom/offset changes and report visible cells
@@ -207,6 +170,50 @@ fun MediaHexVisualization(
                         onMediaClicked(media)
                         clickedMedia = media
                         clickedHexCell = null
+                        
+                        // Trigger reveal animation IMMEDIATELY in tap handler
+                        val allAnimatableItems = hexGridLayout.hexCellsWithMedia.flatMap { cell ->
+                            cell.mediaItems.map { mediaWithPos ->
+                                animationManager.getOrCreateAnimatable(mediaWithPos)
+                            }
+                        }
+                        
+                        // Clean up previous animation IMMEDIATELY if needed
+                        if (revealAnimationTarget != null && revealAnimationTarget != hitAnimatableMedia) {
+                            animationScope.launch {
+                                // Reset all items simultaneously
+                                allAnimatableItems.forEach { item ->
+                                    launch { item.resetRevealState() }
+                                }
+                            }
+                        }
+                        
+                        // Start new animation immediately
+                        animationScope.launch {
+                            val visibilityRatio = calculateVisibilityRatio(hitAnimatableMedia, allAnimatableItems)
+                            
+                            // Animate the clicked item (stays in place, full opacity)
+                            val revealState = revealStrategy.animateReveal(
+                                hitAnimatableMedia, 
+                                visibilityRatio,
+                                androidx.compose.animation.core.tween(AnimationConstants.ANIMATION_DURATION_MS)
+                            )
+                            hitAnimatableMedia.animateToRevealState(revealState)
+                            
+                            // Animate overlapping items (shuffle aside + fade) concurrently
+                            val overlappingAnimations = revealStrategy.animateOverlapping(
+                                allAnimatableItems.filter { it != hitAnimatableMedia },
+                                hitAnimatableMedia,
+                                androidx.compose.animation.core.tween(AnimationConstants.ANIMATION_DURATION_MS)
+                            )
+                            
+                            overlappingAnimations.forEach { (item, state) ->
+                                launch { item.animateToRevealState(state) }
+                            }
+                        }
+                        
+                        revealAnimationTarget = hitAnimatableMedia
+                        
                         // Trigger focus request with unrotated bounds for selected media
                         geometryReader.getMediaBounds(media)?.let { bounds ->
                             onFocusRequested(bounds)
@@ -216,6 +223,25 @@ fun MediaHexVisualization(
                             onHexCellClicked(cell)
                             clickedHexCell = cell
                             clickedMedia = null
+                            
+                            // Clear reveal animation IMMEDIATELY when clicking on cell
+                            if (revealAnimationTarget != null) {
+                                val allAnimatableItems = hexGridLayout.hexCellsWithMedia.flatMap { hexCell ->
+                                    hexCell.mediaItems.map { mediaWithPos ->
+                                        animationManager.getOrCreateAnimatable(mediaWithPos)
+                                    }
+                                }
+                                
+                                animationScope.launch {
+                                    // Reset all items simultaneously
+                                    allAnimatableItems.forEach { item ->
+                                        launch { item.resetRevealState() }
+                                    }
+                                }
+                            }
+                            
+                            revealAnimationTarget = null
+                            
                             // Trigger focus request
                             geometryReader.getHexCellBounds(cell)?.let { bounds ->
                                 onFocusRequested(bounds)
@@ -334,10 +360,39 @@ private fun DrawScope.drawAnimatableMediaFromAtlas(
     zoom: Float
 ) {
     val media = animatableItem.mediaWithPosition.media
-    val bounds = animatableItem.mediaWithPosition.absoluteBounds
+    val originalBounds = animatableItem.mediaWithPosition.absoluteBounds
     val rotationAngle = animatableItem.currentRotation
-
-    drawMediaFromAtlas(media, bounds, rotationAngle, atlasState, zoom)
+    
+    // Apply reveal animation transforms
+    val slideOffset = animatableItem.currentSlideOffset
+    val breathingScale = animatableItem.currentBreathingScale
+    val alpha = animatableItem.currentAlpha
+    
+    // Calculate transformed bounds with slide offset
+    val transformedBounds = androidx.compose.ui.geometry.Rect(
+        left = originalBounds.left + slideOffset.x,
+        top = originalBounds.top + slideOffset.y,
+        right = originalBounds.right + slideOffset.x,
+        bottom = originalBounds.bottom + slideOffset.y
+    )
+    
+    // Apply breathing scale around the center
+    val scaledBounds = if (breathingScale != 1f) {
+        val center = transformedBounds.center
+        val scaledWidth = transformedBounds.width * breathingScale
+        val scaledHeight = transformedBounds.height * breathingScale
+        androidx.compose.ui.geometry.Rect(
+            left = center.x - scaledWidth / 2,
+            top = center.y - scaledHeight / 2,
+            right = center.x + scaledWidth / 2,
+            bottom = center.y + scaledHeight / 2
+        )
+    } else {
+        transformedBounds
+    }
+    
+    // Apply alpha and draw
+    drawMediaFromAtlas(media, scaledBounds, rotationAngle, atlasState, zoom, alpha)
 }
 
 /**
@@ -348,7 +403,8 @@ private fun DrawScope.drawMediaFromAtlas(
     bounds: Rect,
     rotationAngle: Float,
     atlasState: MultiAtlasUpdateResult?,
-    zoom: Float
+    zoom: Float,
+    alpha: Float = 1f
 ) {
     // Calculate rotation center (center of the media bounds)
     val center = bounds.center
@@ -384,21 +440,22 @@ private fun DrawScope.drawMediaFromAtlas(
                                 foundRegion.atlasRect.height.toInt()
                             ),
                             bounds = bounds,
-                            zoom = zoom
+                            zoom = zoom,
+                            alpha = alpha
                         )
                     } else {
                         // Bitmap was recycled, fall back to placeholder
-                        drawPlaceholderRect(media, bounds, Color.Gray, zoom)
+                        drawPlaceholderRect(media, bounds, Color.Gray, zoom, alpha)
                     }
                 } else {
                     // Fallback: No atlas contains this photo
-                    drawPlaceholderRect(media, bounds, Color.Gray, zoom)
+                    drawPlaceholderRect(media, bounds, Color.Gray, zoom, alpha)
                 }
             }
 
             else -> {
                 // Fallback: No atlas available, draw colored rectangle
-                drawPlaceholderRect(media, bounds, zoom = zoom)
+                drawPlaceholderRect(media, bounds, zoom = zoom, alpha = alpha)
             }
         }
     }
@@ -411,7 +468,8 @@ private fun DrawScope.drawPlaceholderRect(
     media: Media,
     bounds: Rect,
     overrideColor: Color? = null,
-    zoom: Float = 1f
+    zoom: Float = 1f,
+    alpha: Float = 1f
 ) {
     val color = overrideColor ?: when (media) {
         is Media.Image -> Color(0xFF2196F3)
@@ -425,7 +483,7 @@ private fun DrawScope.drawPlaceholderRect(
 
     // 1. Draw subtle contact shadow
     drawRoundRect(
-        color = Color.Black.copy(alpha = 0.15f),
+        color = Color.Black.copy(alpha = 0.15f * alpha),
         topLeft = bounds.topLeft + Offset(shadowOffset, shadowOffset),
         size = bounds.size,
         cornerRadius = androidx.compose.ui.geometry.CornerRadius(outerCornerRadius)
@@ -433,7 +491,7 @@ private fun DrawScope.drawPlaceholderRect(
 
     // 2. Draw white border (photo background)
     drawRoundRect(
-        color = Color.White,
+        color = Color.White.copy(alpha = alpha),
         topLeft = bounds.topLeft,
         size = bounds.size,
         cornerRadius = androidx.compose.ui.geometry.CornerRadius(outerCornerRadius)
@@ -448,7 +506,7 @@ private fun DrawScope.drawPlaceholderRect(
     )
 
     drawRoundRect(
-        color = color,
+        color = color.copy(alpha = alpha),
         topLeft = imageArea.topLeft,
         size = imageArea.size,
         cornerRadius = androidx.compose.ui.geometry.CornerRadius(innerCornerRadius)
@@ -456,7 +514,7 @@ private fun DrawScope.drawPlaceholderRect(
 
     // 4. Draw hairline dark gray border around the entire photo
     drawRoundRect(
-        color = Color(0xFF666666),
+        color = Color(0xFF666666).copy(alpha = alpha),
         topLeft = bounds.topLeft,
         size = bounds.size,
         cornerRadius = androidx.compose.ui.geometry.CornerRadius(outerCornerRadius),
@@ -475,7 +533,8 @@ private fun DrawScope.drawStyledPhoto(
     srcOffset: androidx.compose.ui.unit.IntOffset,
     srcSize: androidx.compose.ui.unit.IntSize,
     bounds: Rect,
-    zoom: Float
+    zoom: Float,
+    alpha: Float = 1f
 ) {
     val borderWidth = 2.dp.toPx()
     val innerCornerRadius = 0.1.dp.toPx()  // Increased for smoother corners
@@ -484,7 +543,7 @@ private fun DrawScope.drawStyledPhoto(
 
     // 1. Draw subtle contact shadow
     drawRoundRect(
-        color = Color.Black.copy(alpha = 0.4f),
+        color = Color.Black.copy(alpha = 0.4f * alpha),
         topLeft = bounds.topLeft + Offset(shadowOffset, shadowOffset),
         size = bounds.size,
         cornerRadius = androidx.compose.ui.geometry.CornerRadius(outerCornerRadius)
@@ -492,7 +551,7 @@ private fun DrawScope.drawStyledPhoto(
 
     // 2. Draw white border (photo background)
     drawRoundRect(
-        color = Color.White,
+        color = Color.White.copy(alpha = alpha),
         topLeft = bounds.topLeft,
         size = bounds.size,
         cornerRadius = androidx.compose.ui.geometry.CornerRadius(outerCornerRadius),
@@ -517,12 +576,13 @@ private fun DrawScope.drawStyledPhoto(
         dstSize = androidx.compose.ui.unit.IntSize(
             imageArea.width.toInt(),
             imageArea.height.toInt()
-        )
+        ),
+        alpha = alpha
     )
 
     // 4. Draw hairline dark gray border around the entire photo
     drawRoundRect(
-        color = Color(0xFF666666),
+        color = Color(0xFF666666).copy(alpha = alpha),
         topLeft = bounds.topLeft,
         size = bounds.size,
         cornerRadius = androidx.compose.ui.geometry.CornerRadius(outerCornerRadius),
