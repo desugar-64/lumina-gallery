@@ -38,7 +38,8 @@ class PhotoLODProcessor @Inject constructor(
     suspend fun processPhotoForLOD(
         photoUri: Uri,
         lodLevel: LODLevel,
-        scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER
+        scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER,
+        priority: dev.serhiiyaremych.lumina.domain.model.PhotoPriority = dev.serhiiyaremych.lumina.domain.model.PhotoPriority.NORMAL
     ): ProcessedPhoto? {
         return trace(BenchmarkLabels.PHOTO_LOD_PROCESS_PHOTO) {
             // Load original photo with efficient memory usage
@@ -77,7 +78,8 @@ class PhotoLODProcessor @Inject constructor(
                 originalSize = originalSize,
                 scaledSize = targetSize,
                 aspectRatio = targetSize.width.toFloat() / targetSize.height,
-                lodLevel = lodLevel.level
+                lodLevel = lodLevel.level,
+                priority = priority
             )
         }
     }
@@ -218,5 +220,6 @@ data class ProcessedPhoto(
     val originalSize: IntSize,
     val scaledSize: IntSize,
     val aspectRatio: Float,
-    val lodLevel: Int
+    val lodLevel: Int,
+    val priority: dev.serhiiyaremych.lumina.domain.model.PhotoPriority = dev.serhiiyaremych.lumina.domain.model.PhotoPriority.NORMAL
 )

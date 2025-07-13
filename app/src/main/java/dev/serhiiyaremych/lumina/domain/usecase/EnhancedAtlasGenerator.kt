@@ -69,7 +69,8 @@ class EnhancedAtlasGenerator @Inject constructor(
     suspend fun generateAtlasEnhanced(
         photoUris: List<Uri>,
         lodLevel: LODLevel,
-        scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER
+        scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER,
+        priorityMapping: Map<Uri, dev.serhiiyaremych.lumina.domain.model.PhotoPriority> = emptyMap()
     ): EnhancedAtlasResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
         
         if (photoUris.isEmpty()) {
@@ -87,7 +88,7 @@ class EnhancedAtlasGenerator @Inject constructor(
         currentCoroutineContext().ensureActive()
         Log.d(TAG, "Generating enhanced multi-atlas for ${photoUris.size} photos at $lodLevel")
         
-        val multiAtlasResult = dynamicAtlasPool.generateMultiAtlas(photoUris, lodLevel, scaleStrategy)
+        val multiAtlasResult = dynamicAtlasPool.generateMultiAtlas(photoUris, lodLevel, scaleStrategy, priorityMapping)
         
         val atlasCount = multiAtlasResult.atlases.size
         val successRate = if (photoUris.isNotEmpty()) multiAtlasResult.atlases.sumOf { it.regions.size }.toFloat() / photoUris.size else 0f

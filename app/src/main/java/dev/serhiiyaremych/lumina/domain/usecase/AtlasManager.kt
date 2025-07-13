@@ -48,6 +48,7 @@ class AtlasManager @Inject constructor(
     private var currentCellIds: Set<String> = emptySet()
     private var currentLODLevel: LODLevel = LODLevel.LEVEL_2
     private var lastReportedZoom: Float = 1.0f
+    private var currentSelectedMedia: Media? = null
 
     /**
      * Atlas Request Sequence Counter - Race Condition Protection
@@ -67,11 +68,13 @@ class AtlasManager @Inject constructor(
      * @param visibleCells Currently visible hex cells
      * @param currentZoom Current zoom level
      * @param marginRings Number of rings to expand beyond visible cells
+     * @param selectedMedia Currently selected media item for priority handling
      */
     suspend fun updateVisibleCells(
         visibleCells: List<HexCellWithMedia>,
         currentZoom: Float,
-        marginRings: Int = DEFAULT_MARGIN_RINGS
+        marginRings: Int = DEFAULT_MARGIN_RINGS,
+        selectedMedia: Media? = null
     ): MultiAtlasUpdateResult = trace(BenchmarkLabels.ATLAS_MANAGER_UPDATE_VISIBLE_CELLS) {
         withContext(Dispatchers.Default) {
             // Generate unique sequence number for this atlas request
@@ -91,7 +94,7 @@ class AtlasManager @Inject constructor(
                 Log.d(TAG, "Check regeneration: cellSetKey=${cellSetKey.take(3)}...(${cellSetKey.size}), lodLevel=$lodLevel")
                 Log.d(TAG, "Current state: currentCellIds=${currentCellIds.take(3)}...(${currentCellIds.size}), currentLODLevel=$currentLODLevel, atlases=${currentAtlases.size}")
 
-                if (!isRegenerationNeeded(cellSetKey, lodLevel, currentZoom)) {
+                if (!isRegenerationNeeded(cellSetKey, lodLevel, currentZoom, selectedMedia)) {
                     Log.d(TAG, "Atlas regeneration not needed - returning existing atlases")
                     return@withContext atlasMutex.withLock {
                         if (currentAtlases.isNotEmpty()) {
@@ -108,7 +111,7 @@ class AtlasManager @Inject constructor(
                 Log.d(TAG, "Regenerating atlases for ${expandedCells.size} cells at $lodLevel")
 
                 val (enhancedResult, duration) = trace(BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS) {
-                    measureTimedValue { generateAtlasForCells(expandedCells, lodLevel) }
+                    measureTimedValue { generateAtlasForCells(expandedCells, lodLevel, selectedMedia) }
                 }
 
                 if (enhancedResult.hasResults) {
@@ -131,6 +134,7 @@ class AtlasManager @Inject constructor(
                         currentCellIds = cellSetKey
                         currentLODLevel = lodLevel
                         lastReportedZoom = currentZoom
+                        currentSelectedMedia = selectedMedia
                     }
 
                     val totalRegions = enhancedResult.allAtlases.sumOf { it.regions.size }
@@ -204,11 +208,23 @@ class AtlasManager @Inject constructor(
         currentZoom: Float,
         marginRings: Int = DEFAULT_MARGIN_RINGS
     ): Boolean {
+        return shouldRegenerateAtlas(visibleCells, currentZoom, marginRings, null)
+    }
+
+    /**
+     * Check if atlas regeneration is needed without launching coroutine, considering selected media.
+     */
+    fun shouldRegenerateAtlas(
+        visibleCells: List<HexCellWithMedia>,
+        currentZoom: Float,
+        marginRings: Int = DEFAULT_MARGIN_RINGS,
+        selectedMedia: Media? = null
+    ): Boolean {
         val lodLevel = selectOptimalLODLevel(visibleCells, currentZoom)
         val expandedCells = expandCellsByRings(visibleCells, marginRings)
         val cellSetKey = generateCellSetKey(expandedCells, lodLevel)
 
-        return isRegenerationNeeded(cellSetKey, lodLevel, currentZoom)
+        return isRegenerationNeeded(cellSetKey, lodLevel, currentZoom, selectedMedia)
     }
 
     /**
@@ -223,45 +239,23 @@ class AtlasManager @Inject constructor(
         }
         currentAtlases = emptyList()
         currentCellIds = emptySet()
+        currentSelectedMedia = null
     }
 
     // Private helper methods
 
 
     /**
-     * Selects optimal LOD level based on actual screen pixel size of thumbnails.
-     * Updated for enhanced 8-level LOD system with smoother quality transitions.
+     * Selects optimal LOD level based on zoom factor using predefined zoom ranges.
+     * Uses the zoom ranges defined in LODLevel enum for consistent behavior.
      */
     private fun selectOptimalLODLevel(
         visibleCells: List<HexCellWithMedia>,
         currentZoom: Float
     ): LODLevel {
-        if (visibleCells.isEmpty()) {
-            return LODLevel.entries.first { currentZoom in it.zoomRange }
-        }
-
-        // Use hex cell size as the base for consistent LOD calculation
-        // This prevents hysteresis caused by variable thumbnail sizes
-        val hexCellSize = visibleCells.firstOrNull()?.bounds?.let { 
-            maxOf(it.width, it.height) 
-        } ?: return LODLevel.entries.first { currentZoom in it.zoomRange }
-
-        val maxScreenPixelSize = hexCellSize * currentZoom
-
-        val optimalLOD = when {
-            maxScreenPixelSize <= 48f -> LODLevel.LEVEL_0   // 32px for ultra-tiny thumbnails
-            maxScreenPixelSize <= 96f -> LODLevel.LEVEL_1   // 64px for tiny thumbnails
-            maxScreenPixelSize <= 144f -> LODLevel.LEVEL_2  // 128px for small thumbnails
-            maxScreenPixelSize <= 220f -> LODLevel.LEVEL_3  // 192px for medium thumbnails
-            maxScreenPixelSize <= 320f -> LODLevel.LEVEL_4  // 256px for large thumbnails
-            maxScreenPixelSize <= 450f -> LODLevel.LEVEL_5  // 384px for high-quality thumbnails
-            maxScreenPixelSize <= 640f -> LODLevel.LEVEL_6  // 512px for focused view
-            else -> LODLevel.LEVEL_7                        // 768px for near-fullscreen
-        }
-
-        Log.d(TAG, "selectOptimalLODLevel: maxScreenSize=${maxScreenPixelSize}px (zoom=$currentZoom) -> $optimalLOD")
+        val optimalLOD = LODLevel.forZoom(currentZoom)
+        Log.d(TAG, "selectOptimalLODLevel: zoom=$currentZoom -> $optimalLOD (range: ${optimalLOD.zoomRange})")
         return optimalLOD
-//        return selectLODLevel(currentZoom)
     }
 
     private fun expandCellsByRings(
@@ -282,7 +276,8 @@ class AtlasManager @Inject constructor(
     private fun isRegenerationNeeded(
         cellSetKey: Set<String>,
         lodLevel: LODLevel,
-        currentZoom: Float
+        currentZoom: Float,
+        selectedMedia: Media?
     ): Boolean {
         return when {
             // First time or no atlases available
@@ -309,14 +304,21 @@ class AtlasManager @Inject constructor(
                 true
             }
 
-            // Same LOD level, same cells - no regeneration needed
+            // Selected media has changed (important for priority-based atlas generation)
+            currentSelectedMedia != selectedMedia -> {
+                Log.d(TAG, "shouldRegenerateAtlas: Selected media changed from ${currentSelectedMedia?.displayName} to ${selectedMedia?.displayName}")
+                true
+            }
+
+            // Same LOD level, same cells, same selection - no regeneration needed
             else -> false
         }
     }
 
     private suspend fun generateAtlasForCells(
         cells: List<HexCellWithMedia>,
-        lodLevel: LODLevel
+        lodLevel: LODLevel,
+        selectedMedia: Media? = null
     ): EnhancedAtlasGenerator.EnhancedAtlasResult {
         val allMediaItems = cells.flatMap { cell ->
             cell.mediaItems.map { mediaWithPosition ->
@@ -328,6 +330,18 @@ class AtlasManager @Inject constructor(
         val videoMediaItems = allMediaItems.filterIsInstance<Media.Video>()
 
         val photoUris = imageMediaItems.map { it.uri }
+        
+        // Create priority mapping: selected media gets HIGH priority, all others get NORMAL priority
+        val priorityMapping = photoUris.associateWith { uri ->
+            if (selectedMedia != null && selectedMedia is Media.Image && selectedMedia.uri == uri) {
+                dev.serhiiyaremych.lumina.domain.model.PhotoPriority.HIGH
+            } else {
+                dev.serhiiyaremych.lumina.domain.model.PhotoPriority.NORMAL
+            }
+        }
+        
+        val highPriorityCount = priorityMapping.values.count { it == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.HIGH }
+        val normalPriorityCount = priorityMapping.values.count { it == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.NORMAL }
 
         Log.d(TAG, "Atlas generation for $lodLevel:")
         Log.d(TAG, "  - Total cells: ${cells.size}")
@@ -335,12 +349,16 @@ class AtlasManager @Inject constructor(
         Log.d(TAG, "  - Image items: ${imageMediaItems.size}")
         Log.d(TAG, "  - Video items: ${videoMediaItems.size}")
         Log.d(TAG, "  - Photo URIs to process: ${photoUris.size}")
+        Log.d(TAG, "  - High priority photos: $highPriorityCount")
+        Log.d(TAG, "  - Normal priority photos: $normalPriorityCount")
+        Log.d(TAG, "  - Selected media: ${selectedMedia?.let { "present (${it.javaClass.simpleName})" } ?: "none"}")
         Log.d(TAG, "  - Photo URIs: ${photoUris.take(5)}...")
 
-        // Generate atlases using enhanced system with multi-atlas fallback
+        // Generate atlases using enhanced system with priority-based multi-atlas fallback
         val result: EnhancedAtlasGenerator.EnhancedAtlasResult = enhancedAtlasGenerator.generateAtlasEnhanced(
             photoUris = photoUris,
-            lodLevel = lodLevel
+            lodLevel = lodLevel,
+            priorityMapping = priorityMapping
         )
 
         // Log detailed results

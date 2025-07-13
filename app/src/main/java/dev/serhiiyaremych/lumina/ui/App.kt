@@ -205,7 +205,7 @@ fun App(
                                     },
                                     onVisibleCellsChanged = { visibleCells ->
                                         Log.d("App", "Visible cells changed: ${visibleCells.size} cells")
-                                        galleryViewModel.onVisibleCellsChanged(visibleCells, transformableState.zoom)
+                                        galleryViewModel.onVisibleCellsChanged(visibleCells, transformableState.zoom, selectedMedia)
                                     }
                                 )
                             }
@@ -218,6 +218,7 @@ fun App(
                         isAtlasGenerating = isAtlasGenerating,
                         currentZoom = transformableState.zoom,
                         memoryStatus = memoryStatus,
+                        deviceCapabilities = galleryViewModel.getDeviceCapabilities(),
                         modifier = Modifier.fillMaxSize()
                     )
                 }

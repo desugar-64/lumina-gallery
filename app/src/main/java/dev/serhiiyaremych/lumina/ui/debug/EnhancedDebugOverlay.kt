@@ -1,11 +1,14 @@
 package dev.serhiiyaremych.lumina.ui.debug
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,9 +23,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,11 +33,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -46,11 +44,23 @@ import androidx.compose.ui.zIndex
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
 import dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager
-import dev.serhiiyaremych.lumina.ui.ZoomConstants
 import kotlin.math.roundToInt
 
 /**
- * Enhanced debug overlay system with toggle button and comprehensive atlas information
+ * Debug overlay font size constants for centralized control
+ */
+private object DebugTextSizes {
+    val TOGGLE_BUTTON = 16.sp          // Debug toggle button (×/◐)
+    val LARGE_ICON = 14.sp             // Large icons (🔍, 📱)
+    val PRIMARY_TEXT = 13.sp           // Primary values (zoom level)
+    val SECONDARY_TEXT = 12.sp         // Secondary text (LOD level, icons, tier labels)
+    val TERTIARY_TEXT = 11.sp          // Small labels (strategy name, memory %, atlas sizes)
+    val DETAIL_TEXT = 10.sp            // Detail info (atlas count, photo count, dimensions)
+    val MICRO_TEXT = 9.sp              // Very small text (compact atlas photo count, utilization)
+}
+
+/**
+ * Lightweight, semi-transparent debug overlay focused on multi-LOD atlas visualization
  */
 @Composable
 fun EnhancedDebugOverlay(
@@ -58,466 +68,589 @@ fun EnhancedDebugOverlay(
     isAtlasGenerating: Boolean,
     currentZoom: Float,
     memoryStatus: SmartMemoryManager.MemoryStatus?,
+    deviceCapabilities: dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities? = null,
     modifier: Modifier = Modifier
 ) {
     var isDebugVisible by remember { mutableStateOf(false) }
 
     Box(modifier = modifier) {
-        // Debug toggle button - always visible
+        // Compact debug toggle - smaller and less intrusive
         Surface(
             onClick = { isDebugVisible = !isDebugVisible },
             modifier = Modifier
                 .zIndex(10f)
                 .align(Alignment.TopEnd)
-                .padding(16.dp)
-                .size(48.dp),
+                .padding(8.dp)
+                .size(32.dp),
             shape = CircleShape,
-            color = if (isDebugVisible) Color(0xFF4CAF50) else Color(0xFF2196F3),
-            shadowElevation = 8.dp
+            color = if (isDebugVisible) Color(0x88FF6B35) else Color(0x664FC3F7),
+            shadowElevation = 4.dp
         ) {
-            Icon(
-                imageVector = Icons.Default.Info,
-                contentDescription = "Toggle Debug Info",
-                tint = Color.White,
-                modifier = Modifier.padding(12.dp)
+            Text(
+                text = if (isDebugVisible) "×" else "◐",
+                color = Color.White,
+                fontSize = DebugTextSizes.TOGGLE_BUTTON,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(8.dp)
             )
         }
 
-        // Debug panel - only visible when toggled
+        // Lightweight debug info - always visible when toggled, click-through for most areas
         if (isDebugVisible) {
-            DebugPanel(
+            CompactDebugInfo(
                 atlasState = atlasState,
                 isAtlasGenerating = isAtlasGenerating,
                 currentZoom = currentZoom,
                 memoryStatus = memoryStatus,
+                deviceCapabilities = deviceCapabilities,
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 16.dp)
+                    .align(Alignment.TopStart)
+                    .padding(8.dp)
             )
         }
     }
 }
 
 @Composable
-private fun DebugPanel(
+private fun CompactDebugInfo(
     atlasState: MultiAtlasUpdateResult?,
     isAtlasGenerating: Boolean,
     currentZoom: Float,
     memoryStatus: SmartMemoryManager.MemoryStatus?,
+    deviceCapabilities: dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities?,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = modifier.width(360.dp),
-        shape = RoundedCornerShape(23.dp),
-        color = Color.Black.copy(alpha = 0.9f),
-        shadowElevation = 12.dp
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Header
-            Text(
-                text = "🐛 Debug Panel",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // Memory Section
-            memoryStatus?.let { memory ->
-                MemorySection(memory = memory)
-            }
-
-            // Zoom and LOD Section
-            ZoomAndLODSection(
-                currentZoom = currentZoom,
-                isAtlasGenerating = isAtlasGenerating,
-                atlasState = atlasState
-            )
-
-            // Atlas Information Section
-            AtlasInformationSection(
-                atlasState = atlasState,
-                isAtlasGenerating = isAtlasGenerating
-            )
-        }
-    }
-}
-
-@Composable
-private fun MemorySection(memory: SmartMemoryManager.MemoryStatus) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = "📊 Memory Status",
-            color = Color.White,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        // Memory progress bar
-        val memoryPercent = memory.usagePercent
-        val animatedPercent by animateFloatAsState(
-            targetValue = memoryPercent,
-            animationSpec = tween(durationMillis = 500),
-            label = "memory_percent"
-        )
-
-        val memoryColor = when {
-            memoryPercent < 0.5f -> Color.Green
-            memoryPercent < 0.8f -> Color.Yellow
-            memoryPercent < 0.95f -> Color(0xFFFF9800) // Orange
-            else -> Color.Red
-        }
-
-        val animatedColor by animateColorAsState(
-            targetValue = memoryColor,
-            animationSpec = tween(durationMillis = 300),
-            label = "memory_color"
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(20.dp)
-                .background(Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(animatedPercent)
-                    .height(20.dp)
-                    .background(animatedColor, RoundedCornerShape(10.dp))
-            )
-
-            Text(
-                text = "${(memoryPercent * 100).roundToInt()}%",
-                color = Color.White,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
-
-        // Memory details
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "Used: ${formatBytes(memory.currentUsageBytes)}",
-                color = Color.Cyan,
-                fontSize = 9.sp
-            )
-            Text(
-                text = "Free: ${formatBytes(memory.availableBytes)}",
-                color = Color.Green,
-                fontSize = 9.sp
-            )
-        }
-
-        Text(
-            text = "Pressure: ${memory.pressureLevel} | Atlases: ${memory.registeredAtlases}",
-            color = Color.Gray,
-            fontSize = 9.sp
-        )
-    }
-}
-
-@Composable
-private fun ZoomAndLODSection(
-    currentZoom: Float,
-    isAtlasGenerating: Boolean,
-    atlasState: MultiAtlasUpdateResult?
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = "🔍 Zoom & LOD",
-            color = Color.White,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        val currentLOD = atlasState?.lodLevel ?: LODLevel.forZoom(currentZoom)
-
-        // Zoom level indicator using shared constants
-        val minZoom = ZoomConstants.MIN_ZOOM
-        val maxZoom = ZoomConstants.MAX_ZOOM
-        val zoomPercent = ((currentZoom - minZoom) / (maxZoom - minZoom)).coerceIn(0f, 1f)
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "${minZoom}x",
-                color = Color.Gray,
-                fontSize = 9.sp
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Zoom bar with indicator
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(16.dp)
-            ) {
-                Canvas(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .align(Alignment.Center)
-                ) {
-                    // Background bar
-                    drawLine(
-                        color = Color.Gray.copy(alpha = 0.5f),
-                        start = Offset(0f, size.height / 2),
-                        end = Offset(size.width, size.height / 2),
-                        strokeWidth = 8.dp.toPx(),
-                        cap = StrokeCap.Round
-                    )
-
-                    // Zoom indicator line
-                    val indicatorX = size.width * zoomPercent
-                    drawLine(
-                        color = Color.White,
-                        start = Offset(indicatorX, 0f),
-                        end = Offset(indicatorX, size.height),
-                        strokeWidth = 3.dp.toPx(),
-                        cap = StrokeCap.Round
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Text(
-                text = "${maxZoom.toInt()}x",
-                color = Color.Gray,
-                fontSize = 9.sp
-            )
-        }
-
-        // Current values
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "Current: ${String.format("%.2f", currentZoom)}x",
-                color = Color.White,
-                fontSize = 10.sp
-            )
-            Text(
-                text = "LOD: ${currentLOD.name}",
-                color = if (isAtlasGenerating) Color.Yellow else Color.Cyan,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Text(
-            text = "Resolution: ${currentLOD.resolution}px | Range: ${currentLOD.zoomRange.start}-${currentLOD.zoomRange.endInclusive}",
-            color = Color.Gray,
-            fontSize = 9.sp
-        )
-    }
-}
-
-@Composable
-private fun AtlasInformationSection(
-    atlasState: MultiAtlasUpdateResult?,
-    isAtlasGenerating: Boolean
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "🗺️ Atlas Information",
-                color = Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            if (isAtlasGenerating) {
-                Text(
-                    text = "⏳ Generating...",
-                    color = Color.Yellow,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-
-        when (atlasState) {
-            is MultiAtlasUpdateResult.Success -> {
-                AtlasSuccessView(atlasState = atlasState)
-            }
-            is MultiAtlasUpdateResult.GenerationFailed -> {
-                AtlasErrorView(
-                    title = "Generation Failed",
-                    message = atlasState.error
-                )
-            }
-            is MultiAtlasUpdateResult.Error -> {
-                AtlasErrorView(
-                    title = "Atlas Error",
-                    message = atlasState.exception.message ?: "Unknown error"
-                )
-            }
-            null -> {
-                Text(
-                    text = "No atlas data available",
-                    color = Color.Gray,
-                    fontSize = 10.sp
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun AtlasSuccessView(atlasState: MultiAtlasUpdateResult.Success) {
-    val totalRegions = atlasState.atlases.sumOf { it.regions.size }
-    val avgUtilization = if (atlasState.atlases.isNotEmpty()) {
-        atlasState.atlases.map { it.utilization }.average().toFloat()
-    } else 0f
-    val totalMemoryMB = atlasState.atlases.sumOf { atlas ->
-        atlas.bitmap.allocationByteCount / (1024 * 1024)
-    }
-    val validAtlases = atlasState.atlases.filter { !it.bitmap.isRecycled }
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        // Statistics
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "Atlases: ${atlasState.atlases.size}",
-                color = Color.White,
-                fontSize = 10.sp
-            )
-            Text(
-                text = "Photos: $totalRegions",
-                color = Color.White,
-                fontSize = 10.sp
-            )
-            Text(
-                text = "Memory: ${totalMemoryMB}MB",
-                color = Color.White,
-                fontSize = 10.sp
-            )
-        }
-
-        Text(
-            text = "Avg Utilization: ${(avgUtilization * 100).roundToInt()}%",
-            color = if (avgUtilization > 0.6f) Color.Green else Color.Yellow,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        // Atlas previews
-        if (validAtlases.isNotEmpty()) {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(validAtlases) { atlas ->
-                    AtlasPreviewCard(atlas = atlas)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AtlasPreviewCard(atlas: dev.serhiiyaremych.lumina.domain.model.TextureAtlas) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
+        // Compact zoom and expected LOD info
+        CompactZoomInfo(currentZoom, isAtlasGenerating)
+
+        // Device capabilities info
+        deviceCapabilities?.let { CompactDeviceInfo(it) }
+
+        // Multi-LOD atlas visualization - main focus
+        MultiLODAtlasView(atlasState)
+
+        // Compact memory indicator
+        memoryStatus?.let { CompactMemoryIndicator(it) }
+    }
+}
+
+@Composable
+private fun CompactZoomInfo(currentZoom: Float, isAtlasGenerating: Boolean) {
+    val expectedLOD = LODLevel.forZoom(currentZoom)
+
+    Row(
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Zoom icon and value
+        Text(
+            text = "🔍",
+            fontSize = DebugTextSizes.LARGE_ICON
+        )
+
+        Text(
+            text = "${String.format("%.1f", currentZoom)}×",
+            color = Color.White,
+            fontSize = DebugTextSizes.PRIMARY_TEXT,
+            fontWeight = FontWeight.Bold
+        )
+
+        // Arrow separator
+        Text(
+            text = "→",
+            color = Color.Gray,
+            fontSize = DebugTextSizes.SECONDARY_TEXT
+        )
+
+        // LOD level with icon
+        Text(
+            text = "📷",
+            fontSize = DebugTextSizes.SECONDARY_TEXT
+        )
+
+        Text(
+            text = expectedLOD.name.replace("LEVEL_", "L"),
+            color = if (isAtlasGenerating) Color.Yellow else Color.Cyan,
+            fontSize = DebugTextSizes.SECONDARY_TEXT,
+            fontWeight = FontWeight.Bold
+        )
+
+        if (isAtlasGenerating) {
+            AnimatedGeneratingIndicator()
+        }
+    }
+}
+
+@Composable
+private fun MultiLODAtlasView(atlasState: MultiAtlasUpdateResult?) {
+    when (atlasState) {
+        is MultiAtlasUpdateResult.Success -> {
+            val validAtlases = atlasState.atlases.filter { !it.bitmap.isRecycled }
+            val lodGroups = validAtlases.groupBy { LODLevel.fromLevel(it.lodLevel) }
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                // Strategy info with priority distribution
+                AtlasStrategyIndicator(atlasState)
+
+                // LOD groups - main focus
+                lodGroups.entries.sortedBy { it.key?.level ?: -1 }.forEach { (lod, atlases) ->
+                    LODGroupView(lod, atlases)
+                }
+            }
+        }
+
+        is MultiAtlasUpdateResult.GenerationFailed -> {
+            CompactErrorView("Gen Failed: ${atlasState.error.take(30)}...")
+        }
+
+        is MultiAtlasUpdateResult.Error -> {
+            CompactErrorView("Error: ${atlasState.exception.message?.take(30) ?: "Unknown"}...")
+        }
+
+        null -> {
+            Text(
+                text = "No atlas data",
+                color = Color.Gray.copy(alpha = 0.7f),
+                fontSize = DebugTextSizes.TERTIARY_TEXT,
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                    .padding(4.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun AtlasStrategyIndicator(atlasState: MultiAtlasUpdateResult.Success) {
+    // Detect strategy from atlas distribution
+    val strategy = when {
+        atlasState.atlases.size == 1 -> "SINGLE"
+        atlasState.atlases.groupBy { LODLevel.fromLevel(it.lodLevel) }.size > 1 -> "PRIORITY"
+        else -> "MULTI"
+    }
+
+    val strategyColor = when (strategy) {
+        "PRIORITY" -> Color(0xFF4CAF50) // Green for priority-based
+        "MULTI" -> Color(0xFF2196F3)   // Blue for multi-size
+        else -> Color(0xFFFF9800)      // Orange for single
+    }
+
+    val strategyIcon = when (strategy) {
+        "PRIORITY" -> "⭐"  // Star for priority
+        "MULTI" -> "🔄"    // Recycle for multi
+        else -> "📄"       // Single page for single
+    }
+
+    Row(
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = strategyIcon,
+            fontSize = DebugTextSizes.SECONDARY_TEXT
+        )
+
+        Text(
+            text = strategy,
+            color = strategyColor,
+            fontSize = DebugTextSizes.TERTIARY_TEXT,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = "📋",
+            fontSize = DebugTextSizes.DETAIL_TEXT
+        )
+
+        Text(
+            text = "${atlasState.atlases.size} atlas${if (atlasState.atlases.size != 1) "es" else ""}",
+            color = Color.White,
+            fontSize = DebugTextSizes.DETAIL_TEXT,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = "📸",
+            fontSize = DebugTextSizes.DETAIL_TEXT
+        )
+
+        Text(
+            text = "${atlasState.atlases.sumOf { it.regions.size }} photos",
+            color = Color.White,
+            fontSize = DebugTextSizes.DETAIL_TEXT,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+private fun LODGroupView(lod: LODLevel?, atlases: List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>) {
+    var isExpanded by remember { mutableStateOf(false) }
+
+    val lodColor = when (lod?.level) {
+        0, 1 -> Color(0xFF9E9E9E) // Gray for low LOD
+        2, 3 -> Color(0xFF2196F3) // Blue for medium LOD
+        4, 5 -> Color(0xFFFF9800) // Orange for high LOD
+        6, 7 -> Color(0xFFF44336) // Red for very high LOD
+        else -> Color.White
+    }
+
+    val lodIcon = when (lod?.level) {
+        0, 1 -> "🔽"  // Low quality
+        2, 3 -> "📷"  // Medium quality
+        4, 5 -> "📸"  // High quality
+        6, 7 -> "🎯"  // Very high/precise quality
+        else -> "❓"
+    }
+
+    Column(
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
+            .padding(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        // Clickable header row
+        Row(
+            modifier = Modifier
+                .clickable { isExpanded = !isExpanded },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            // LOD icon
+            Text(
+                text = lodIcon,
+                fontSize = DebugTextSizes.SECONDARY_TEXT
+            )
+
+            // LOD level indicator
+            Text(
+                text = lod?.name?.replace("LEVEL_", "L") ?: "L?",
+                color = Color.White,
+                fontSize = DebugTextSizes.SECONDARY_TEXT,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .background(lodColor.copy(alpha = 0.8f), RoundedCornerShape(3.dp))
+                    .padding(horizontal = 4.dp, vertical = 1.dp)
+            )
+
+            // Expand/collapse indicator
+            Text(
+                text = if (isExpanded) "🔼" else "🔽",
+                fontSize = DebugTextSizes.DETAIL_TEXT,
+                color = Color.Gray
+            )
+
+            // Atlas count
+            Text(
+                text = "${atlases.size} atlas${if (atlases.size != 1) "es" else ""}",
+                color = Color.White,
+                fontSize = DebugTextSizes.DETAIL_TEXT
+            )
+        }
+
+        // Atlas display - compact or expanded
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            items(atlases) { atlas ->
+                if (isExpanded) {
+                    ExpandedAtlasCard(atlas, lodColor)
+                } else {
+                    CompactAtlasCard(atlas, lodColor)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompactAtlasCard(atlas: dev.serhiiyaremych.lumina.domain.model.TextureAtlas, lodColor: Color) {
+    Box(
+        modifier = Modifier
+            .size(28.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(Color.Gray.copy(alpha = 0.3f))
+    ) {
+        Image(
+            bitmap = atlas.bitmap.asImageBitmap(),
+            contentDescription = "Atlas",
+            modifier = Modifier.size(28.dp)
+        )
+
+        // Photo count
+        Text(
+            text = "${atlas.regions.size}",
+            color = Color.White,
+            fontSize = DebugTextSizes.MICRO_TEXT,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .background(lodColor.copy(alpha = 0.8f), RoundedCornerShape(2.dp))
+                .padding(1.dp)
+        )
+
+        // Utilization indicator as colored border
+        val utilizationColor =
+            if (atlas.utilization > 0.7f) Color.Green else if (atlas.utilization > 0.4f) Color.Yellow else Color.Red
         Box(
             modifier = Modifier
-                .size(60.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .size(28.dp)
+                .background(Color.Transparent)
+                .clip(RoundedCornerShape(4.dp))
+                .background(utilizationColor.copy(alpha = 0.3f))
+        )
+    }
+}
+
+@Composable
+private fun ExpandedAtlasCard(atlas: dev.serhiiyaremych.lumina.domain.model.TextureAtlas, lodColor: Color) {
+    Column(
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        // Atlas bitmap at 3x size (84dp instead of 28dp)
+        Box(
+            modifier = Modifier
+                .size(300.dp)
+                .clip(RoundedCornerShape(6.dp))
                 .background(Color.Gray.copy(alpha = 0.3f))
         ) {
             Image(
                 bitmap = atlas.bitmap.asImageBitmap(),
-                contentDescription = "Atlas Preview",
-                modifier = Modifier.fillMaxWidth()
+                contentDescription = "Expanded Atlas",
+                modifier = Modifier.matchParentSize()
             )
 
-            // Photo count badge
+            // Photo count in top-right corner
             Text(
                 text = "${atlas.regions.size}",
                 color = Color.White,
-                fontSize = 8.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(4.dp))
-                    .padding(2.dp)
-            )
-
-            // Utilization badge
-            Text(
-                text = "${(atlas.utilization * 100).roundToInt()}%",
-                color = if (atlas.utilization > 0.6f) Color.Green else Color.Yellow,
-                fontSize = 7.sp,
+                fontSize = DebugTextSizes.TERTIARY_TEXT,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(4.dp))
-                    .padding(2.dp)
+                    .background(lodColor.copy(alpha = 0.9f), RoundedCornerShape(3.dp))
+                    .padding(horizontal = 3.dp, vertical = 1.dp)
+            )
+
+            // Utilization indicator in bottom-left corner
+            val utilizationColor =
+                if (atlas.utilization > 0.7f) Color.Green else if (atlas.utilization > 0.4f) Color.Yellow else Color.Red
+            Text(
+                text = "${(atlas.utilization * 100).roundToInt()}%",
+                color = Color.White,
+                fontSize = DebugTextSizes.MICRO_TEXT,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .background(utilizationColor.copy(alpha = 0.9f), RoundedCornerShape(3.dp))
+                    .padding(horizontal = 3.dp, vertical = 1.dp)
             )
         }
 
-        // Atlas info
+        // Atlas details
+        Column {
+            Text(
+                text = "${atlas.size.width}×${atlas.size.height}",
+                color = Color.White,
+                fontSize = DebugTextSizes.DETAIL_TEXT,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = "LOD ${atlas.lodLevel}",
+                color = lodColor,
+                fontSize = DebugTextSizes.MICRO_TEXT,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun CompactMemoryIndicator(memory: SmartMemoryManager.MemoryStatus) {
+    val memoryColor = when {
+        memory.usagePercent < 0.6f -> Color(0xFF4CAF50) // Green
+        memory.usagePercent < 0.8f -> Color(0xFFFF9800) // Orange
+        else -> Color(0xFFF44336) // Red
+    }
+
+    val memoryIcon = when {
+        memory.usagePercent < 0.6f -> "💚"  // Green heart for good
+        memory.usagePercent < 0.8f -> "⚠️"  // Warning for medium
+        else -> "🔴"  // Red circle for high
+    }
+
+    Row(
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        // Memory icon
         Text(
-            text = "${atlas.size.width}x${atlas.size.height}",
-            color = Color.Cyan,
-            fontSize = 8.sp,
-            textAlign = TextAlign.Center
+            text = memoryIcon,
+            fontSize = DebugTextSizes.SECONDARY_TEXT
         )
 
-        val memoryMB = atlas.bitmap.allocationByteCount / (1024 * 1024)
+        // Memory usage bar
+        Box(
+            modifier = Modifier
+                .width(40.dp)
+                .height(4.dp)
+                .background(Color.Gray.copy(alpha = 0.5f), RoundedCornerShape(2.dp))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(memory.usagePercent)
+                    .height(4.dp)
+                    .background(memoryColor, RoundedCornerShape(2.dp))
+            )
+        }
+
         Text(
-            text = "${memoryMB}MB",
-            color = Color.Gray,
-            fontSize = 8.sp,
-            textAlign = TextAlign.Center
+            text = "${(memory.usagePercent * 100).roundToInt()}%",
+            color = Color.White,
+            fontSize = DebugTextSizes.TERTIARY_TEXT,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = "${formatBytes(memory.currentUsageBytes)}",
+            color = Color.White,
+            fontSize = DebugTextSizes.DETAIL_TEXT,
+            fontWeight = FontWeight.Bold
         )
     }
 }
 
 @Composable
-private fun AtlasErrorView(title: String, message: String) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+private fun CompactErrorView(message: String) {
+    Text(
+        text = message,
+        color = Color.Red,
+        fontSize = DebugTextSizes.TERTIARY_TEXT,
+        modifier = Modifier
+            .background(Color.Red.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+            .padding(4.dp)
+    )
+}
+
+
+@Composable
+private fun CompactDeviceInfo(deviceCapabilities: dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities) {
+    val capabilities = deviceCapabilities.getCapabilities()
+    val recommendedSizes = deviceCapabilities.getRecommendedAtlasSizes()
+
+    Row(
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        // Device icon
         Text(
-            text = title,
-            color = Color.Red,
-            fontSize = 10.sp,
+            text = "📱",
+            fontSize = DebugTextSizes.LARGE_ICON
+        )
+
+        // Performance tier indicator with icon
+        val tierColor = when (capabilities.performanceTier) {
+            dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities.PerformanceTier.HIGH -> Color(0xFF4CAF50) // Green
+            dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities.PerformanceTier.MEDIUM -> Color(0xFFFF9800) // Orange
+            dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities.PerformanceTier.LOW -> Color(0xFFF44336) // Red
+        }
+
+        val tierIcon = when (capabilities.performanceTier) {
+            dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities.PerformanceTier.HIGH -> "🚀"
+            dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities.PerformanceTier.MEDIUM -> "⚡"
+            dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities.PerformanceTier.LOW -> "🐌"
+        }
+
+        Text(
+            text = tierIcon,
+            fontSize = DebugTextSizes.SECONDARY_TEXT
+        )
+
+        Text(
+            text = capabilities.performanceTier.name.take(1), // H/M/L
+            color = Color.White,
+            fontSize = DebugTextSizes.SECONDARY_TEXT,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .background(tierColor.copy(alpha = 0.8f), RoundedCornerShape(3.dp))
+                .padding(horizontal = 3.dp, vertical = 1.dp)
+        )
+
+        // Memory budget with icon
+        Text(
+            text = "💾",
+            fontSize = DebugTextSizes.SECONDARY_TEXT
+        )
+
+        Text(
+            text = "${capabilities.memoryBudgetMB}MB",
+            color = Color.White,
+            fontSize = DebugTextSizes.SECONDARY_TEXT,
             fontWeight = FontWeight.Bold
         )
+
+        // Atlas sizes with icon
         Text(
-            text = message,
-            color = Color.Red.copy(alpha = 0.8f),
-            fontSize = 9.sp
+            text = "🗂️",
+            fontSize = DebugTextSizes.SECONDARY_TEXT
+        )
+
+        val atlasSizesText = recommendedSizes.map { "${it.width / 1024}K" }.joinToString("/")
+        Text(
+            text = atlasSizesText,
+            color = Color.Cyan,
+            fontSize = DebugTextSizes.TERTIARY_TEXT,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+private fun AnimatedGeneratingIndicator() {
+    val infiniteTransition = rememberInfiniteTransition(label = "atlas_generating")
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "rotation"
+    )
+
+    Box(
+        modifier = Modifier.size(12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "⟳",
+            color = Color.Yellow,
+            fontSize = DebugTextSizes.SECONDARY_TEXT,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.graphicsLayer(rotationZ = rotation)
         )
     }
 }

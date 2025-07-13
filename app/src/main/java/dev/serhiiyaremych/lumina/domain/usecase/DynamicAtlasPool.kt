@@ -121,7 +121,8 @@ class DynamicAtlasPool @Inject constructor(
     suspend fun generateMultiAtlas(
         photoUris: List<Uri>,
         lodLevel: LODLevel,
-        scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER
+        scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER,
+        priorityMapping: Map<Uri, dev.serhiiyaremych.lumina.domain.model.PhotoPriority> = emptyMap()
     ): MultiAtlasResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
         if (photoUris.isEmpty()) {
             return@trace MultiAtlasResult(
@@ -133,8 +134,8 @@ class DynamicAtlasPool @Inject constructor(
             )
         }
 
-        // Step 1: Process all photos for the specified LOD level
-        val processedPhotos = processPhotosForLOD(photoUris, lodLevel, scaleStrategy)
+        // Step 1: Process all photos for the specified LOD level with priority-based LOD boost
+        val processedPhotos = processPhotosForLOD(photoUris, lodLevel, scaleStrategy, priorityMapping)
         val processingFailed = photoUris.filterNot { uri -> processedPhotos.any { it.id == uri } }
 
         Log.d(TAG, "Photo processing complete: ${processedPhotos.size}/${photoUris.size} succeeded, ${processingFailed.size} failed at $lodLevel")
@@ -233,24 +234,37 @@ class DynamicAtlasPool @Inject constructor(
     }
 
     /**
-     * Process photos for LOD level with error handling
+     * Process photos for LOD level with error handling and priority-based LOD boosting
      */
     private suspend fun processPhotosForLOD(
         photoUris: List<Uri>,
         lodLevel: LODLevel,
-        scaleStrategy: ScaleStrategy
+        scaleStrategy: ScaleStrategy,
+        priorityMapping: Map<Uri, dev.serhiiyaremych.lumina.domain.model.PhotoPriority> = emptyMap()
     ): List<ProcessedPhoto> = trace(BenchmarkLabels.ATLAS_GENERATOR_PROCESS_PHOTOS) {
         val processedPhotos = mutableListOf<ProcessedPhoto>()
 
         for (uri in photoUris) {
             currentCoroutineContext().ensureActive()
 
+            // Determine effective LOD level based on priority
+            val priority = priorityMapping[uri] ?: dev.serhiiyaremych.lumina.domain.model.PhotoPriority.NORMAL
+            val effectiveLODLevel = if (priority == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.HIGH) {
+                // Use maximum LOD level for high priority photos (selected photos)
+                LODLevel.entries.last()
+            } else {
+                lodLevel
+            }
+
             runCatching {
-                photoLODProcessor.processPhotoForLOD(uri, lodLevel, scaleStrategy)
+                photoLODProcessor.processPhotoForLOD(uri, effectiveLODLevel, scaleStrategy, priority)
             }.fold(
                 onSuccess = { processed ->
                     if (processed != null) {
                         processedPhotos.add(processed)
+                        if (priority == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.HIGH) {
+                            Log.d(TAG, "HIGH priority photo processed: $uri at max $effectiveLODLevel (original: $lodLevel)")
+                        }
                     }
                 },
                 onFailure = { e ->
@@ -278,12 +292,22 @@ class DynamicAtlasPool @Inject constructor(
 
         val memoryStatus = smartMemoryManager.getMemoryStatus()
 
+        // Check if we have high priority photos to determine if priority-based distribution is beneficial
+        val hasHighPriorityPhotos = processedPhotos.any { it.priority == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.HIGH }
+        
         val distributionStrategy = when {
+            // At CRITICAL memory pressure, force single atlas to prevent OOM
+            memoryStatus.pressureLevel >= SmartMemoryManager.MemoryPressure.CRITICAL -> DistributionStrategy.SINGLE_SIZE
+            // If we have high priority photos, prefer priority-based distribution even at moderate memory pressure
+            hasHighPriorityPhotos && memoryStatus.pressureLevel < SmartMemoryManager.MemoryPressure.CRITICAL -> DistributionStrategy.PRIORITY_BASED
             estimatedAtlasesNeeded <= 1 -> DistributionStrategy.SINGLE_SIZE
-            memoryStatus.pressureLevel >= SmartMemoryManager.MemoryPressure.MEDIUM -> DistributionStrategy.SINGLE_SIZE
+            // Only prevent multi-atlas at HIGH memory pressure or above (90%+)
+            memoryStatus.pressureLevel >= SmartMemoryManager.MemoryPressure.HIGH -> DistributionStrategy.SINGLE_SIZE
             capabilities.performanceTier == DeviceCapabilities.PerformanceTier.HIGH -> DistributionStrategy.PRIORITY_BASED
             else -> DistributionStrategy.MULTI_SIZE
         }
+        
+        Log.d(TAG, "Strategy selection: hasHighPriorityPhotos=$hasHighPriorityPhotos, estimatedAtlasesNeeded=$estimatedAtlasesNeeded, memoryPressure=${memoryStatus.pressureLevel}, performanceTier=${capabilities.performanceTier} → $distributionStrategy")
 
         val maxParallelAtlases = when {
             memoryStatus.pressureLevel >= SmartMemoryManager.MemoryPressure.HIGH -> 1
@@ -538,9 +562,39 @@ class DynamicAtlasPool @Inject constructor(
         atlasSizes: List<IntSize>,
         lodLevel: LODLevel
     ): List<PhotoGroup> {
-        // For now, use multi-size distribution
-        // TODO: Implement priority-based distribution when visibility calculator is ready
-        return distributeMultiSize(processedPhotos, atlasSizes, lodLevel)
+        // Separate photos by priority
+        val highPriorityPhotos = processedPhotos.filter { 
+            it.priority == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.HIGH 
+        }
+        val normalPriorityPhotos = processedPhotos.filter { 
+            it.priority == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.NORMAL 
+        }
+        
+        Log.d(TAG, "Priority-based distribution: ${highPriorityPhotos.size} high priority, ${normalPriorityPhotos.size} normal priority photos")
+        
+        val allGroups = mutableListOf<PhotoGroup>()
+        
+        // Distribute HIGH priority photos first using existing multi-size logic
+        if (highPriorityPhotos.isNotEmpty()) {
+            val highPriorityGroups = distributeMultiSize(highPriorityPhotos, atlasSizes, lodLevel)
+            // Mark high priority groups with maximum LOD level
+            val maxLOD = LODLevel.entries.last()
+            val markedHighPriorityGroups = highPriorityGroups.map { group ->
+                group.copy(effectiveLODLevel = maxLOD)
+            }
+            allGroups.addAll(markedHighPriorityGroups)
+            Log.d(TAG, "High priority photos distributed into ${markedHighPriorityGroups.size} dedicated atlases with max LOD ($maxLOD)")
+        }
+        
+        // Distribute NORMAL priority photos using existing multi-size logic
+        if (normalPriorityPhotos.isNotEmpty()) {
+            val normalPriorityGroups = distributeMultiSize(normalPriorityPhotos, atlasSizes, lodLevel)
+            allGroups.addAll(normalPriorityGroups)
+            Log.d(TAG, "Normal priority photos distributed into ${normalPriorityGroups.size} atlases")
+        }
+        
+        Log.d(TAG, "Priority-based distribution complete: ${allGroups.size} total atlas groups")
+        return allGroups
     }
 
     /**
@@ -607,11 +661,14 @@ class DynamicAtlasPool @Inject constructor(
         // Create atlas regions
         val atlasRegions = createAtlasRegions(photoGroup.photos, packResult, lodLevel)
 
+        // Use effective LOD level if specified, otherwise use the original LOD level
+        val effectiveLODLevel = photoGroup.effectiveLODLevel ?: lodLevel
+        
         // Create atlas and generate memory key
         val atlas = TextureAtlas(
             bitmap = atlasBitmap,
             regions = atlasRegions.associateBy { it.photoId },
-            lodLevel = lodLevel.level,
+            lodLevel = effectiveLODLevel.level,
             size = photoGroup.atlasSize
         )
 
@@ -773,6 +830,7 @@ class DynamicAtlasPool @Inject constructor(
      */
     data class PhotoGroup(
         val photos: List<ProcessedPhoto>,
-        val atlasSize: IntSize
+        val atlasSize: IntSize,
+        val effectiveLODLevel: LODLevel? = null
     )
 }

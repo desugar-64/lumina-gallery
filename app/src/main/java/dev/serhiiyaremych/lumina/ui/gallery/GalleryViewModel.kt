@@ -32,7 +32,8 @@ class GalleryViewModel @Inject constructor(
     private val getMediaUseCase: GetMediaUseCase,
     private val groupMediaUseCase: GroupMediaUseCase,
     private val generateHexGridLayoutUseCase: GenerateHexGridLayoutUseCase,
-    private val atlasManager: AtlasManager
+    private val atlasManager: AtlasManager,
+    private val deviceCapabilities: dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities
 ) : ViewModel() {
 
     var currentPeriod: GroupingPeriod = GroupingPeriod.MONTHLY
@@ -66,7 +67,7 @@ class GalleryViewModel @Inject constructor(
     // Track current request sequence to prevent stale results
     private var currentRequestSequence: Long = 0
 
-    private val updateAtlasFlow = MutableStateFlow<Pair<List<HexCellWithMedia>, Float>>(Pair(emptyList(), 1.0f))
+    private val updateAtlasFlow = MutableStateFlow<Triple<List<HexCellWithMedia>, Float, Media?>>(Triple(emptyList(), 1.0f, null))
 
     init {
         loadMedia()
@@ -86,13 +87,14 @@ class GalleryViewModel @Inject constructor(
             updateAtlasFlow
                 .filter { it.first.isNotEmpty() }
                 .distinctUntilChanged()
-                .collectLatest { (visibleCells, currentZoom) ->
+                .collectLatest { (visibleCells, currentZoom, selectedMedia) ->
                     _isAtlasGenerating.value = true
                     
                     runCatching {
                         atlasManager.updateVisibleCells(
                             visibleCells = visibleCells,
-                            currentZoom = currentZoom
+                            currentZoom = currentZoom,
+                            selectedMedia = selectedMedia
                         )
                     }.fold(
                         onSuccess = { result ->
@@ -170,10 +172,11 @@ class GalleryViewModel @Inject constructor(
      */
     fun onVisibleCellsChanged(
         visibleCells: List<HexCellWithMedia>,
-        currentZoom: Float
+        currentZoom: Float,
+        selectedMedia: Media? = null
     ) {
-        android.util.Log.d("GalleryViewModel", "onVisibleCellsChanged: ${visibleCells.size} cells, zoom=$currentZoom")
-        updateAtlasFlow.value = Pair(visibleCells, currentZoom)
+        android.util.Log.d("GalleryViewModel", "onVisibleCellsChanged: ${visibleCells.size} cells, zoom=$currentZoom, selectedMedia=${selectedMedia?.let { "present" } ?: "none"}")
+        updateAtlasFlow.value = Triple(visibleCells, currentZoom, selectedMedia)
         
         // Update memory status for debug panel
         updateMemoryStatus()
@@ -197,4 +200,9 @@ class GalleryViewModel @Inject constructor(
      * Get current atlas manager for UI rendering.
      */
     fun getAtlasManager(): AtlasManager = atlasManager
+
+    /**
+     * Get device capabilities for debug overlay.
+     */
+    fun getDeviceCapabilities(): dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities = deviceCapabilities
 }
