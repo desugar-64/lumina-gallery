@@ -378,6 +378,8 @@ This project includes comprehensive documentation in `docs/` that should be refe
 - **compose-side-effects-samples.md**: Sample code for Compose side-effects usage
 - **compose-animation-doc.md**: Guide for Compose animations
 - **compose-animations-samples.md**: Sample code for Compose animations
+- **compose-ui-graphics-layer.md**: Complete GraphicsLayer API documentation for offscreen rendering and layered drawing
+- **compose-ui-graphics-layer-samples.md**: GraphicsLayer code samples demonstrating layered drawing, blend modes, and visual effects
 
 ### Android-Specific Documentation
 - **media/**: Android media permissions documentation

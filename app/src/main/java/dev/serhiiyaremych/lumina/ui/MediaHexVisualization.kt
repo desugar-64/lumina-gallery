@@ -22,7 +22,13 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.layer.GraphicsLayer
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.Media
@@ -62,18 +68,24 @@ fun MediaHexVisualization(
     var clickedHexCell by remember { mutableStateOf<HexCell?>(null) }
     var ripplePosition by remember { mutableStateOf<Offset?>(null) }
     var revealAnimationTarget by remember { mutableStateOf<AnimatableMediaItem?>(null) }
-    
+
     // Remember coroutine scope for immediate animation triggering
     val animationScope = rememberCoroutineScope()
 
     // Capture latest callback to avoid restarting effect when callback changes
     val currentOnVisibleCellsChanged by rememberUpdatedState(onVisibleCellsChanged)
+    
+    // Create GraphicsLayers for separate rendering
+    val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
+    val contentLayer = rememberGraphicsLayer()
+    val selectedLayer = rememberGraphicsLayer()
 
     if (hexGridLayout.hexCellsWithMedia.isEmpty()) return
 
     // Animation manager for media items
     val animationManager = remember { AnimatableMediaManager() }
-    
+
     // Reveal animation strategy for Solution 3
     val revealStrategy = remember { PileShuffleRevealStrategy() }
 
@@ -115,7 +127,7 @@ fun MediaHexVisualization(
         geometryReader.clear()
         clickedMedia = null
         clickedHexCell = null
-        
+
         // Clean up reveal animation immediately on layout change
         if (revealAnimationTarget != null) {
             val allAnimatableItems = hexGridLayout.hexCellsWithMedia.flatMap { cell ->
@@ -123,12 +135,12 @@ fun MediaHexVisualization(
                     animationManager.getOrCreateAnimatable(mediaWithPos)
                 }
             }
-            
+
             allAnimatableItems.forEach { item ->
                 launch { item.resetRevealState() }
             }
         }
-        
+
         revealAnimationTarget = null
     }
 
@@ -170,14 +182,14 @@ fun MediaHexVisualization(
                         onMediaClicked(media)
                         clickedMedia = media
                         clickedHexCell = null
-                        
+
                         // Trigger reveal animation IMMEDIATELY in tap handler
                         val allAnimatableItems = hexGridLayout.hexCellsWithMedia.flatMap { cell ->
                             cell.mediaItems.map { mediaWithPos ->
                                 animationManager.getOrCreateAnimatable(mediaWithPos)
                             }
                         }
-                        
+
                         // Clean up previous animation IMMEDIATELY if needed
                         if (revealAnimationTarget != null && revealAnimationTarget != hitAnimatableMedia) {
                             animationScope.launch {
@@ -187,33 +199,32 @@ fun MediaHexVisualization(
                                 }
                             }
                         }
-                        
+
                         // Start new animation immediately
                         animationScope.launch {
                             val visibilityRatio = calculateVisibilityRatio(hitAnimatableMedia, allAnimatableItems)
-                            
+
                             // Animate the clicked item (stays in place, full opacity)
                             val revealState = revealStrategy.animateReveal(
-                                hitAnimatableMedia, 
+                                hitAnimatableMedia,
                                 visibilityRatio,
                                 androidx.compose.animation.core.tween(AnimationConstants.ANIMATION_DURATION_MS)
                             )
                             hitAnimatableMedia.animateToRevealState(revealState)
-                            
+
                             // Animate overlapping items (shuffle aside + fade) concurrently
                             val overlappingAnimations = revealStrategy.animateOverlapping(
                                 allAnimatableItems.filter { it != hitAnimatableMedia },
                                 hitAnimatableMedia,
                                 androidx.compose.animation.core.tween(AnimationConstants.ANIMATION_DURATION_MS)
                             )
-                            
+
                             overlappingAnimations.forEach { (item, state) ->
                                 launch { item.animateToRevealState(state) }
                             }
                         }
-                        
                         revealAnimationTarget = hitAnimatableMedia
-                        
+
                         // Trigger focus request with unrotated bounds for selected media
                         geometryReader.getMediaBounds(media)?.let { bounds ->
                             onFocusRequested(bounds)
@@ -223,7 +234,7 @@ fun MediaHexVisualization(
                             onHexCellClicked(cell)
                             clickedHexCell = cell
                             clickedMedia = null
-                            
+
                             // Clear reveal animation IMMEDIATELY when clicking on cell
                             if (revealAnimationTarget != null) {
                                 val allAnimatableItems = hexGridLayout.hexCellsWithMedia.flatMap { hexCell ->
@@ -231,7 +242,7 @@ fun MediaHexVisualization(
                                         animationManager.getOrCreateAnimatable(mediaWithPos)
                                     }
                                 }
-                                
+
                                 animationScope.launch {
                                     // Reset all items simultaneously
                                     allAnimatableItems.forEach { item ->
@@ -239,9 +250,9 @@ fun MediaHexVisualization(
                                     }
                                 }
                             }
-                            
+
                             revealAnimationTarget = null
-                            
+
                             // Trigger focus request
                             geometryReader.getHexCellBounds(cell)?.let { bounds ->
                                 onFocusRequested(bounds)
@@ -254,42 +265,95 @@ fun MediaHexVisualization(
         val zoom = provideZoom()
         val offset = provideOffset()
         val clampedZoom = zoom.coerceIn(0.01f, 100f)
+        
+        // Record content layer with all non-selected media
+        contentLayer.record(
+            density = density,
+            layoutDirection = layoutDirection,
+            size = IntSize(size.width.toInt(), size.height.toInt())
+        ) {
+            withTransform({
+                scale(clampedZoom, clampedZoom, pivot = Offset.Zero)
+                translate(offset.x / clampedZoom, offset.y / clampedZoom)
+            }) {
+                // Store hex cell bounds for hit testing (world coordinates)
+                hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
+                    geometryReader.storeHexCellBounds(hexCellWithMedia.hexCell)
+                }
+
+                // Draw hex grid background
+                hexGridRenderer.drawHexGrid(
+                    drawScope = this,
+                    hexGrid = hexGridLayout.hexGrid,
+                    zoom = 1f,
+                    offset = Offset.Zero
+                )
+
+                // Draw all non-selected media items
+                hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
+                    hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
+                        val animatableItem = animationManager.getOrCreateAnimatable(mediaWithPosition)
+                        val isSelected = animatableItem.mediaWithPosition.media == selectedMedia
+
+                        geometryReader.storeMediaBounds(
+                            media = animatableItem.mediaWithPosition.media,
+                            bounds = animatableItem.mediaWithPosition.absoluteBounds,
+                            hexCell = hexCellWithMedia.hexCell
+                        )
+
+                        // Only draw non-selected items in content layer
+                        if (!isSelected) {
+                            drawAnimatableMediaFromAtlas(
+                                animatableItem = animatableItem,
+                                atlasState = atlasState,
+                                zoom = zoom
+                            )
+                        }
+                        geometryReader.debugDrawBounds(this, zoom)
+                    }
+                }
+            }
+        }
+        
+        // Record selected layer with only the selected media item
+        selectedLayer.record(
+            density = density,
+            layoutDirection = layoutDirection,
+            size = IntSize(size.width.toInt(), size.height.toInt())
+        ) {
+            withTransform({
+                scale(clampedZoom, clampedZoom, pivot = Offset.Zero)
+                translate(offset.x / clampedZoom, offset.y / clampedZoom)
+            }) {
+                // Draw only the selected media item
+                selectedMedia?.let { media ->
+                    hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
+                        hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
+                            val animatableItem = animationManager.getOrCreateAnimatable(mediaWithPosition)
+                            val isSelected = animatableItem.mediaWithPosition.media == media
+
+                            if (isSelected) {
+                                drawAnimatableMediaFromAtlas(
+                                    animatableItem = animatableItem,
+                                    atlasState = atlasState,
+                                    zoom = zoom
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Draw both layers in order: content first, then selected on top
+        drawLayer(contentLayer)
+        drawLayer(selectedLayer)
+        
+        // Draw debug overlays and UI elements on top
         withTransform({
             scale(clampedZoom, clampedZoom, pivot = Offset.Zero)
             translate(offset.x / clampedZoom, offset.y / clampedZoom)
         }) {
-            // Store hex cell bounds for hit testing (world coordinates, same as before)
-            hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
-                geometryReader.storeHexCellBounds(hexCellWithMedia.hexCell)
-            }
-
-            hexGridRenderer.drawHexGrid(
-                drawScope = this,
-                hexGrid = hexGridLayout.hexGrid,
-                zoom = 1f,
-                offset = Offset.Zero
-            )
-
-            hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
-                hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
-                    // Get or create animatable item - this becomes our primary canvas item
-                    val animatableItem = animationManager.getOrCreateAnimatable(mediaWithPosition)
-
-                    geometryReader.storeMediaBounds(
-                        media = animatableItem.mediaWithPosition.media,
-                        bounds = animatableItem.mediaWithPosition.absoluteBounds, // World coordinates
-                        hexCell = hexCellWithMedia.hexCell
-                    )
-
-                    drawAnimatableMediaFromAtlas(
-                        animatableItem = animatableItem,
-                        atlasState = atlasState,
-                        zoom = zoom
-                    )
-                    geometryReader.debugDrawBounds(this, zoom)
-                }
-            }
-
             clickedMedia?.let { media ->
                 geometryReader.getMediaBounds(media)?.let { bounds ->
                     drawRect(
@@ -362,12 +426,12 @@ private fun DrawScope.drawAnimatableMediaFromAtlas(
     val media = animatableItem.mediaWithPosition.media
     val originalBounds = animatableItem.mediaWithPosition.absoluteBounds
     val rotationAngle = animatableItem.currentRotation
-    
+
     // Apply reveal animation transforms
     val slideOffset = animatableItem.currentSlideOffset
     val breathingScale = animatableItem.currentBreathingScale
     val alpha = animatableItem.currentAlpha
-    
+
     // Calculate transformed bounds with slide offset
     val transformedBounds = androidx.compose.ui.geometry.Rect(
         left = originalBounds.left + slideOffset.x,
@@ -375,7 +439,7 @@ private fun DrawScope.drawAnimatableMediaFromAtlas(
         right = originalBounds.right + slideOffset.x,
         bottom = originalBounds.bottom + slideOffset.y
     )
-    
+
     // Apply breathing scale around the center
     val scaledBounds = if (breathingScale != 1f) {
         val center = transformedBounds.center
@@ -390,7 +454,7 @@ private fun DrawScope.drawAnimatableMediaFromAtlas(
     } else {
         transformedBounds
     }
-    
+
     // Apply alpha and draw
     drawMediaFromAtlas(media, scaledBounds, rotationAngle, atlasState, zoom, alpha)
 }
