@@ -1,8 +1,13 @@
 package dev.serhiiyaremych.lumina.ui
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.asComposeColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.layer.GraphicsLayer
@@ -38,13 +43,17 @@ fun rememberMediaLayers(): MediaLayerManager {
     val layoutDirection = LocalLayoutDirection.current
     val contentLayer = rememberGraphicsLayer()
     val selectedLayer = rememberGraphicsLayer()
-    
+
+    // Animation state for desaturation effect
+    val desaturationAnimatable = remember { Animatable(0f) }
+
     return remember {
         MediaLayerManager(
             contentLayer = contentLayer,
             selectedLayer = selectedLayer,
             density = density,
-            layoutDirection = layoutDirection
+            layoutDirection = layoutDirection,
+            desaturationAnimatable = desaturationAnimatable
         )
     }
 }
@@ -56,9 +65,29 @@ class MediaLayerManager(
     private val contentLayer: GraphicsLayer,
     private val selectedLayer: GraphicsLayer,
     private val density: androidx.compose.ui.unit.Density,
-    private val layoutDirection: androidx.compose.ui.unit.LayoutDirection
+    private val layoutDirection: androidx.compose.ui.unit.LayoutDirection,
+    private val desaturationAnimatable: Animatable<Float, *>
 ) {
-    
+
+    // Pre-allocated Android ColorMatrix for desaturation effect to avoid allocations
+    private val desaturationMatrix = android.graphics.ColorMatrix()
+
+    companion object {
+        private const val DESATURATION_ANIMATION_DURATION = 300 // milliseconds
+        private const val DESATURATION_STRENGTH = 0.9f // 50% desaturation
+    }
+
+    /**
+     * Triggers the desaturation animation based on selection state.
+     */
+    suspend fun animateDesaturation(hasSelection: Boolean) {
+        val targetValue = if (hasSelection) DESATURATION_STRENGTH else 0f
+        desaturationAnimatable.animateTo(
+            targetValue = targetValue,
+            animationSpec = tween(durationMillis = DESATURATION_ANIMATION_DURATION)
+        )
+    }
+
     /**
      * Records and draws both content and selected layers with proper layering.
      */
@@ -69,18 +98,27 @@ class MediaLayerManager(
         offset: Offset
     ) {
         val clampedZoom = zoom.coerceIn(0.01f, 100f)
-        
+
         // Record content layer with all non-selected media
         recordContentLayer(config, canvasSize, clampedZoom, offset)
-        
+
         // Record selected layer with only the selected media item
         recordSelectedLayer(config, canvasSize, clampedZoom, offset)
-        
+
+        // Apply desaturation effect to content layer when there's a selection
+        val currentDesaturation = desaturationAnimatable.value
+        if (currentDesaturation > 0f) {
+            applyDesaturationToContentLayer(currentDesaturation)
+        } else {
+            // Clear color filter when no desaturation
+            contentLayer.colorFilter = null
+        }
+
         // Draw both layers in order: content first, then selected on top
         drawLayer(contentLayer)
         drawLayer(selectedLayer)
     }
-    
+
     /**
      * Records the content layer with hex grid background and all non-selected media items.
      */
@@ -138,7 +176,7 @@ class MediaLayerManager(
             }
         }
     }
-    
+
     /**
      * Records the selected layer with only the selected media item.
      */
@@ -176,5 +214,22 @@ class MediaLayerManager(
                 }
             }
         }
+    }
+
+    /**
+     * Applies desaturation effect to the content layer using ColorMatrix.setSaturation().
+     *
+     * @param desaturationAmount 0f = fully saturated, 1f = fully desaturated
+     */
+    private fun applyDesaturationToContentLayer(desaturationAmount: Float) {
+        // Calculate saturation level: 1f = normal, 0f = completely desaturated
+        val saturationLevel = 1f - desaturationAmount
+
+        // Use Android's built-in setSaturation method
+        desaturationMatrix.setSaturation(saturationLevel)
+
+        // Convert Android ColorMatrix to Compose ColorFilter
+        val colorMatrixFilter = android.graphics.ColorMatrixColorFilter(desaturationMatrix)
+        contentLayer.colorFilter = colorMatrixFilter.asComposeColorFilter()
     }
 }

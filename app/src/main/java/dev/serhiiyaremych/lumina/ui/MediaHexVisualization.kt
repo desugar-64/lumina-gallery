@@ -3,6 +3,7 @@ package dev.serhiiyaremych.lumina.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -53,6 +54,11 @@ fun MediaHexVisualization(
 
     // Layer management - handles GraphicsLayer creation and recording
     val layerManager = rememberMediaLayers()
+    
+    // Animate desaturation effect when selection changes
+    LaunchedEffect(selectedMedia) {
+        layerManager.animateDesaturation(selectedMedia != null)
+    }
 
     // Input handling configuration
     val inputConfig = MediaInputConfig(
