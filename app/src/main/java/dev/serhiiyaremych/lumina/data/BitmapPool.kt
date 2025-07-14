@@ -1,6 +1,7 @@
 package dev.serhiiyaremych.lumina.data
 
 import android.graphics.Bitmap
+import androidx.core.graphics.createBitmap
 import android.util.LruCache
 import androidx.compose.ui.unit.IntSize
 import androidx.tracing.trace
@@ -132,7 +133,7 @@ class BitmapPool @Inject constructor(
             // Pool miss - create new bitmap
             android.util.Log.d(TAG, "Pool miss: ${width}x${height} ${config} - creating new")
             return@trace trace(BenchmarkLabels.ATLAS_MEMORY_BITMAP_ALLOCATE) {
-                Bitmap.createBitmap(width, height, config)
+                createBitmap(width, height, config)
             }
         }
     }

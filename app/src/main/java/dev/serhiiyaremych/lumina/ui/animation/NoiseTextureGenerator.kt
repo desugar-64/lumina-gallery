@@ -1,6 +1,8 @@
 package dev.serhiiyaremych.lumina.ui.animation
 
 import android.graphics.Bitmap
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.set
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RadialGradient
@@ -54,7 +56,7 @@ class NoiseTextureGenerator(
      * Generates a new noise texture with circular gradient masking.
      */
     private fun generateNoiseTexture(): Bitmap {
-        val bitmap = Bitmap.createBitmap(config.size, config.size, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(config.size, config.size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         
         // Generate Perlin-like noise
@@ -105,7 +107,7 @@ class NoiseTextureGenerator(
                 val finalAlpha = (noiseValue * gradientAlpha * 255).toInt().coerceIn(0, 255)
                 val color = (finalAlpha shl 24) or 0x00FFFFFF // White with calculated alpha
                 
-                bitmap.setPixel(x, y, color)
+                bitmap[x, y] = color
             }
         }
         

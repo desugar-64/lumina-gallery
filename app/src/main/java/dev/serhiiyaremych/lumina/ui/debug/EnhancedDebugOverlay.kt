@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import java.util.Locale
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
@@ -158,7 +159,7 @@ private fun CompactZoomInfo(currentZoom: Float, isAtlasGenerating: Boolean) {
         )
 
         Text(
-            text = "${String.format("%.1f", currentZoom)}×",
+            text = "${String.format(Locale.US, "%.1f", currentZoom)}×",
             color = Color.White,
             fontSize = DebugTextSizes.PRIMARY_TEXT,
             fontWeight = FontWeight.Bold
@@ -637,9 +638,9 @@ private fun AnimatedGeneratingIndicator() {
 
 private fun formatBytes(bytes: Long): String {
     return when {
-        bytes >= 1024 * 1024 * 1024 -> String.format("%.1f GB", bytes / (1024.0 * 1024.0 * 1024.0))
-        bytes >= 1024 * 1024 -> String.format("%.1f MB", bytes / (1024.0 * 1024.0))
-        bytes >= 1024 -> String.format("%.1f KB", bytes / 1024.0)
+        bytes >= 1024 * 1024 * 1024 -> String.format(Locale.US, "%.1f GB", bytes / (1024.0 * 1024.0 * 1024.0))
+        bytes >= 1024 * 1024 -> String.format(Locale.US, "%.1f MB", bytes / (1024.0 * 1024.0))
+        bytes >= 1024 -> String.format(Locale.US, "%.1f KB", bytes / 1024.0)
         else -> "$bytes B"
     }
 }

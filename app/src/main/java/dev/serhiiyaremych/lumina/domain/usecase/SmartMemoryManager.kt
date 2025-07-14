@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
+import java.util.Locale
 import javax.inject.Singleton
 
 /**
@@ -360,7 +361,7 @@ class SmartMemoryManager @Inject constructor(
                     "totalBudget=${formatBytes(totalBudgetBytes)}, " +
                     "currentUsage=${formatBytes(currentUsageBytes)}, " +
                     "available=${formatBytes(availableBytes)}, " +
-                    "usagePercent=${String.format("%.1f", usagePercent * 100)}%, " +
+                    "usagePercent=${String.format(Locale.US, "%.1f", usagePercent * 100)}%, " +
                     "pressure=$pressureLevel, " +
                     "atlases=$registeredAtlases, " +
                     "capabilities=$deviceCapabilities" +
@@ -369,9 +370,9 @@ class SmartMemoryManager @Inject constructor(
 
         private fun formatBytes(bytes: Long): String {
             return when {
-                bytes >= 1024 * 1024 * 1024 -> String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0))
-                bytes >= 1024 * 1024 -> String.format("%.2f MB", bytes / (1024.0 * 1024.0))
-                bytes >= 1024 -> String.format("%.2f KB", bytes / 1024.0)
+                bytes >= 1024 * 1024 * 1024 -> String.format(Locale.US, "%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0))
+                bytes >= 1024 * 1024 -> String.format(Locale.US, "%.2f MB", bytes / (1024.0 * 1024.0))
+                bytes >= 1024 -> String.format(Locale.US, "%.2f KB", bytes / 1024.0)
                 else -> "$bytes B"
             }
         }
