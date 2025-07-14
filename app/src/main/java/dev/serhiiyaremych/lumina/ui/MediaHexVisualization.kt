@@ -61,6 +61,7 @@ fun MediaHexVisualization(
         geometryReader = state.geometryReader,
         provideZoom = provideZoom,
         provideOffset = provideOffset,
+        selectedMedia = selectedMedia,
         onMediaClicked = onMediaClicked,
         onHexCellClicked = onHexCellClicked,
         onFocusRequested = onFocusRequested,

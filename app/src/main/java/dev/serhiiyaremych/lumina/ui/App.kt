@@ -191,7 +191,13 @@ fun App(
                                     selectedMedia = selectedMedia,
                                     onMediaClicked = { media ->
                                         Log.d("App", "Media clicked: ${media.displayName}")
-                                        selectedMedia = media
+                                        // If the same media is clicked twice, deselect it
+                                        selectedMedia = if (selectedMedia == media) {
+                                            Log.d("App", "Deselecting media: ${media.displayName}")
+                                            null
+                                        } else {
+                                            media
+                                        }
                                     },
                                     onHexCellClicked = { hexCell ->
                                         Log.d("App", "Hex cell clicked: (${hexCell.q}, ${hexCell.r})")

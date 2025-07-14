@@ -26,6 +26,7 @@ data class MediaInputConfig(
     val geometryReader: GeometryReader,
     val provideZoom: () -> Float,
     val provideOffset: () -> Offset,
+    val selectedMedia: Media? = null,
     val onMediaClicked: (Media) -> Unit = {},
     val onHexCellClicked: (HexCell) -> Unit = {},
     val onFocusRequested: (Rect) -> Unit = {},
@@ -44,7 +45,7 @@ fun Modifier.mediaHexInput(config: MediaInputConfig): Modifier {
     val animationScope = rememberCoroutineScope()
     val revealStrategy = remember { PileShuffleRevealStrategy() }
     
-    return this.pointerInput(Unit, config.provideZoom, config.provideOffset) {
+    return this.pointerInput(config.selectedMedia, config.provideZoom, config.provideOffset) {
         detectTapGestures { tapOffset ->
             val zoom = config.provideZoom()
             val offset = config.provideOffset()
@@ -82,7 +83,7 @@ fun Modifier.mediaHexInput(config: MediaInputConfig): Modifier {
 }
 
 /**
- * Handles tap on media item with reveal animation.
+ * Handles tap on media item with reveal animation or deselection cleanup.
  */
 private fun handleMediaTap(
     hitAnimatableMedia: AnimatableMediaItem,
@@ -91,49 +92,66 @@ private fun handleMediaTap(
     revealStrategy: PileShuffleRevealStrategy
 ) {
     val media = hitAnimatableMedia.mediaWithPosition.media
+    // Check selection state BEFORE calling callbacks
+    val isCurrentlySelected = config.selectedMedia == media
+    
+    // Call the callbacks to update selection state
     config.onMediaClicked(media)
     config.onClickedMedia(media)
     config.onClickedHexCell(null)
 
-    // Trigger reveal animation IMMEDIATELY in tap handler
     val allAnimatableItems = config.hexGridLayout.hexCellsWithMedia.flatMap { cell ->
         cell.mediaItems.map { mediaWithPos ->
             config.animationManager.getOrCreateAnimatable(mediaWithPos)
         }
     }
 
-    // Clean up previous animation IMMEDIATELY if needed
-    config.onRevealAnimationTarget(null) // Clear previous target first
-    
-    // Start new animation immediately
-    animationScope.launch {
-        val visibilityRatio = calculateVisibilityRatio(hitAnimatableMedia, allAnimatableItems)
-
-        // Animate the clicked item (stays in place, full opacity)
-        val revealState = revealStrategy.animateReveal(
-            hitAnimatableMedia,
-            visibilityRatio,
-            androidx.compose.animation.core.tween(AnimationConstants.ANIMATION_DURATION_MS)
-        )
-        hitAnimatableMedia.animateToRevealState(revealState)
-
-        // Animate overlapping items (shuffle aside + fade) concurrently
-        val overlappingAnimations = revealStrategy.animateOverlapping(
-            allAnimatableItems.filter { it != hitAnimatableMedia },
-            hitAnimatableMedia,
-            androidx.compose.animation.core.tween(AnimationConstants.ANIMATION_DURATION_MS)
-        )
-
-        overlappingAnimations.forEach { (item, state) ->
-            launch { item.animateToRevealState(state) }
+    if (isCurrentlySelected) {
+        // Media was already selected, so this is a deselection - trigger cleanup animation
+        animationScope.launch {
+            // Reset all items simultaneously (same as hex cell tap)
+            allAnimatableItems.forEach { item ->
+                launch { item.resetRevealState() }
+            }
         }
-    }
-    
-    config.onRevealAnimationTarget(hitAnimatableMedia)
+        
+        config.onRevealAnimationTarget(null)
+    } else {
+        // Media was not selected, so this is a new selection - trigger reveal animation
+        
+        // Clean up previous animation IMMEDIATELY if needed
+        config.onRevealAnimationTarget(null) // Clear previous target first
+        
+        // Start new animation immediately
+        animationScope.launch {
+            val visibilityRatio = calculateVisibilityRatio(hitAnimatableMedia, allAnimatableItems)
 
-    // Trigger focus request with unrotated bounds for selected media
-    config.geometryReader.getMediaBounds(media)?.let { bounds ->
-        config.onFocusRequested(bounds)
+            // Animate the clicked item (stays in place, full opacity)
+            val revealState = revealStrategy.animateReveal(
+                hitAnimatableMedia,
+                visibilityRatio,
+                androidx.compose.animation.core.tween(AnimationConstants.ANIMATION_DURATION_MS)
+            )
+            hitAnimatableMedia.animateToRevealState(revealState)
+
+            // Animate overlapping items (shuffle aside + fade) concurrently
+            val overlappingAnimations = revealStrategy.animateOverlapping(
+                allAnimatableItems.filter { it != hitAnimatableMedia },
+                hitAnimatableMedia,
+                androidx.compose.animation.core.tween(AnimationConstants.ANIMATION_DURATION_MS)
+            )
+
+            overlappingAnimations.forEach { (item, state) ->
+                launch { item.animateToRevealState(state) }
+            }
+        }
+        
+        config.onRevealAnimationTarget(hitAnimatableMedia)
+
+        // Trigger focus request with unrotated bounds for selected media
+        config.geometryReader.getMediaBounds(media)?.let { bounds ->
+            config.onFocusRequested(bounds)
+        }
     }
 }
 

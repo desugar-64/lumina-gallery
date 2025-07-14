@@ -95,6 +95,30 @@ adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity
 ./gradlew -q installDebug && adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity
 ```
 
+### Codebase Analysis with Gemini CLI
+```bash
+# Use Gemini CLI for large codebase analysis when Claude's context is insufficient
+# Install from: https://github.com/google/gemini-cli#installation
+
+# Check if feature is implemented across codebase
+gemini -p "@app/src/ Has touch gesture handling been implemented? Show me the relevant files and functions"
+
+# Analyze specific implementation patterns
+gemini -p "@app/src/main/java/dev/serhiiyaremych/lumina/domain/ @app/src/main/java/dev/serhiiyaremych/lumina/ui/ How is the atlas system integrated with the UI rendering?"
+
+# Verify architecture patterns
+gemini -p "@app/src/ Is clean architecture properly implemented? Show repository, use case, and UI layer separation"
+
+# Find usage of specific components
+gemini -p "@app/src/ Where is the HexGridGenerator used? List all files and functions that reference it"
+
+# Check for performance optimizations
+gemini -p "@app/src/main/java/dev/serhiiyaremych/lumina/ui/ Are there any performance optimizations for canvas drawing? Show the implementation details"
+
+# Security and permissions analysis
+gemini -p "@app/src/ How are media permissions handled? Show the complete permission flow implementation"
+```
+
 ## Project Structure
 
 ### Key File Locations
@@ -417,7 +441,11 @@ Think hard to understand the true nature of a problem, not just to find a soluti
 
 ### Development Workflow
 
-**IMPORTANT**: Before committing any changes, always verify that the project builds successfully by running `./gradlew -q assembleDebug`. This ensures that all modifications compile correctly and don't break the build.
+**IMPORTANT**: After implementing any feature or making code changes, always:
+1. **Build the project** to verify it compiles: `./gradlew -q assembleDebug`
+2. **Ask the user** if they want to launch the application to test the changes: `./gradlew -q installDebug && adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity`
+
+This ensures that all modifications compile correctly and gives the user the option to immediately test the implementation.
 
 ## Benchmarking Workflow
 
