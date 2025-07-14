@@ -188,73 +188,9 @@ class PileShuffleRevealStrategy : RevealAnimationStrategy {
         clickedItem: AnimatableMediaItem,
         animationSpec: AnimationSpec<Float>
     ): Map<AnimatableMediaItem, RevealAnimationState> {
-        val clickedBounds = clickedItem.mediaWithPosition.absoluteBounds
-        val clickedCenter = clickedBounds.center
-        
-        return overlappingItems.mapNotNull { overlappingItem ->
-            val overlappingBounds = overlappingItem.mediaWithPosition.absoluteBounds
-            
-            // Check if this item actually overlaps with the clicked item
-            if (overlappingBounds.intersect(clickedBounds).isEmpty) {
-                null // No overlap, no animation needed
-            } else {
-                // Calculate shuffle direction (away from clicked item)
-                val overlappingCenter = overlappingBounds.center
-                val direction = (overlappingCenter - clickedCenter).normalized()
-                
-                // Calculate minimum distance to move completely out of bounds
-                val minDistance = calculateMinimumClearanceDistance(
-                    clickedBounds = clickedBounds,
-                    overlappingBounds = overlappingBounds,
-                    direction = direction
-                )
-                
-                val shuffleOffset = direction * minDistance
-                
-                overlappingItem to RevealAnimationState(
-                    slideOffset = shuffleOffset,
-                    breathingScale = 1.0f,
-                    zIndex = 0f,
-                    alpha = ALPHA_FADE_VALUE // Fade to 30% opacity
-                )
-            }
-        }.toMap()
-    }
-    
-    /**
-     * Calculates the minimum distance needed to move overlapping photo completely
-     * out of the bounds of the clicked photo.
-     */
-    private fun calculateMinimumClearanceDistance(
-        clickedBounds: androidx.compose.ui.geometry.Rect,
-        overlappingBounds: androidx.compose.ui.geometry.Rect,
-        direction: Offset
-    ): Float {
-        // Calculate distance from overlapping center to clicked bounds edge
-        val overlappingCenter = overlappingBounds.center
-        val clickedCenter = clickedBounds.center
-        
-        // Distance from overlapping center to clicked bounds edge in direction
-        val distanceToEdge = when {
-            direction.x > 0 -> clickedBounds.right - overlappingCenter.x
-            direction.x < 0 -> overlappingCenter.x - clickedBounds.left
-            else -> 0f
-        } + when {
-            direction.y > 0 -> clickedBounds.bottom - overlappingCenter.y
-            direction.y < 0 -> overlappingCenter.y - clickedBounds.top
-            else -> 0f
-        }
-        
-        // Add half the overlapping photo size to ensure complete clearance
-        val halfOverlappingSize = kotlin.math.max(
-            overlappingBounds.width,
-            overlappingBounds.height
-        ) / 2f
-        
-        // Add padding for visual separation
-        val padding = 20f
-        
-        return kotlin.math.max(60f, distanceToEdge + halfOverlappingSize + padding)
+        // Return empty map - no shuffle animation for overlapping items
+        // This keeps surrounding images in place while preserving focus zoom
+        return emptyMap()
     }
 
     override suspend fun animateCleanup(
