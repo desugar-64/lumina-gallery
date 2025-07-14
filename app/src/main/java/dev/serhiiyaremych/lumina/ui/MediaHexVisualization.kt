@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -72,6 +73,7 @@ fun MediaHexVisualization(
     Canvas(
         modifier = Modifier
             .fillMaxSize()
+            .clipToBounds()
             .mediaHexInput(inputConfig) // Clean input handling via modifier extension
     ) {
         val zoom = provideZoom()

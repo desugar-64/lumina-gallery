@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -472,8 +473,9 @@ private fun ExpandedAtlasCard(atlas: dev.serhiiyaremych.lumina.domain.model.Text
                 fontWeight = FontWeight.Bold
             )
 
+            val lodLevel = LODLevel.fromLevel(atlas.lodLevel) ?: LODLevel.LEVEL_0
             Text(
-                text = "LOD ${atlas.lodLevel}",
+                text = "LOD ${lodLevel.level}, ${lodLevel.resolution}x${lodLevel.resolution}px",
                 color = lodColor,
                 fontSize = DebugTextSizes.MICRO_TEXT,
                 fontWeight = FontWeight.Bold
@@ -630,29 +632,7 @@ private fun CompactDeviceInfo(deviceCapabilities: dev.serhiiyaremych.lumina.doma
 
 @Composable
 private fun AnimatedGeneratingIndicator() {
-    val infiniteTransition = rememberInfiniteTransition(label = "atlas_generating")
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "rotation"
-    )
-
-    Box(
-        modifier = Modifier.size(12.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "⟳",
-            color = Color.Yellow,
-            fontSize = DebugTextSizes.SECONDARY_TEXT,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.graphicsLayer(rotationZ = rotation)
-        )
-    }
+    CircularProgressIndicator(Modifier.size(12.dp), color = Color.White)
 }
 
 private fun formatBytes(bytes: Long): String {
