@@ -57,7 +57,7 @@ fun MediaHexVisualization(
     
     // Animate desaturation effect when selection changes
     LaunchedEffect(selectedMedia) {
-        layerManager.animateDesaturation(selectedMedia != null)
+        layerManager.animateDesaturation(selectedMedia)
     }
 
     // Input handling configuration

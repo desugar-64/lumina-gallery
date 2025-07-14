@@ -5,6 +5,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -53,13 +55,17 @@ fun rememberMediaLayers(): MediaLayerManager {
     // Animation state for desaturation effect
     val desaturationAnimatable = remember { Animatable(0f) }
 
+    // Animation state for gradient alpha effect
+    val gradientAlphaAnimatable = remember { Animatable(0f) }
+
     return remember {
         MediaLayerManager(
             contentLayer = contentLayer,
             selectedLayer = selectedLayer,
             density = density,
             layoutDirection = layoutDirection,
-            desaturationAnimatable = desaturationAnimatable
+            desaturationAnimatable = desaturationAnimatable,
+            gradientAlphaAnimatable = gradientAlphaAnimatable
         )
     }
 }
@@ -72,11 +78,16 @@ class MediaLayerManager(
     private val selectedLayer: GraphicsLayer,
     private val density: androidx.compose.ui.unit.Density,
     private val layoutDirection: androidx.compose.ui.unit.LayoutDirection,
-    private val desaturationAnimatable: Animatable<Float, *>
+    private val desaturationAnimatable: Animatable<Float, *>,
+    private val gradientAlphaAnimatable: Animatable<Float, *>
 ) {
 
     // Pre-allocated Android ColorMatrix for desaturation effect to avoid allocations
     private val desaturationMatrix = android.graphics.ColorMatrix()
+
+    // Track the item that's currently animating out (for smooth deselection)
+    private var pendingDeselectionItem: AnimatableMediaItem? = null
+    private var delayedSelectedMedia: Media? = null
 
     companion object {
         private const val DESATURATION_ANIMATION_DURATION = 300 // milliseconds
@@ -84,14 +95,117 @@ class MediaLayerManager(
     }
 
     /**
-     * Triggers the desaturation animation based on selection state.
+     * Triggers both desaturation and gradient alpha animations based on selection state.
+     * Implements delayed deselection to ensure smooth fade-out animation without abrupt disappearance.
+     *
+     * ## How Delayed Deselection Works:
+     *
+     * ### Problem:
+     * When a user deselects an item, `selectedMedia` becomes `null` immediately, causing the
+     * gradient to disappear abruptly instead of smoothly fading out.
+     *
+     * ### Solution:
+     * This function maintains a `delayedSelectedMedia` state that keeps the previously selected
+     * item alive during the fade-out animation, ensuring smooth visual transitions for the
+     * gradient effect.
+     *
+     * ### Animation Lifecycle:
+     *
+     * **1. Selection (selectedMedia = SomeMedia)**
+     * - `delayedSelectedMedia` = SomeMedia (immediate update)
+     * - `gradientAlphaTarget` = 1f (fade in gradient)
+     * - `desaturationTarget` = 0.9f (background dims)
+     * - Result: Circle grows from center outward over 300ms
+     *
+     * **2. Deselection (selectedMedia = null)**
+     * - `delayedSelectedMedia` = SomeMedia (kept alive for animation)
+     * - `gradientAlphaTarget` = 0f (fade out gradient)
+     * - `desaturationTarget` = 0f (background restores)
+     * - Result: Circle shrinks to center inward over 300ms
+     *
+     * **3. After Animation Completes**
+     * - `delayedSelectedMedia` = null (cleared after fade-out)
+     * - Gradient stops rendering naturally
+     * - No abrupt disappearance!
+     *
+     * **4. Selection Switch (selectedMedia = AnotherMedia)**
+     * - `delayedSelectedMedia` = AnotherMedia (immediate update)
+     * - Previous selection is cleared immediately
+     * - Smooth transition between different items
+     *
+     * ### Technical Implementation:
+     * - Uses `coroutineScope` to run desaturation and gradient animations simultaneously
+     * - Both animations use the same 300ms duration for perfect synchronization
+     * - `getEffectiveSelectedMedia()` returns `selectedMedia ?: delayedSelectedMedia` during rendering
+     * - Cleanup happens in the gradient animation's completion callback
+     *
+     * @param selectedMedia The currently selected media item (null when deselecting)
      */
-    suspend fun animateDesaturation(hasSelection: Boolean) {
-        val targetValue = if (hasSelection) DESATURATION_STRENGTH else 0f
-        desaturationAnimatable.animateTo(
-            targetValue = targetValue,
-            animationSpec = tween(durationMillis = DESATURATION_ANIMATION_DURATION)
-        )
+    suspend fun animateDesaturation(selectedMedia: Media?) {
+        val hasSelection = selectedMedia != null
+        val desaturationTarget = if (hasSelection) DESATURATION_STRENGTH else 0f
+        val gradientAlphaTarget = if (hasSelection) 1f else 0f
+
+        // Update delayed selection state for smooth deselection
+        if (hasSelection) {
+            // New selection - update immediately and clear any pending deselection
+            delayedSelectedMedia = selectedMedia
+            pendingDeselectionItem = null
+        } else {
+            // Deselection - keep the current selection alive for animation
+            // Don't clear delayedSelectedMedia until animation completes
+        }
+
+        // Animate both effects simultaneously for synchronized transitions
+        coroutineScope {
+            launch {
+                desaturationAnimatable.animateTo(
+                    targetValue = desaturationTarget,
+                    animationSpec = tween(durationMillis = DESATURATION_ANIMATION_DURATION)
+                )
+            }
+            launch {
+                gradientAlphaAnimatable.animateTo(
+                    targetValue = gradientAlphaTarget,
+                    animationSpec = tween(durationMillis = DESATURATION_ANIMATION_DURATION)
+                )
+
+                // Clear delayed selection after fade-out animation completes
+                if (!hasSelection) {
+                    delayedSelectedMedia = null
+                    pendingDeselectionItem = null
+                }
+            }
+        }
+    }
+
+    /**
+     * Get the media that should be used for rendering (either current or delayed for animation).
+     *
+     * This function is the key to the delayed deselection mechanism. It ensures that:
+     *
+     * - **During Selection**: Returns the actual selected media immediately
+     * - **During Deselection**: Returns the delayed media to keep gradient visible during fade-out
+     * - **After Animation**: Returns null once the fade-out completes
+     *
+     * ## Usage in Rendering:
+     * Both content and selected layers use this function to determine which item should be:
+     * - Excluded from desaturation effects (appears bright)
+     * - Drawn in the selected layer (appears on top)
+     * - Used for gradient rendering (gets the spotlight effect)
+     *
+     * ## State Transitions:
+     * ```
+     * Select Item:   actualSelectedMedia = Item → returns Item
+     * Deselect Item: actualSelectedMedia = null → returns delayedSelectedMedia (Item)
+     * After Fade:    actualSelectedMedia = null → returns null (delayedSelectedMedia cleared)
+     * ```
+     *
+     * @param actualSelectedMedia The current selection state from the UI
+     * @return The media item that should be treated as selected for rendering purposes
+     */
+    fun getEffectiveSelectedMedia(actualSelectedMedia: Media?): Media? {
+        return actualSelectedMedia ?: delayedSelectedMedia
     }
 
     /**
@@ -113,7 +227,9 @@ class MediaLayerManager(
 
         // Configure content layer composition strategy and effects when there's a selection
         val currentDesaturation = desaturationAnimatable.value
-        val hasSelection = config.selectedMedia != null
+        val currentGradientAlpha = gradientAlphaAnimatable.value
+        val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
+        val hasSelection = effectiveSelectedMedia != null
 
         if (hasSelection) {
             // Set content layer to offscreen compositing for blend mode effects
@@ -128,6 +244,10 @@ class MediaLayerManager(
             contentLayer.compositingStrategy = CompositingStrategy.Auto
             contentLayer.colorFilter = null
         }
+
+        // Selected layer always uses default settings (no alpha fade)
+        selectedLayer.compositingStrategy = CompositingStrategy.Auto
+        selectedLayer.alpha = 1f
 
         // Draw both layers in order: content first, then selected on top
         drawLayer(contentLayer)
@@ -167,10 +287,11 @@ class MediaLayerManager(
 
                 // Draw all non-selected media items
                 var selectedMedia: AnimatableMediaItem? = null
+                val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
                 config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
                     hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
                         val animatableItem = config.animationManager.getOrCreateAnimatable(mediaWithPosition)
-                        val isSelected = animatableItem.mediaWithPosition.media == config.selectedMedia
+                        val isSelected = animatableItem.mediaWithPosition.media == effectiveSelectedMedia
 
                         if (isSelected) selectedMedia = animatableItem
 
@@ -192,7 +313,8 @@ class MediaLayerManager(
                     }
                 }
 
-                selectedMedia?.let { selected -> drawSelectionGradient(selected) }
+                // Draw gradient for effective selected media
+                selectedMedia?.let { item -> drawSelectionGradient(item) }
             }
         }
     }
@@ -216,7 +338,8 @@ class MediaLayerManager(
                 translate(offset.x / clampedZoom, offset.y / clampedZoom)
             }) {
                 // Draw only the selected media item
-                config.selectedMedia?.let { media ->
+                val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
+                effectiveSelectedMedia?.let { media ->
                     config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
                         hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
                             val animatableItem = config.animationManager.getOrCreateAnimatable(mediaWithPosition)
@@ -255,11 +378,17 @@ class MediaLayerManager(
     }
 
     /**
-     * Draws a circular gradient that creates a smooth spotlight effect around the selected media item.
-     * Uses alpha channel to create smooth fade from transparent center to opaque edges.
+     * Draws an animated circular gradient that creates a smooth spotlight effect around the selected media item.
+     * Uses animated alpha channel to create growing/shrinking circle effect.
      * Radius is 30% bigger than the largest side of the selected item.
      */
     private fun DrawScope.drawSelectionGradient(animatableItem: dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaItem) {
+        // Get current animation progress for growing/shrinking effect
+        val currentGradientAlpha = gradientAlphaAnimatable.value
+
+        // Skip drawing if gradient is fully transparent (no selection or animation not started)
+        if (currentGradientAlpha <= 0f) return
+
         val bounds = animatableItem.mediaWithPosition.absoluteBounds
         val center = bounds.center
 
@@ -267,23 +396,23 @@ class MediaLayerManager(
         val maxSide = max(bounds.width, bounds.height)
         val gradientRadius = maxSide * 1.7f / 2f
 
-        // Create radial gradient with alpha channel: transparent center to opaque black edges
-        // This creates a smooth spotlight effect rather than a hard cutoff
+        // Create radial gradient with animated alpha values: transparent center to opaque black edges
+        // The animation creates a growing/shrinking circle effect as alpha increases/decreases uniformly
         val gradient = Brush.radialGradient(
             colors = listOf(
-                Color.Black.copy(alpha = 0f),    // Center: fully transparent (spotlight effect)
-                Color.Black.copy(alpha = 0.9f),
-                Color.Black.copy(alpha = 1f),    // Edges: fully opaque (normal content)
-                Color.Black.copy(alpha = 1f),    // Edges: fully opaque (normal content)
-                Color.Black.copy(alpha = 1f),    // Edges: fully opaque (normal content)
-                Color.Black.copy(alpha = 1f),    // Edges: fully opaque (normal content)
-                Color.Black.copy(alpha = 1f),    // Edges: fully opaque (normal content)
+                Color.Black.copy(alpha = 0f),                                    // Center: always transparent (spotlight effect)
+                Color.Black.copy(alpha = 0.9f * currentGradientAlpha),           // Animated transition
+                Color.Black.copy(alpha = 1f * currentGradientAlpha),             // Edges: animated opacity
+                Color.Black.copy(alpha = 1f * currentGradientAlpha),
+                Color.Black.copy(alpha = 1f * currentGradientAlpha),
+                Color.Black.copy(alpha = 1f * currentGradientAlpha),
+                Color.Black.copy(alpha = 1f * currentGradientAlpha),
             ).reversed(),
             center = center,
             radius = gradientRadius,
         )
 
-        // Draw the circular gradient with normal blend mode using alpha channel
+        // Draw the circular gradient with DstOut blend mode for hole effect
         drawCircle(
             brush = gradient,
             radius = gradientRadius,
