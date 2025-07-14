@@ -202,6 +202,11 @@ class GalleryViewModel @Inject constructor(
     fun getAtlasManager(): AtlasManager = atlasManager
 
     /**
+     * Get smart memory manager for enhanced debug overlay.
+     */
+    fun getSmartMemoryManager(): dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager = atlasManager.getSmartMemoryManager()
+
+    /**
      * Get device capabilities for debug overlay.
      */
     fun getDeviceCapabilities(): dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities = deviceCapabilities

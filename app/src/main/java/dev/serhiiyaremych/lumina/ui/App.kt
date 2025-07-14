@@ -224,6 +224,7 @@ fun App(
                         isAtlasGenerating = isAtlasGenerating,
                         currentZoom = transformableState.zoom,
                         memoryStatus = memoryStatus,
+                        smartMemoryManager = galleryViewModel.getSmartMemoryManager(),
                         deviceCapabilities = galleryViewModel.getDeviceCapabilities(),
                         modifier = Modifier.fillMaxSize()
                     )

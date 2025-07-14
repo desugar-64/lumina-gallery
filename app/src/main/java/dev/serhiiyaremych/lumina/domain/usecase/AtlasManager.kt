@@ -201,6 +201,13 @@ class AtlasManager @Inject constructor(
     }
 
     /**
+     * Get smart memory manager instance for advanced debugging.
+     */
+    fun getSmartMemoryManager(): SmartMemoryManager {
+        return smartMemoryManager
+    }
+
+    /**
      * Check if atlas regeneration is needed without launching coroutine.
      */
     fun shouldRegenerateAtlas(

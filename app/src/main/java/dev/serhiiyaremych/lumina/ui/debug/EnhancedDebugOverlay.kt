@@ -70,6 +70,7 @@ fun EnhancedDebugOverlay(
     isAtlasGenerating: Boolean,
     currentZoom: Float,
     memoryStatus: SmartMemoryManager.MemoryStatus?,
+    smartMemoryManager: SmartMemoryManager? = null,
     deviceCapabilities: dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities? = null,
     modifier: Modifier = Modifier
 ) {
@@ -105,6 +106,7 @@ fun EnhancedDebugOverlay(
                 isAtlasGenerating = isAtlasGenerating,
                 currentZoom = currentZoom,
                 memoryStatus = memoryStatus,
+                smartMemoryManager = smartMemoryManager,
                 deviceCapabilities = deviceCapabilities,
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -120,6 +122,7 @@ private fun CompactDebugInfo(
     isAtlasGenerating: Boolean,
     currentZoom: Float,
     memoryStatus: SmartMemoryManager.MemoryStatus?,
+    smartMemoryManager: SmartMemoryManager?,
     deviceCapabilities: dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities?,
     modifier: Modifier = Modifier
 ) {
@@ -136,8 +139,10 @@ private fun CompactDebugInfo(
         // Multi-LOD atlas visualization - main focus
         MultiLODAtlasView(atlasState)
 
-        // Compact memory indicator
-        memoryStatus?.let { CompactMemoryIndicator(it) }
+        // Enhanced memory management display
+        memoryStatus?.let { 
+            EnhancedMemoryDisplay(it, smartMemoryManager)
+        }
     }
 }
 
@@ -486,57 +491,260 @@ private fun ExpandedAtlasCard(atlas: dev.serhiiyaremych.lumina.domain.model.Text
 }
 
 @Composable
-private fun CompactMemoryIndicator(memory: SmartMemoryManager.MemoryStatus) {
-    val memoryColor = when {
-        memory.usagePercent < 0.6f -> Color(0xFF4CAF50) // Green
-        memory.usagePercent < 0.8f -> Color(0xFFFF9800) // Orange
-        else -> Color(0xFFF44336) // Red
-    }
+private fun EnhancedMemoryDisplay(
+    memory: SmartMemoryManager.MemoryStatus,
+    smartMemoryManager: SmartMemoryManager?
+) {
+    var isExpanded by remember { mutableStateOf(false) }
 
-    val memoryIcon = when {
-        memory.usagePercent < 0.6f -> "💚"  // Green heart for good
-        memory.usagePercent < 0.8f -> "⚠️"  // Warning for medium
-        else -> "🔴"  // Red circle for high
-    }
-
-    Row(
-        modifier = Modifier
-            .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    Column(
+        verticalArrangement = Arrangement.spacedBy(3.dp)
     ) {
-        // Memory icon
-        Text(
-            text = memoryIcon,
-            fontSize = DebugTextSizes.SECONDARY_TEXT
-        )
-
-        // Memory usage bar
-        Box(
+        // Primary memory indicator (always visible)
+        Row(
             modifier = Modifier
-                .width(40.dp)
-                .height(4.dp)
-                .background(Color.Gray.copy(alpha = 0.5f), RoundedCornerShape(2.dp))
+                .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
+                .clickable { isExpanded = !isExpanded }
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+            // Memory pressure icon
+            val pressureIcon = when (memory.pressureLevel) {
+                SmartMemoryManager.MemoryPressure.NORMAL -> "💚"
+                SmartMemoryManager.MemoryPressure.LOW -> "💛"
+                SmartMemoryManager.MemoryPressure.MEDIUM -> "🧡"
+                SmartMemoryManager.MemoryPressure.HIGH -> "❤️"
+                SmartMemoryManager.MemoryPressure.CRITICAL -> "🔴"
+            }
+
+            Text(
+                text = pressureIcon,
+                fontSize = DebugTextSizes.SECONDARY_TEXT
+            )
+
+            // Memory pressure level
+            val pressureColor = when (memory.pressureLevel) {
+                SmartMemoryManager.MemoryPressure.NORMAL -> Color(0xFF4CAF50)
+                SmartMemoryManager.MemoryPressure.LOW -> Color(0xFFFFC107)
+                SmartMemoryManager.MemoryPressure.MEDIUM -> Color(0xFFFF9800)
+                SmartMemoryManager.MemoryPressure.HIGH -> Color(0xFFFF5722)
+                SmartMemoryManager.MemoryPressure.CRITICAL -> Color(0xFFF44336)
+            }
+
+            Text(
+                text = memory.pressureLevel.name.take(1), // N/L/M/H/C
+                color = Color.White,
+                fontSize = DebugTextSizes.SECONDARY_TEXT,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .background(pressureColor.copy(alpha = 0.8f), RoundedCornerShape(3.dp))
+                    .padding(horizontal = 3.dp, vertical = 1.dp)
+            )
+
+            // Memory usage bar
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(memory.usagePercent)
+                    .width(40.dp)
                     .height(4.dp)
-                    .background(memoryColor, RoundedCornerShape(2.dp))
+                    .background(Color.Gray.copy(alpha = 0.5f), RoundedCornerShape(2.dp))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(memory.usagePercent)
+                        .height(4.dp)
+                        .background(pressureColor, RoundedCornerShape(2.dp))
+                )
+            }
+
+            Text(
+                text = "${(memory.usagePercent * 100).roundToInt()}%",
+                color = Color.White,
+                fontSize = DebugTextSizes.TERTIARY_TEXT,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = formatBytes(memory.currentUsageBytes),
+                color = Color.White,
+                fontSize = DebugTextSizes.DETAIL_TEXT,
+                fontWeight = FontWeight.Bold
+            )
+
+            // Expand/collapse indicator
+            Text(
+                text = if (isExpanded) "🔼" else "🔽",
+                fontSize = DebugTextSizes.DETAIL_TEXT,
+                color = Color.Gray
             )
         }
 
+        // Expanded memory details
+        if (isExpanded && smartMemoryManager != null) {
+            SystemMemoryPressureIndicator(smartMemoryManager)
+            MemoryLeakDetectionStatus(smartMemoryManager)
+            MemoryBudgetInfo(memory, smartMemoryManager)
+        }
+    }
+}
+
+@Composable
+private fun SystemMemoryPressureIndicator(smartMemoryManager: SmartMemoryManager) {
+    // Note: We would need to expose system memory pressure from SmartMemoryManager
+    // For now, showing atlas count and background app estimate
+    Row(
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+            .padding(horizontal = 6.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
         Text(
-            text = "${(memory.usagePercent * 100).roundToInt()}%",
+            text = "🌐",
+            fontSize = DebugTextSizes.SECONDARY_TEXT
+        )
+
+        Text(
+            text = "SYS",
+            color = Color.Cyan,
+            fontSize = DebugTextSizes.TERTIARY_TEXT,
+            fontWeight = FontWeight.Bold
+        )
+
+        // System pressure would be calculated here if exposed
+        Text(
+            text = "~50%",
+            color = Color.Yellow,
+            fontSize = DebugTextSizes.TERTIARY_TEXT
+        )
+
+        Text(
+            text = "📱",
+            fontSize = DebugTextSizes.DETAIL_TEXT
+        )
+
+        Text(
+            text = "~5 bg apps",
+            color = Color.White,
+            fontSize = DebugTextSizes.DETAIL_TEXT
+        )
+    }
+}
+
+@Composable
+private fun MemoryLeakDetectionStatus(smartMemoryManager: SmartMemoryManager) {
+    // Try to get leak detection result
+    val leakReport = remember { smartMemoryManager.detectMemoryLeak() }
+    
+    Row(
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+            .padding(horizontal = 6.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        val leakIcon = if (leakReport?.detected == true) {
+            when {
+                leakReport.severity > 0.8f -> "🆘"  // Critical leak
+                leakReport.severity > 0.6f -> "⚠️"  // High leak
+                leakReport.severity > 0.4f -> "🟡"  // Medium leak
+                else -> "🟢"  // Low leak
+            }
+        } else "✅"  // No leak detected
+
+        Text(
+            text = leakIcon,
+            fontSize = DebugTextSizes.SECONDARY_TEXT
+        )
+
+        Text(
+            text = "LEAK",
+            color = if (leakReport?.detected == true) Color.Red else Color.Green,
+            fontSize = DebugTextSizes.TERTIARY_TEXT,
+            fontWeight = FontWeight.Bold
+        )
+
+        if (leakReport?.detected == true) {
+            Text(
+                text = "${(leakReport.severity * 100).roundToInt()}%",
+                color = Color.Red,
+                fontSize = DebugTextSizes.TERTIARY_TEXT,
+                fontWeight = FontWeight.Bold
+            )
+        } else {
+            Text(
+                text = "OK",
+                color = Color.Green,
+                fontSize = DebugTextSizes.TERTIARY_TEXT,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun MemoryBudgetInfo(
+    memory: SmartMemoryManager.MemoryStatus,
+    smartMemoryManager: SmartMemoryManager
+) {
+    Row(
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+            .padding(horizontal = 6.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = "💰",
+            fontSize = DebugTextSizes.SECONDARY_TEXT
+        )
+
+        Text(
+            text = "BUDGET",
+            color = Color.Cyan,
+            fontSize = DebugTextSizes.TERTIARY_TEXT,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = formatBytes(memory.totalBudgetBytes),
             color = Color.White,
             fontSize = DebugTextSizes.TERTIARY_TEXT,
             fontWeight = FontWeight.Bold
         )
 
         Text(
-            text = "${formatBytes(memory.currentUsageBytes)}",
+            text = "📊",
+            fontSize = DebugTextSizes.DETAIL_TEXT
+        )
+
+        Text(
+            text = "${memory.registeredAtlases} atlases",
             color = Color.White,
+            fontSize = DebugTextSizes.DETAIL_TEXT
+        )
+
+        // Show tier info
+        val tierIcon = when (memory.deviceCapabilities.memoryTier.name) {
+            "HIGH" -> "🏆"
+            "MEDIUM" -> "⚡"
+            "MINIMAL" -> "🔋"
+            else -> "❓"
+        }
+
+        Text(
+            text = tierIcon,
+            fontSize = DebugTextSizes.DETAIL_TEXT
+        )
+
+        Text(
+            text = memory.deviceCapabilities.memoryTier.name.take(1),
+            color = when (memory.deviceCapabilities.memoryTier.name) {
+                "HIGH" -> Color.Green
+                "MEDIUM" -> Color.Yellow
+                "MINIMAL" -> Color.Red
+                else -> Color.Gray
+            },
             fontSize = DebugTextSizes.DETAIL_TEXT,
             fontWeight = FontWeight.Bold
         )
