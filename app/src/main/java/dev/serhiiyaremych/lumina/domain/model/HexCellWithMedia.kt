@@ -3,6 +3,7 @@ package dev.serhiiyaremych.lumina.domain.model
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.asComposeColorFilter
 
 /**
  * A hex cell containing positioned media items.
@@ -30,10 +31,10 @@ data class HexCellWithMedia(
                 bottom = viewport.bottom + margin
             )
         } else viewport
-        
+
         return bounds.overlaps(expandedViewport)
     }
-    
+
     /**
      * Returns media items that are visible within the given viewport.
      * Used for fine-grained culling within visible hex cells.
@@ -70,7 +71,7 @@ data class MediaWithPosition(
     val aspectRatio: Float = if (media.height != 0) {
         media.width.toFloat() / media.height.toFloat()
     } else 1f
-    
+
     /**
      * Returns true if the given point (in world coordinates) hits this media item
      */
@@ -103,7 +104,7 @@ data class HexGridLayout(
             hexCellWithMedia.isInViewport(viewport, margin)
         }
     }
-    
+
     /**
      * Finds the media item at the given world coordinate position.
      * Used for click/tap handling.
@@ -116,7 +117,7 @@ data class HexGridLayout(
                 }?.media
             }
     }
-    
+
     /**
      * Finds the hex cell at the given world coordinate position.
      * Used for hex cell click/tap handling.
@@ -139,7 +140,7 @@ private fun calculateHexBounds(hexCell: HexCell): Rect {
     val maxX = vertices.maxOf { it.x }
     val minY = vertices.minOf { it.y }
     val maxY = vertices.maxOf { it.y }
-    
+
     return Rect(
         left = minX,
         top = minY,
@@ -155,13 +156,13 @@ private fun calculateLayoutBounds(hexCellsWithMedia: List<HexCellWithMedia>): Re
     if (hexCellsWithMedia.isEmpty()) {
         return Rect.Zero
     }
-    
+
     val allBounds = hexCellsWithMedia.map { it.bounds }
     val minX = allBounds.minOf { it.left }
     val maxX = allBounds.maxOf { it.right }
     val minY = allBounds.minOf { it.top }
     val maxY = allBounds.maxOf { it.bottom }
-    
+
     return Rect(
         left = minX,
         top = minY,

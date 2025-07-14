@@ -6,18 +6,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asComposeColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
+import kotlin.math.max
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.layer.CompositingStrategy
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
+import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaItem
 import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaManager
 
 /**
@@ -105,12 +111,21 @@ class MediaLayerManager(
         // Record selected layer with only the selected media item
         recordSelectedLayer(config, canvasSize, clampedZoom, offset)
 
-        // Apply desaturation effect to content layer when there's a selection
+        // Configure content layer composition strategy and effects when there's a selection
         val currentDesaturation = desaturationAnimatable.value
-        if (currentDesaturation > 0f) {
-            applyDesaturationToContentLayer(currentDesaturation)
+        val hasSelection = config.selectedMedia != null
+
+        if (hasSelection) {
+            // Set content layer to offscreen compositing for blend mode effects
+            contentLayer.compositingStrategy = CompositingStrategy.Offscreen
+
+            // Apply desaturation if needed
+            if (currentDesaturation > 0f) {
+                applyDesaturationToContentLayer(currentDesaturation)
+            }
         } else {
-            // Clear color filter when no desaturation
+            // Reset to default compositing strategy when no selection
+            contentLayer.compositingStrategy = CompositingStrategy.Auto
             contentLayer.colorFilter = null
         }
 
@@ -151,10 +166,13 @@ class MediaLayerManager(
                 )
 
                 // Draw all non-selected media items
+                var selectedMedia: AnimatableMediaItem? = null
                 config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
                     hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
                         val animatableItem = config.animationManager.getOrCreateAnimatable(mediaWithPosition)
                         val isSelected = animatableItem.mediaWithPosition.media == config.selectedMedia
+
+                        if (isSelected) selectedMedia = animatableItem
 
                         config.geometryReader.storeMediaBounds(
                             media = animatableItem.mediaWithPosition.media,
@@ -173,6 +191,8 @@ class MediaLayerManager(
                         config.geometryReader.debugDrawBounds(this, config.zoom)
                     }
                 }
+
+                selectedMedia?.let { selected -> drawSelectionGradient(selected) }
             }
         }
     }
@@ -203,6 +223,7 @@ class MediaLayerManager(
                             val isSelected = animatableItem.mediaWithPosition.media == media
 
                             if (isSelected) {
+                                // Draw the selected media item (gradient is now in content layer)
                                 drawAnimatableMediaFromAtlas(
                                     animatableItem = animatableItem,
                                     atlasState = config.atlasState,
@@ -231,5 +252,43 @@ class MediaLayerManager(
         // Convert Android ColorMatrix to Compose ColorFilter
         val colorMatrixFilter = android.graphics.ColorMatrixColorFilter(desaturationMatrix)
         contentLayer.colorFilter = colorMatrixFilter.asComposeColorFilter()
+    }
+
+    /**
+     * Draws a circular gradient that creates a smooth spotlight effect around the selected media item.
+     * Uses alpha channel to create smooth fade from transparent center to opaque edges.
+     * Radius is 30% bigger than the largest side of the selected item.
+     */
+    private fun DrawScope.drawSelectionGradient(animatableItem: dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaItem) {
+        val bounds = animatableItem.mediaWithPosition.absoluteBounds
+        val center = bounds.center
+
+        // Calculate radius as 30% bigger than the largest side of the item
+        val maxSide = max(bounds.width, bounds.height)
+        val gradientRadius = maxSide * 1.7f / 2f
+
+        // Create radial gradient with alpha channel: transparent center to opaque black edges
+        // This creates a smooth spotlight effect rather than a hard cutoff
+        val gradient = Brush.radialGradient(
+            colors = listOf(
+                Color.Black.copy(alpha = 0f),    // Center: fully transparent (spotlight effect)
+                Color.Black.copy(alpha = 0.9f),
+                Color.Black.copy(alpha = 1f),    // Edges: fully opaque (normal content)
+                Color.Black.copy(alpha = 1f),    // Edges: fully opaque (normal content)
+                Color.Black.copy(alpha = 1f),    // Edges: fully opaque (normal content)
+                Color.Black.copy(alpha = 1f),    // Edges: fully opaque (normal content)
+                Color.Black.copy(alpha = 1f),    // Edges: fully opaque (normal content)
+            ).reversed(),
+            center = center,
+            radius = gradientRadius,
+        )
+
+        // Draw the circular gradient with normal blend mode using alpha channel
+        drawCircle(
+            brush = gradient,
+            radius = gradientRadius,
+            center = center,
+            blendMode = BlendMode.DstOut
+        )
     }
 }
