@@ -14,6 +14,7 @@ import dev.serhiiyaremych.lumina.data.ScaleStrategy
 import dev.serhiiyaremych.lumina.data.ShelfTexturePacker
 import dev.serhiiyaremych.lumina.domain.model.AtlasRegion
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
+import dev.serhiiyaremych.lumina.domain.model.PhotoPriority
 import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
 import dev.serhiiyaremych.lumina.domain.usecase.AtlasGenerationResult
 import dev.serhiiyaremych.lumina.domain.usecase.ProcessedPhoto
@@ -61,10 +62,10 @@ class DynamicAtlasPool @Inject constructor(
         private const val UTILIZATION_TARGET = 0.9f // Target 90% utilization
         private const val MIN_PHOTOS_PER_ATLAS_DEFAULT = 4 // Default minimum photos to justify an atlas
     }
-    
+
     // Memory pressure monitoring
     private val memoryPressureScope = CoroutineScope(SupervisorJob())
-    
+
     init {
         // Monitor memory pressure and clean bitmap pool accordingly
         smartMemoryManager.memoryPressure
@@ -122,7 +123,7 @@ class DynamicAtlasPool @Inject constructor(
         photoUris: List<Uri>,
         lodLevel: LODLevel,
         scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER,
-        priorityMapping: Map<Uri, dev.serhiiyaremych.lumina.domain.model.PhotoPriority> = emptyMap()
+        priorityMapping: Map<Uri, PhotoPriority> = emptyMap()
     ): MultiAtlasResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
         if (photoUris.isEmpty()) {
             return@trace MultiAtlasResult(
@@ -221,7 +222,7 @@ class DynamicAtlasPool @Inject constructor(
 
         Log.d(TAG, "Atlas generation results: ${allAtlases.size} atlases created, $totalPackedPhotos photos packed, ${allFailed.size} failed")
 
-        // Clean up processed photo bitmaps
+        // Clean up processed photo bitmaps - direct recycling (not pool) for stability
         cleanupProcessedPhotos(processedPhotos)
 
         return@trace MultiAtlasResult(
@@ -234,47 +235,71 @@ class DynamicAtlasPool @Inject constructor(
     }
 
     /**
-     * Process photos for LOD level with error handling and priority-based LOD boosting
+     * Process photos for LOD level with error handling, priority-based LOD boosting, and parallel processing
+     * OPTIMIZED: Uses device-aware parallel processing for individual photos
      */
     private suspend fun processPhotosForLOD(
         photoUris: List<Uri>,
         lodLevel: LODLevel,
         scaleStrategy: ScaleStrategy,
-        priorityMapping: Map<Uri, dev.serhiiyaremych.lumina.domain.model.PhotoPriority> = emptyMap()
+        priorityMapping: Map<Uri, PhotoPriority> = emptyMap()
     ): List<ProcessedPhoto> = trace(BenchmarkLabels.ATLAS_GENERATOR_PROCESS_PHOTOS) {
-        val processedPhotos = mutableListOf<ProcessedPhoto>()
-
-        for (uri in photoUris) {
-            currentCoroutineContext().ensureActive()
-
-            // Determine effective LOD level based on priority
-            val priority = priorityMapping[uri] ?: dev.serhiiyaremych.lumina.domain.model.PhotoPriority.NORMAL
-            val effectiveLODLevel = if (priority == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.HIGH) {
-                // Use maximum LOD level for high priority photos (selected photos)
-                LODLevel.entries.last()
-            } else {
-                lodLevel
-            }
-
-            runCatching {
-                photoLODProcessor.processPhotoForLOD(uri, effectiveLODLevel, scaleStrategy, priority)
-            }.fold(
-                onSuccess = { processed ->
-                    if (processed != null) {
-                        processedPhotos.add(processed)
-                        if (priority == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.HIGH) {
-                            Log.d(TAG, "HIGH priority photo processed: $uri at max $effectiveLODLevel (original: $lodLevel)")
-                        }
-                    }
-                },
-                onFailure = { e ->
-                    Log.e(TAG, "Failed to process photo: $uri", e)
-                    if (e is CancellationException) throw e
-                }
-            )
+        if (photoUris.isEmpty()) {
+            return@trace emptyList()
         }
 
-        return@trace processedPhotos
+        // Determine parallel processing limits based on device capabilities and memory pressure
+        val memoryStatus = smartMemoryManager.getMemoryStatus()
+        val capabilities = deviceCapabilities.getCapabilities()
+
+        val maxParallelPhotos = when {
+            memoryStatus.pressureLevel >= SmartMemoryManager.MemoryPressure.HIGH -> 2
+            capabilities.performanceTier == DeviceCapabilities.PerformanceTier.HIGH -> 6
+            capabilities.performanceTier == DeviceCapabilities.PerformanceTier.MEDIUM -> 4
+            else -> 2
+        }
+
+        Log.d(TAG, "Processing ${photoUris.size} photos with up to $maxParallelPhotos parallel workers (memory: ${memoryStatus.pressureLevel}, performance: ${capabilities.performanceTier})")
+
+        // Process photos in parallel chunks to manage memory usage
+        return@trace coroutineScope {
+            photoUris.chunked(maxParallelPhotos).flatMap { chunk ->
+                chunk.map { uri ->
+                    async {
+                        currentCoroutineContext().ensureActive()
+
+                        // Determine effective LOD level based on priority
+                        val priority = priorityMapping[uri] ?: PhotoPriority.NORMAL
+                        val effectiveLODLevel = if (priority == PhotoPriority.HIGH) {
+                            // Use maximum LOD level for high priority photos (selected photos)
+                            LODLevel.entries.last()
+                        } else {
+                            lodLevel
+                        }
+
+                        runCatching {
+                            photoLODProcessor.processPhotoForLOD(uri, effectiveLODLevel, scaleStrategy, priority)
+                        }.fold(
+                            onSuccess = { processed ->
+                                if (processed != null) {
+                                    if (priority == PhotoPriority.HIGH) {
+                                        Log.d(TAG, "HIGH priority photo processed: $uri at max $effectiveLODLevel (original: $lodLevel)")
+                                    }
+                                    processed
+                                } else {
+                                    null
+                                }
+                            },
+                            onFailure = { e ->
+                                Log.e(TAG, "Failed to process photo: $uri", e)
+                                if (e is CancellationException) throw e
+                                null
+                            }
+                        )
+                    }
+                }.awaitAll().filterNotNull()
+            }
+        }
     }
 
     /**
@@ -293,20 +318,33 @@ class DynamicAtlasPool @Inject constructor(
         val memoryStatus = smartMemoryManager.getMemoryStatus()
 
         // Check if we have high priority photos to determine if priority-based distribution is beneficial
-        val hasHighPriorityPhotos = processedPhotos.any { it.priority == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.HIGH }
-        
+        val hasHighPriorityPhotos = processedPhotos.any { it.priority == PhotoPriority.HIGH }
+
         val distributionStrategy = when {
-            // At CRITICAL memory pressure, force single atlas to prevent OOM
-            memoryStatus.pressureLevel >= SmartMemoryManager.MemoryPressure.CRITICAL -> DistributionStrategy.SINGLE_SIZE
-            // If we have high priority photos, prefer priority-based distribution even at moderate memory pressure
-            hasHighPriorityPhotos && memoryStatus.pressureLevel < SmartMemoryManager.MemoryPressure.CRITICAL -> DistributionStrategy.PRIORITY_BASED
-            estimatedAtlasesNeeded <= 1 -> DistributionStrategy.SINGLE_SIZE
-            // Only prevent multi-atlas at HIGH memory pressure or above (90%+)
-            memoryStatus.pressureLevel >= SmartMemoryManager.MemoryPressure.HIGH -> DistributionStrategy.SINGLE_SIZE
-            capabilities.performanceTier == DeviceCapabilities.PerformanceTier.HIGH -> DistributionStrategy.PRIORITY_BASED
+            // Critical memory pressure always uses single size to conserve memory
+            memoryStatus.pressureLevel >= SmartMemoryManager.MemoryPressure.CRITICAL -> 
+                DistributionStrategy.SINGLE_SIZE
+            
+            // High priority photos with good memory conditions use priority-based distribution
+            hasHighPriorityPhotos && memoryStatus.pressureLevel < SmartMemoryManager.MemoryPressure.CRITICAL -> 
+                DistributionStrategy.PRIORITY_BASED
+            
+            // Single atlas is sufficient for small photo sets
+            estimatedAtlasesNeeded <= 1 -> 
+                DistributionStrategy.SINGLE_SIZE
+            
+            // High memory pressure uses single size to reduce memory usage
+            memoryStatus.pressureLevel >= SmartMemoryManager.MemoryPressure.HIGH -> 
+                DistributionStrategy.SINGLE_SIZE
+            
+            // High performance devices can handle priority-based distribution
+            capabilities.performanceTier == DeviceCapabilities.PerformanceTier.HIGH -> 
+                DistributionStrategy.PRIORITY_BASED
+            
+            // Default to multi-size distribution for optimal atlas utilization
             else -> DistributionStrategy.MULTI_SIZE
         }
-        
+
         Log.d(TAG, "Strategy selection: hasHighPriorityPhotos=$hasHighPriorityPhotos, estimatedAtlasesNeeded=$estimatedAtlasesNeeded, memoryPressure=${memoryStatus.pressureLevel}, performanceTier=${capabilities.performanceTier} → $distributionStrategy")
 
         val maxParallelAtlases = when {
@@ -440,12 +478,8 @@ class DynamicAtlasPool @Inject constructor(
                     val photoArea = photo.scaledSize.width * photo.scaledSize.height
 
                     // Check if photo will fit in shelf packing algorithm
-                    val paddedHeight = photo.scaledSize.height + 4 // 2px padding each side
-                    val canFitInShelf = if (atlasSize.width == 2048) {
-                        paddedHeight <= 1020 // Conservative estimate for 2048x2048 atlas
-                    } else {
-                        paddedHeight <= atlasSize.height - 20 // Conservative estimate with some buffer
-                    }
+                    val paddedHeight = photo.scaledSize.height + ATLAS_PADDING * 2
+                    val canFitInShelf = canPhotoFitInAtlas(photo, atlasSize, groupPhotos)
 
                     // Area check + shelf fitting check
                     if (currentArea + photoArea <= maxArea && canFitInShelf) {
@@ -462,8 +496,9 @@ class DynamicAtlasPool @Inject constructor(
                 // Create atlas if we have enough photos to justify it
                 val utilizationPercent = if (maxArea > 0) currentArea.toFloat() / maxArea else 0f
                 val minUtilization = if (lodLevel.level >= 4) 0.3f else 0.5f // Lower threshold for high LOD
+                val hasEnoughPhotos = groupPhotos.size >= minPhotosPerAtlas
 
-                if (groupPhotos.isNotEmpty() && (utilizationPercent >= minUtilization || passCount == maxPasses - 1)) {
+                if (groupPhotos.isNotEmpty() && (hasEnoughPhotos && utilizationPercent >= minUtilization || passCount == maxPasses - 1)) {
                     groups.add(PhotoGroup(groupPhotos, atlasSize))
                     Log.d(TAG, "Created group with ${groupPhotos.size} photos for ${atlasSize.width}x${atlasSize.height} (${(utilizationPercent * 100).toInt()}% utilization)")
                     break // Move to next atlas size
@@ -563,17 +598,17 @@ class DynamicAtlasPool @Inject constructor(
         lodLevel: LODLevel
     ): List<PhotoGroup> {
         // Separate photos by priority
-        val highPriorityPhotos = processedPhotos.filter { 
-            it.priority == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.HIGH 
+        val highPriorityPhotos = processedPhotos.filter {
+            it.priority == PhotoPriority.HIGH
         }
-        val normalPriorityPhotos = processedPhotos.filter { 
-            it.priority == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.NORMAL 
+        val normalPriorityPhotos = processedPhotos.filter {
+            it.priority == PhotoPriority.NORMAL
         }
-        
+
         Log.d(TAG, "Priority-based distribution: ${highPriorityPhotos.size} high priority, ${normalPriorityPhotos.size} normal priority photos")
-        
+
         val allGroups = mutableListOf<PhotoGroup>()
-        
+
         // Distribute HIGH priority photos first using existing multi-size logic
         if (highPriorityPhotos.isNotEmpty()) {
             val highPriorityGroups = distributeMultiSize(highPriorityPhotos, atlasSizes, lodLevel)
@@ -585,14 +620,14 @@ class DynamicAtlasPool @Inject constructor(
             allGroups.addAll(markedHighPriorityGroups)
             Log.d(TAG, "High priority photos distributed into ${markedHighPriorityGroups.size} dedicated atlases with max LOD ($maxLOD)")
         }
-        
+
         // Distribute NORMAL priority photos using existing multi-size logic
         if (normalPriorityPhotos.isNotEmpty()) {
             val normalPriorityGroups = distributeMultiSize(normalPriorityPhotos, atlasSizes, lodLevel)
             allGroups.addAll(normalPriorityGroups)
             Log.d(TAG, "Normal priority photos distributed into ${normalPriorityGroups.size} atlases")
         }
-        
+
         Log.d(TAG, "Priority-based distribution complete: ${allGroups.size} total atlas groups")
         return allGroups
     }
@@ -663,7 +698,7 @@ class DynamicAtlasPool @Inject constructor(
 
         // Use effective LOD level if specified, otherwise use the original LOD level
         val effectiveLODLevel = photoGroup.effectiveLODLevel ?: lodLevel
-        
+
         // Create atlas and generate memory key
         val atlas = TextureAtlas(
             bitmap = atlasBitmap,
@@ -764,16 +799,16 @@ class DynamicAtlasPool @Inject constructor(
     }
 
     /**
-     * Clean up processed photo bitmaps by returning them to pool
+     * Clean up processed photo bitmaps with direct recycling (no pool)
      */
     private fun cleanupProcessedPhotos(processedPhotos: List<ProcessedPhoto>) {
         processedPhotos.forEach { photo ->
             if (!photo.bitmap.isRecycled) {
-                bitmapPool.release(photo.bitmap)
+                photo.bitmap.recycle()
             }
         }
     }
-    
+
     /**
      * Release atlas bitmap back to pool instead of recycling
      */
@@ -823,6 +858,72 @@ class DynamicAtlasPool @Inject constructor(
             distributionStrategy = DistributionStrategy.SINGLE_SIZE,
             maxParallelAtlases = 1
         )
+    }
+
+    /**
+     * Dynamically calculate if a photo can fit in an atlas based on current shelf usage.
+     * This replaces the magic number approach with proper shelf packing simulation.
+     */
+    private fun canPhotoFitInAtlas(
+        photo: ProcessedPhoto,
+        atlasSize: IntSize,
+        currentPhotos: List<ProcessedPhoto>
+    ): Boolean {
+        val paddedPhotoSize = IntSize(
+            width = photo.scaledSize.width + ATLAS_PADDING * 2,
+            height = photo.scaledSize.height + ATLAS_PADDING * 2
+        )
+        
+        // Check if photo exceeds atlas dimensions
+        if (paddedPhotoSize.width > atlasSize.width || paddedPhotoSize.height > atlasSize.height) {
+            return false
+        }
+        
+        // If no photos in current group, this photo will definitely fit
+        if (currentPhotos.isEmpty()) {
+            return true
+        }
+        
+        // Simulate shelf packing to calculate remaining height
+        val shelfHeights = mutableListOf<Int>()
+        var currentShelfHeight = 0
+        
+        // Sort current photos by height (descending) to simulate shelf packing algorithm
+        val sortedPhotos = currentPhotos.sortedByDescending { it.scaledSize.height }
+        
+        for (existingPhoto in sortedPhotos) {
+            val existingPaddedSize = IntSize(
+                width = existingPhoto.scaledSize.width + ATLAS_PADDING * 2,
+                height = existingPhoto.scaledSize.height + ATLAS_PADDING * 2
+            )
+            
+            // Try to fit in existing shelves
+            var fitsInExistingShelf = false
+            for (i in shelfHeights.indices) {
+                if (existingPaddedSize.height <= shelfHeights[i]) {
+                    // Photo fits in this shelf height
+                    fitsInExistingShelf = true
+                    break
+                }
+            }
+            
+            // If doesn't fit in existing shelves, create new shelf
+            if (!fitsInExistingShelf) {
+                shelfHeights.add(existingPaddedSize.height)
+                currentShelfHeight += existingPaddedSize.height
+            }
+        }
+        
+        // Check if new photo can fit in existing shelves
+        for (shelfHeight in shelfHeights) {
+            if (paddedPhotoSize.height <= shelfHeight) {
+                return true // Fits in existing shelf
+            }
+        }
+        
+        // Check if new photo can fit in a new shelf
+        val remainingHeight = atlasSize.height - currentShelfHeight
+        return paddedPhotoSize.height <= remainingHeight
     }
 
     /**

@@ -80,3 +80,6 @@ lint/tmp/
 # Aider files
 .aider*
 !.aider-desk/
+
+# Benchmark results
+benchmark_results/

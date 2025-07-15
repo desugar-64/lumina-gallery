@@ -64,6 +64,7 @@ dependencies {
 
     // Hilt dependencies
     implementation(libs.hilt.android)
+    implementation(libs.exifinterface)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
@@ -77,6 +78,9 @@ dependencies {
     // Tracing dependencies for benchmarking
     implementation(libs.androidx.tracing.ktx)
     implementation(libs.androidx.compose.runtime.tracing)
+
+    // ExifInterface for photo orientation handling
+    implementation(libs.androidx.exifinterface)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

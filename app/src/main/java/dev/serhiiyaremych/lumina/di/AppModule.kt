@@ -60,8 +60,9 @@ object AppModule {
     @Provides
     fun providePhotoLODProcessor(
         @ApplicationContext context: Context,
-        photoScaler: PhotoScaler
-    ): PhotoLODProcessor = PhotoLODProcessor(context.contentResolver, photoScaler)
+        photoScaler: PhotoScaler,
+        bitmapPool: BitmapPool
+    ): PhotoLODProcessor = PhotoLODProcessor(context.contentResolver, photoScaler, bitmapPool)
 
     @Singleton
     @Provides
