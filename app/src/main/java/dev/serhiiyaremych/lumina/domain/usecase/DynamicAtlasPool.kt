@@ -12,6 +12,7 @@ import dev.serhiiyaremych.lumina.data.ImageToPack
 import dev.serhiiyaremych.lumina.data.PackResult
 import dev.serhiiyaremych.lumina.data.ScaleStrategy
 import dev.serhiiyaremych.lumina.data.ShelfTexturePacker
+import dev.serhiiyaremych.lumina.domain.model.AtlasOptimizationConfig
 import dev.serhiiyaremych.lumina.domain.model.AtlasRegion
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.domain.model.PhotoPriority
@@ -48,6 +49,17 @@ class DynamicAtlasPool @Inject constructor(
     private val photoLODProcessor: PhotoLODProcessor,
     private val bitmapPool: dev.serhiiyaremych.lumina.data.BitmapPool
 ) {
+    
+    // Configuration for atlas optimization based on zoom levels
+    private val optimizationConfig = AtlasOptimizationConfig.default()
+    
+    /**
+     * Update the zoom threshold for atlas optimization
+     */
+    fun updateZoomThreshold(threshold: Float) {
+        // For future implementation if needed - currently using immutable config
+        Log.d(TAG, "Atlas optimization zoom threshold: $threshold (current: ${optimizationConfig.lowQualityZoomThreshold})")
+    }
 
     companion object {
         private const val TAG = "DynamicAtlasPool"
@@ -122,6 +134,7 @@ class DynamicAtlasPool @Inject constructor(
     suspend fun generateMultiAtlas(
         photoUris: List<Uri>,
         lodLevel: LODLevel,
+        currentZoom: Float,
         scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER,
         priorityMapping: Map<Uri, PhotoPriority> = emptyMap()
     ): MultiAtlasResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
@@ -155,7 +168,7 @@ class DynamicAtlasPool @Inject constructor(
         }
 
         // Step 2: Determine optimal atlas generation strategy
-        val strategy = determineAtlasStrategy(processedPhotos, lodLevel)
+        val strategy = determineAtlasStrategy(processedPhotos, lodLevel, currentZoom)
 
         // Step 3: Distribute photos across atlases
         val photoGroups = distributePhotos(processedPhotos, strategy, lodLevel)
@@ -165,7 +178,7 @@ class DynamicAtlasPool @Inject constructor(
         }
 
         // Step 4: Generate atlases in parallel
-        val atlasResults = generateAtlasesInParallel(photoGroups, strategy, lodLevel)
+        val atlasResults = generateAtlasesInParallel(photoGroups, strategy, lodLevel, currentZoom)
 
         // Step 5: Collect results and clean up
         val allAtlases = atlasResults.mapNotNull { it.atlas }
@@ -307,10 +320,21 @@ class DynamicAtlasPool @Inject constructor(
      */
     private fun determineAtlasStrategy(
         processedPhotos: List<ProcessedPhoto>,
-        lodLevel: LODLevel
+        lodLevel: LODLevel,
+        currentZoom: Float
     ): AtlasStrategy {
         val capabilities = deviceCapabilities.getCapabilities()
         val recommendedSizes = deviceCapabilities.getRecommendedAtlasSizes()
+
+        // Apply zoom-based optimization config
+        val optimizedSizes = if (optimizationConfig.shouldUseLowQuality(currentZoom)) {
+            // Use optimized atlas size for low zoom levels
+            val optimizedSize = optimizationConfig.getAtlasSize(currentZoom, capabilities.maxAtlasSize)
+            listOf(optimizedSize)
+        } else {
+            // Use device-recommended sizes for high zoom levels
+            recommendedSizes
+        }
 
         val totalPhotoArea = processedPhotos.sumOf { it.scaledSize.width * it.scaledSize.height }
         val estimatedAtlasesNeeded = estimateAtlasesNeeded(totalPhotoArea, lodLevel)
@@ -345,7 +369,7 @@ class DynamicAtlasPool @Inject constructor(
             else -> DistributionStrategy.MULTI_SIZE
         }
 
-        Log.d(TAG, "Strategy selection: hasHighPriorityPhotos=$hasHighPriorityPhotos, estimatedAtlasesNeeded=$estimatedAtlasesNeeded, memoryPressure=${memoryStatus.pressureLevel}, performanceTier=${capabilities.performanceTier} → $distributionStrategy")
+        Log.d(TAG, "Strategy selection: zoom=$currentZoom, lowQuality=${optimizationConfig.shouldUseLowQuality(currentZoom)}, hasHighPriorityPhotos=$hasHighPriorityPhotos, estimatedAtlasesNeeded=$estimatedAtlasesNeeded, memoryPressure=${memoryStatus.pressureLevel}, performanceTier=${capabilities.performanceTier} → $distributionStrategy")
 
         val maxParallelAtlases = when {
             memoryStatus.pressureLevel >= SmartMemoryManager.MemoryPressure.HIGH -> 1
@@ -360,7 +384,7 @@ class DynamicAtlasPool @Inject constructor(
         Log.d(TAG, "Memory budget analysis: ${availableMemoryMB}MB available / ${totalBudgetMB}MB total, current pressure: ${memoryStatus.pressureLevel}")
 
         return AtlasStrategy(
-            atlasSizes = recommendedSizes,
+            atlasSizes = optimizedSizes,
             distributionStrategy = distributionStrategy,
             maxParallelAtlases = maxParallelAtlases
         )
@@ -638,12 +662,13 @@ class DynamicAtlasPool @Inject constructor(
     private suspend fun generateAtlasesInParallel(
         photoGroups: List<PhotoGroup>,
         strategy: AtlasStrategy,
-        lodLevel: LODLevel
+        lodLevel: LODLevel,
+        currentZoom: Float
     ): List<AtlasGenerationResult> = coroutineScope {
         photoGroups.chunked(strategy.maxParallelAtlases).flatMap { chunk ->
             chunk.map { group ->
                 async {
-                    generateSingleAtlas(group, lodLevel)
+                    generateSingleAtlas(group, lodLevel, currentZoom)
                 }
             }.awaitAll()
         }
@@ -654,7 +679,8 @@ class DynamicAtlasPool @Inject constructor(
      */
     private suspend fun generateSingleAtlas(
         photoGroup: PhotoGroup,
-        lodLevel: LODLevel
+        lodLevel: LODLevel,
+        currentZoom: Float
     ): AtlasGenerationResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
         val imagesToPack = photoGroup.photos.map { ImageToPack(it) }
 
@@ -691,7 +717,7 @@ class DynamicAtlasPool @Inject constructor(
         }
 
         // Create atlas bitmap
-        val atlasBitmap = createAtlasBitmap(photoGroup.photos, packResult, photoGroup.atlasSize)
+        val atlasBitmap = createAtlasBitmap(photoGroup.photos, packResult, photoGroup.atlasSize, currentZoom)
 
         // Create atlas regions
         val atlasRegions = createAtlasRegions(photoGroup.photos, packResult, lodLevel)
@@ -736,9 +762,13 @@ class DynamicAtlasPool @Inject constructor(
     private suspend fun createAtlasBitmap(
         processedPhotos: List<ProcessedPhoto>,
         packResult: PackResult,
-        atlasSize: IntSize
+        atlasSize: IntSize,
+        currentZoom: Float
     ): Bitmap {
-        val atlasBitmap = bitmapPool.acquire(atlasSize.width, atlasSize.height, Bitmap.Config.ARGB_8888)
+        val bitmapConfig = optimizationConfig.getBitmapConfig(currentZoom)
+        val atlasBitmap = bitmapPool.acquire(atlasSize.width, atlasSize.height, bitmapConfig)
+        
+        Log.d(TAG, "Creating atlas bitmap: ${atlasSize.width}x${atlasSize.height} with config $bitmapConfig (zoom: $currentZoom, lowQuality: ${optimizationConfig.shouldUseLowQuality(currentZoom)})")
         val photosMap = processedPhotos.associateBy { it.id }
 
         trace(BenchmarkLabels.ATLAS_GENERATOR_SOFTWARE_CANVAS) {

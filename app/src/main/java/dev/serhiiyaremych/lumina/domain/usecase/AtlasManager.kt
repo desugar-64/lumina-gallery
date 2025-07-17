@@ -111,7 +111,7 @@ class AtlasManager @Inject constructor(
                 Log.d(TAG, "Regenerating atlases for ${expandedCells.size} cells at $lodLevel")
 
                 val (enhancedResult, duration) = trace(BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS) {
-                    measureTimedValue { generateAtlasForCells(expandedCells, lodLevel, selectedMedia) }
+                    measureTimedValue { generateAtlasForCells(expandedCells, lodLevel, currentZoom, selectedMedia) }
                 }
 
                 if (enhancedResult.hasResults) {
@@ -325,6 +325,7 @@ class AtlasManager @Inject constructor(
     private suspend fun generateAtlasForCells(
         cells: List<HexCellWithMedia>,
         lodLevel: LODLevel,
+        currentZoom: Float,
         selectedMedia: Media? = null
     ): EnhancedAtlasGenerator.EnhancedAtlasResult {
         val allMediaItems = cells.flatMap { cell ->
@@ -365,6 +366,7 @@ class AtlasManager @Inject constructor(
         val result: EnhancedAtlasGenerator.EnhancedAtlasResult = enhancedAtlasGenerator.generateAtlasEnhanced(
             photoUris = photoUris,
             lodLevel = lodLevel,
+            currentZoom = currentZoom,
             priorityMapping = priorityMapping
         )
 

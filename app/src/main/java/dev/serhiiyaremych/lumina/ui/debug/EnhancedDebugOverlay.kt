@@ -1,5 +1,6 @@
 package dev.serhiiyaremych.lumina.ui.debug
 
+import android.graphics.Bitmap
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -486,6 +487,28 @@ private fun ExpandedAtlasCard(atlas: dev.serhiiyaremych.lumina.domain.model.Text
                 fontSize = DebugTextSizes.MICRO_TEXT,
                 fontWeight = FontWeight.Bold
             )
+            
+            // Show bitmap config
+            val configText = when (atlas.bitmap.config) {
+                Bitmap.Config.RGB_565 -> "RGB565"
+                Bitmap.Config.ARGB_8888 -> "ARGB8888"
+                Bitmap.Config.ARGB_4444 -> "ARGB4444"
+                Bitmap.Config.ALPHA_8 -> "ALPHA8"
+                else -> "UNKNOWN"
+            }
+            
+            val configColor = when (atlas.bitmap.config) {
+                Bitmap.Config.RGB_565 -> Color(0xFF4CAF50) // Green for optimized
+                Bitmap.Config.ARGB_8888 -> Color(0xFF2196F3) // Blue for full quality
+                else -> Color.Gray
+            }
+            
+            Text(
+                text = "📊 $configText",
+                color = configColor,
+                fontSize = DebugTextSizes.MICRO_TEXT,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
@@ -768,6 +791,9 @@ private fun CompactErrorView(message: String) {
 private fun CompactDeviceInfo(deviceCapabilities: dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities) {
     val capabilities = deviceCapabilities.getCapabilities()
     val recommendedSizes = deviceCapabilities.getRecommendedAtlasSizes()
+    
+    // Atlas optimization config for debugging
+    val optimizationConfig = dev.serhiiyaremych.lumina.domain.model.AtlasOptimizationConfig.default()
 
     Row(
         modifier = Modifier

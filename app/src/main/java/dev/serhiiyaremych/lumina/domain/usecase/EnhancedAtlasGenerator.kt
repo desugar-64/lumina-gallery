@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.tracing.trace
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.data.ScaleStrategy
+import dev.serhiiyaremych.lumina.domain.model.AtlasOptimizationConfig
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
 import kotlinx.coroutines.currentCoroutineContext
@@ -28,6 +29,9 @@ class EnhancedAtlasGenerator @Inject constructor(
     private val smartMemoryManager: SmartMemoryManager,
     private val deviceCapabilities: DeviceCapabilities
 ) {
+    
+    // Configuration for atlas optimization based on zoom levels
+    private val optimizationConfig = AtlasOptimizationConfig.default()
 
     companion object {
         private const val TAG = "EnhancedAtlasGenerator"
@@ -46,6 +50,7 @@ class EnhancedAtlasGenerator @Inject constructor(
     suspend fun generateAtlasEnhanced(
         photoUris: List<Uri>,
         lodLevel: LODLevel,
+        currentZoom: Float,
         scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER,
         priorityMapping: Map<Uri, dev.serhiiyaremych.lumina.domain.model.PhotoPriority> = emptyMap()
     ): EnhancedAtlasResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
@@ -63,9 +68,9 @@ class EnhancedAtlasGenerator @Inject constructor(
 
         // Use multi-atlas system directly for optimal photo distribution
         currentCoroutineContext().ensureActive()
-        Log.d(TAG, "Generating enhanced multi-atlas for ${photoUris.size} photos at $lodLevel")
+        Log.d(TAG, "Generating enhanced multi-atlas for ${photoUris.size} photos at $lodLevel (zoom: $currentZoom)")
 
-        val multiAtlasResult = dynamicAtlasPool.generateMultiAtlas(photoUris, lodLevel, scaleStrategy, priorityMapping)
+        val multiAtlasResult = dynamicAtlasPool.generateMultiAtlas(photoUris, lodLevel, currentZoom, scaleStrategy, priorityMapping)
 
         val atlasCount = multiAtlasResult.atlases.size
         val successRate = if (photoUris.isNotEmpty()) multiAtlasResult.atlases.sumOf { it.regions.size }.toFloat() / photoUris.size else 0f
