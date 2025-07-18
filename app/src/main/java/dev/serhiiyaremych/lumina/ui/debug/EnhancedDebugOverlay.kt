@@ -15,11 +15,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -84,6 +87,7 @@ fun EnhancedDebugOverlay(
             modifier = Modifier
                 .zIndex(10f)
                 .align(Alignment.TopEnd)
+                .windowInsetsPadding(WindowInsets.systemBars)
                 .padding(8.dp)
                 .size(32.dp),
             shape = CircleShape,
@@ -111,6 +115,7 @@ fun EnhancedDebugOverlay(
                 deviceCapabilities = deviceCapabilities,
                 modifier = Modifier
                     .align(Alignment.TopStart)
+                    .windowInsetsPadding(WindowInsets.systemBars)
                     .padding(8.dp)
             )
         }
