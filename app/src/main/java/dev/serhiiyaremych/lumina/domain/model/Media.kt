@@ -11,7 +11,8 @@ sealed class Media(
     open val dateModified: Long,
     open val size: Long,
     open val width: Int,
-    open val height: Int
+    open val height: Int,
+    open val metadataState: MetadataLoadingState = MetadataLoadingState.NotLoaded
 ) {
     data class Image(
         override val id: Long,
@@ -22,8 +23,9 @@ sealed class Media(
         override val dateModified: Long,
         override val size: Long,
         override val width: Int,
-        override val height: Int
-    ) : Media(id, uri, path, displayName, dateAdded, dateModified, size, width, height)
+        override val height: Int,
+        override val metadataState: MetadataLoadingState = MetadataLoadingState.NotLoaded
+    ) : Media(id, uri, path, displayName, dateAdded, dateModified, size, width, height, metadataState)
 
     data class Video(
         override val id: Long,
@@ -35,6 +37,7 @@ sealed class Media(
         override val size: Long,
         override val width: Int,
         override val height: Int,
-        val duration: Long
-    ) : Media(id, uri, path, displayName, dateAdded, dateModified, size, width, height)
+        val duration: Long,
+        override val metadataState: MetadataLoadingState = MetadataLoadingState.NotLoaded
+    ) : Media(id, uri, path, displayName, dateAdded, dateModified, size, width, height, metadataState)
 }
