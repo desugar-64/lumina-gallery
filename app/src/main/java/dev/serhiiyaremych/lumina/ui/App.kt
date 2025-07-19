@@ -76,14 +76,24 @@ fun App(
         // Remember stable cell focus listener
         val cellFocusListener = remember {
             object : CellFocusListener {
-                override fun onCellSignificant(hexCell: dev.serhiiyaremych.lumina.domain.model.HexCell, hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia, coverage: Float) {
-                    Log.d("CellFocus", "Cell SIGNIFICANT: (${hexCell.q}, ${hexCell.r}) coverage=${String.format("%.2f", coverage)}")
-                    significantCells = significantCells + hexCell
+                override fun onCellSignificant(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia, coverage: Float) {
+                    Log.d("CellFocus", "Cell SIGNIFICANT: (${hexCellWithMedia.hexCell.q}, ${hexCellWithMedia.hexCell.r}) coverage=${String.format("%.2f", coverage)}")
+                    significantCells = significantCells + hexCellWithMedia.hexCell
                 }
                 
-                override fun onCellInsignificant(hexCell: dev.serhiiyaremych.lumina.domain.model.HexCell) {
+                override fun onCellInsignificant(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia) {
+                    val hexCell = hexCellWithMedia.hexCell
                     Log.d("CellFocus", "App callback - Cell INSIGNIFICANT: (${hexCell.q}, ${hexCell.r})")
                     Log.d("CellFocus", "App callback - Before removal: ${significantCells.size} cells")
+                    
+                    // Clear selection if the current selectedMedia belongs to this cell
+                    selectedMedia?.let { currentSelection ->
+                        if (hexCellWithMedia.mediaItems.any { it.media == currentSelection }) {
+                            Log.d("CellFocus", "Clearing selected media as its cell became insignificant")
+                            selectedMedia = null
+                        }
+                    }
+                    
                     significantCells = significantCells - hexCell
                     Log.d("CellFocus", "App callback - After removal: ${significantCells.size} cells")
                 }
@@ -236,7 +246,10 @@ fun App(
                                         Log.d("App", "Visible cells changed: ${visibleCells.size} cells")
                                         galleryViewModel.onVisibleCellsChanged(visibleCells, transformableState.zoom, selectedMedia)
                                     },
-                                    cellFocusListener = cellFocusListener
+                                    cellFocusListener = cellFocusListener,
+                                    onClearClickedMedia = {
+                                        Log.d("CellFocus", "Clearing clicked media state for red outline")
+                                    }
                                 )
                             }
                         }

@@ -30,12 +30,12 @@ interface CellFocusListener {
     /**
      * Called when a cell becomes significant in the viewport.
      */
-    fun onCellSignificant(hexCell: HexCell, hexCellWithMedia: HexCellWithMedia, coverage: Float)
+    fun onCellSignificant(hexCellWithMedia: HexCellWithMedia, coverage: Float)
     
     /**
      * Called when a cell becomes insignificant or leaves viewport.
      */
-    fun onCellInsignificant(hexCell: HexCell)
+    fun onCellInsignificant(hexCellWithMedia: HexCellWithMedia)
 }
 
 /**
@@ -77,7 +77,7 @@ class CellFocusManager(
         // Don't cancel gesture calculations - let viewport determine final state
         
         // Immediate callback for clicks (may cause duplicate if cell is already significant)
-        listener.onCellSignificant(hexCell, hexCellWithMedia, 1.0f) // Max coverage for clicks
+        listener.onCellSignificant(hexCellWithMedia, 1.0f) // Max coverage for clicks
     }
     
     private fun calculateCellFocus(
@@ -110,7 +110,7 @@ class CellFocusManager(
                         if (config.debugLogging) {
                             android.util.Log.d("CellFocus", "NEW Cell SIGNIFICANT: (${cellWithMedia.hexCell.q}, ${cellWithMedia.hexCell.r}) coverage=${String.format("%.3f", coverage)}")
                         }
-                        listener.onCellSignificant(cellWithMedia.hexCell, cellWithMedia, coverage)
+                        listener.onCellSignificant(cellWithMedia, coverage)
                     }
                 }
             }
@@ -127,7 +127,9 @@ class CellFocusManager(
             if (config.debugLogging) {
                 android.util.Log.d("CellFocus", "Cell INSIGNIFICANT: (${hexCell.q}, ${hexCell.r})")
             }
-            listener.onCellInsignificant(hexCell)
+            // Find the HexCellWithMedia for this hexCell
+            val cellWithMedia = hexCellsWithMedia.first { it.hexCell == hexCell }
+            listener.onCellInsignificant(cellWithMedia)
         }
         
         // Update significant cells set (do this AFTER calculating removals)

@@ -54,7 +54,11 @@ fun MediaHexVisualization(
     /**
      * Configuration for cell focus detection.
      */
-    cellFocusConfig: CellFocusConfig = CellFocusConfig(debugLogging = true)
+    cellFocusConfig: CellFocusConfig = CellFocusConfig(debugLogging = true),
+    /**
+     * Callback to clear clicked media state (for debug outline).
+     */
+    onClearClickedMedia: () -> Unit = {}
 ) {
     if (hexGridLayout.hexCellsWithMedia.isEmpty()) return
 
@@ -85,6 +89,14 @@ fun MediaHexVisualization(
     // Animate desaturation effect when selection changes
     LaunchedEffect(selectedMedia) {
         layerManager.animateDesaturation(selectedMedia)
+    }
+    
+    // Clear clicked media state when selectedMedia is cleared
+    LaunchedEffect(selectedMedia) {
+        if (selectedMedia == null) {
+            state.setClickedMedia(null)
+            onClearClickedMedia()
+        }
     }
     
 
