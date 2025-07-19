@@ -33,7 +33,8 @@ data class MediaInputConfig(
     val onRipplePosition: (Offset?) -> Unit = {},
     val onClickedMedia: (Media?) -> Unit = {},
     val onClickedHexCell: (HexCell?) -> Unit = {},
-    val onRevealAnimationTarget: (AnimatableMediaItem?) -> Unit = {}
+    val onRevealAnimationTarget: (AnimatableMediaItem?) -> Unit = {},
+    val cellFocusManager: CellFocusManager? = null
 )
 
 /**
@@ -99,6 +100,20 @@ private fun handleMediaTap(
     config.onMediaClicked(media)
     config.onClickedMedia(media)
     config.onClickedHexCell(null)
+    
+    // Notify cell focus manager of media click
+    config.cellFocusManager?.let { focusManager ->
+        // Find the HexCellWithMedia containing this media
+        config.hexGridLayout.hexCellsWithMedia.find { cellWithMedia ->
+            cellWithMedia.mediaItems.any { it.media == media }
+        }?.let { hexCellWithMedia ->
+            focusManager.onCellClicked(
+                hexCell = hexCellWithMedia.hexCell,
+                hexCellWithMedia = hexCellWithMedia,
+                clickedMedia = media
+            )
+        }
+    }
 
     val allAnimatableItems = config.hexGridLayout.hexCellsWithMedia.flatMap { cell ->
         cell.mediaItems.map { mediaWithPos ->
@@ -167,6 +182,17 @@ private fun handleHexCellTap(
         config.onHexCellClicked(cell)
         config.onClickedHexCell(cell)
         config.onClickedMedia(null)
+        
+        // Notify cell focus manager of hex cell click
+        config.cellFocusManager?.let { focusManager ->
+            // Find the HexCellWithMedia for this cell
+            config.hexGridLayout.hexCellsWithMedia.find { it.hexCell == cell }?.let { hexCellWithMedia ->
+                focusManager.onCellClicked(
+                    hexCell = cell,
+                    hexCellWithMedia = hexCellWithMedia
+                )
+            }
+        }
 
         // Clear reveal animation IMMEDIATELY when clicking on cell
         val allAnimatableItems = config.hexGridLayout.hexCellsWithMedia.flatMap { hexCell ->

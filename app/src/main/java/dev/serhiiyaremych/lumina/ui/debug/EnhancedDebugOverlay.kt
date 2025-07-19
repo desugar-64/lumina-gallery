@@ -76,6 +76,7 @@ fun EnhancedDebugOverlay(
     memoryStatus: SmartMemoryManager.MemoryStatus?,
     smartMemoryManager: SmartMemoryManager? = null,
     deviceCapabilities: dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities? = null,
+    significantCells: Set<dev.serhiiyaremych.lumina.domain.model.HexCell> = emptySet(),
     modifier: Modifier = Modifier
 ) {
     var isDebugVisible by remember { mutableStateOf(false) }
@@ -113,6 +114,7 @@ fun EnhancedDebugOverlay(
                 memoryStatus = memoryStatus,
                 smartMemoryManager = smartMemoryManager,
                 deviceCapabilities = deviceCapabilities,
+                significantCells = significantCells,
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .windowInsetsPadding(WindowInsets.systemBars)
@@ -130,6 +132,7 @@ private fun CompactDebugInfo(
     memoryStatus: SmartMemoryManager.MemoryStatus?,
     smartMemoryManager: SmartMemoryManager?,
     deviceCapabilities: dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities?,
+    significantCells: Set<dev.serhiiyaremych.lumina.domain.model.HexCell> = emptySet(),
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -138,6 +141,9 @@ private fun CompactDebugInfo(
     ) {
         // Compact zoom and expected LOD info
         CompactZoomInfo(currentZoom, isAtlasGenerating)
+        
+        // Cell focus debug info
+        CompactCellFocusInfo(significantCells)
 
         // Device capabilities info
         deviceCapabilities?.let { CompactDeviceInfo(it) }
@@ -873,6 +879,42 @@ private fun CompactDeviceInfo(deviceCapabilities: dev.serhiiyaremych.lumina.doma
 @Composable
 private fun AnimatedGeneratingIndicator() {
     CircularProgressIndicator(Modifier.size(12.dp), color = Color.White)
+}
+
+@Composable
+private fun CompactCellFocusInfo(significantCells: Set<dev.serhiiyaremych.lumina.domain.model.HexCell>) {
+    Row(
+        modifier = Modifier
+            .background(Color.Magenta.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        // Focus icon
+        Text(
+            text = "🎯",
+            fontSize = 12.sp
+        )
+        
+        // Significant cells count
+        Text(
+            text = "${significantCells.size} cells",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color.White
+        )
+        
+        // Cell coordinates (show first few)
+        if (significantCells.isNotEmpty()) {
+            val cellsText = significantCells.take(3).joinToString(", ") { "(${it.q},${it.r})" }
+            val moreText = if (significantCells.size > 3) "..." else ""
+            Text(
+                text = "$cellsText$moreText",
+                fontSize = 9.sp,
+                color = Color.White.copy(alpha = 0.8f)
+            )
+        }
+    }
 }
 
 private fun formatBytes(bytes: Long): String {

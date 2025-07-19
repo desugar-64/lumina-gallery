@@ -69,6 +69,26 @@ fun App(
         
         // Selected media state for unrotation
         var selectedMedia by remember { mutableStateOf<dev.serhiiyaremych.lumina.domain.model.Media?>(null) }
+        
+        // Cell focus debug state
+        var significantCells by remember { mutableStateOf(setOf<dev.serhiiyaremych.lumina.domain.model.HexCell>()) }
+        
+        // Remember stable cell focus listener
+        val cellFocusListener = remember {
+            object : CellFocusListener {
+                override fun onCellSignificant(hexCell: dev.serhiiyaremych.lumina.domain.model.HexCell, hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia, coverage: Float) {
+                    Log.d("CellFocus", "Cell SIGNIFICANT: (${hexCell.q}, ${hexCell.r}) coverage=${String.format("%.2f", coverage)}")
+                    significantCells = significantCells + hexCell
+                }
+                
+                override fun onCellInsignificant(hexCell: dev.serhiiyaremych.lumina.domain.model.HexCell) {
+                    Log.d("CellFocus", "App callback - Cell INSIGNIFICANT: (${hexCell.q}, ${hexCell.r})")
+                    Log.d("CellFocus", "App callback - Before removal: ${significantCells.size} cells")
+                    significantCells = significantCells - hexCell
+                    Log.d("CellFocus", "App callback - After removal: ${significantCells.size} cells")
+                }
+            }
+        }
 
         Log.d(
             "App",
@@ -215,7 +235,8 @@ fun App(
                                     onVisibleCellsChanged = { visibleCells ->
                                         Log.d("App", "Visible cells changed: ${visibleCells.size} cells")
                                         galleryViewModel.onVisibleCellsChanged(visibleCells, transformableState.zoom, selectedMedia)
-                                    }
+                                    },
+                                    cellFocusListener = cellFocusListener
                                 )
                             }
                         }
@@ -229,6 +250,7 @@ fun App(
                         memoryStatus = memoryStatus,
                         smartMemoryManager = galleryViewModel.getSmartMemoryManager(),
                         deviceCapabilities = galleryViewModel.getDeviceCapabilities(),
+                        significantCells = significantCells,
                         modifier = Modifier.fillMaxSize()
                     )
                 }

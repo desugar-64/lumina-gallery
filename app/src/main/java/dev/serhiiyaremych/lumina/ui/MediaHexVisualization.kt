@@ -1,9 +1,16 @@
 package dev.serhiiyaremych.lumina.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -39,9 +46,29 @@ fun MediaHexVisualization(
      * Callback when visible cells change due to zoom/pan operations.
      * Reports cells that are actually being rendered on screen.
      */
-    onVisibleCellsChanged: (List<dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia>) -> Unit = {}
+    onVisibleCellsChanged: (List<dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia>) -> Unit = {},
+    /**
+     * Optional cell focus listener for significant/insignificant cell focus events.
+     */
+    cellFocusListener: CellFocusListener? = null,
+    /**
+     * Configuration for cell focus detection.
+     */
+    cellFocusConfig: CellFocusConfig = CellFocusConfig(debugLogging = true)
 ) {
     if (hexGridLayout.hexCellsWithMedia.isEmpty()) return
+
+    // Cell focus management
+    val coroutineScope = rememberCoroutineScope()
+    val cellFocusManager = remember(cellFocusListener, coroutineScope, cellFocusConfig) {
+        cellFocusListener?.let { listener ->
+            CellFocusManager(
+                config = cellFocusConfig,
+                scope = coroutineScope,
+                listener = listener
+            )
+        }
+    }
 
     // State management - handles all LaunchedEffects, animation management, and state coordination
     val state = rememberMediaHexState(
@@ -59,6 +86,7 @@ fun MediaHexVisualization(
     LaunchedEffect(selectedMedia) {
         layerManager.animateDesaturation(selectedMedia)
     }
+    
 
     // Input handling configuration
     val inputConfig = MediaInputConfig(
@@ -74,15 +102,40 @@ fun MediaHexVisualization(
         onRipplePosition = state.setRipplePosition,
         onClickedMedia = state.setClickedMedia,
         onClickedHexCell = state.setClickedHexCell,
-        onRevealAnimationTarget = state.setRevealAnimationTarget
+        onRevealAnimationTarget = state.setRevealAnimationTarget,
+        cellFocusManager = cellFocusManager
     )
 
-    Canvas(
-        modifier = Modifier
-            .fillMaxSize()
-            .clipToBounds()
-            .mediaHexInput(inputConfig) // Clean input handling via modifier extension
-    ) {
+    BoxWithConstraints {
+        val canvasSize = androidx.compose.ui.geometry.Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat())
+        
+        // Stable references to prevent LaunchedEffect restarts
+        val zoomProvider = androidx.compose.runtime.rememberUpdatedState(provideZoom)
+        val offsetProvider = androidx.compose.runtime.rememberUpdatedState(provideOffset)
+        
+        // Monitor gesture changes with actual canvas size
+        LaunchedEffect(cellFocusManager, canvasSize) {
+            cellFocusManager?.let { mgr ->
+                snapshotFlow { 
+                    Pair(zoomProvider.value(), offsetProvider.value()) 
+                }.collect { (zoom, offset) ->
+                    mgr.onGestureUpdate(
+                        geometryReader = state.geometryReader,
+                        contentSize = canvasSize,
+                        zoom = zoom,
+                        offset = offset,
+                        hexCellsWithMedia = hexGridLayout.hexCellsWithMedia
+                    )
+                }
+            }
+        }
+        
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .clipToBounds()
+                .mediaHexInput(inputConfig) // Clean input handling via modifier extension
+        ) {
         val zoom = provideZoom()
         val offset = provideOffset()
         val clampedZoom = zoom.coerceIn(0.01f, 100f)
@@ -139,6 +192,7 @@ fun MediaHexVisualization(
                     )
                 }
             }
+            
         }
 
         // Ripple effect for taps
@@ -157,5 +211,6 @@ fun MediaHexVisualization(
             state.setRipplePosition(null)
         }
     }
+}
 }
 
