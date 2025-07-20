@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
@@ -366,11 +366,9 @@ private fun FocusedCellPanel(
         modifier = modifier
             .fillMaxWidth()
             .padding(16.dp)
-            .offset {
-                androidx.compose.ui.unit.IntOffset(
-                    x = (screenX - canvasSize.width / 2).toInt(),
-                    y = screenY.toInt() // Panel top edge aligns to cell bottom edge
-                )
+            .graphicsLayer {
+                translationX = screenX - canvasSize.width / 2
+                translationY = screenY // Panel top edge aligns to cell bottom edge
             },
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surface,
