@@ -14,6 +14,7 @@ import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaItem
 import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaManager
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 /**
@@ -135,7 +136,8 @@ fun rememberMediaHexState(
     LaunchedEffect(hexGridLayout, currentOnVisibleCellsChanged) {
         snapshotFlow {
             provideZoom() to provideOffset()
-        }.collect { (zoom, offset) ->
+        }.distinctUntilChanged()
+        .collect { (zoom, offset) ->
             val visibleCells = calculateVisibleCells(
                 hexGridLayout = hexGridLayout,
                 zoom = zoom,

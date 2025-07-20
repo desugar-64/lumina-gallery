@@ -93,32 +93,27 @@ fun App(
 
         // Permission state management
         var permissionGranted by remember { mutableStateOf(false) }
-        
-        // Selected media state for unrotation
+
         var selectedMedia by remember { mutableStateOf<dev.serhiiyaremych.lumina.domain.model.Media?>(null) }
-        
-        // Cell focus debug state
         var significantCells by remember { mutableStateOf(setOf<dev.serhiiyaremych.lumina.domain.model.HexCell>()) }
-        
-        // UI state for focused cell panel
         var focusedCellWithMedia by remember { mutableStateOf<dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia?>(null) }
-        
+
         // Remember stable cell focus listener
         val cellFocusListener = remember {
             object : CellFocusListener {
                 override fun onCellSignificant(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia, coverage: Float) {
                     Log.d("CellFocus", "Cell SIGNIFICANT: (${hexCellWithMedia.hexCell.q}, ${hexCellWithMedia.hexCell.r}) coverage=${String.format("%.2f", coverage)}")
                     significantCells = significantCells + hexCellWithMedia.hexCell
-                    
+
                     // Show focused cell panel
                     focusedCellWithMedia = hexCellWithMedia
                 }
-                
+
                 override fun onCellInsignificant(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia) {
                     val hexCell = hexCellWithMedia.hexCell
                     Log.d("CellFocus", "App callback - Cell INSIGNIFICANT: (${hexCell.q}, ${hexCell.r})")
                     Log.d("CellFocus", "App callback - Before removal: ${significantCells.size} cells")
-                    
+
                     // Clear selection if the current selectedMedia belongs to this cell
                     selectedMedia?.let { currentSelection ->
                         if (hexCellWithMedia.mediaItems.any { it.media == currentSelection }) {
@@ -126,10 +121,10 @@ fun App(
                             selectedMedia = null
                         }
                     }
-                    
+
                     significantCells = significantCells - hexCell
                     Log.d("CellFocus", "App callback - After removal: ${significantCells.size} cells")
-                    
+
                     // Hide focused cell panel if this was the focused cell
                     if (focusedCellWithMedia?.hexCell == hexCell) {
                         focusedCellWithMedia = null
@@ -304,7 +299,7 @@ fun App(
                         significantCells = significantCells,
                         modifier = Modifier.fillMaxSize()
                     )
-                    
+
                     // Focused cell panel UI stub - positioned relative to cell
                     focusedCellWithMedia?.let { cellWithMedia ->
                         FocusedCellPanel(
@@ -313,9 +308,15 @@ fun App(
                             onMediaSelected = { media ->
                                 selectedMedia = media
                             },
-                            zoom = transformableState.zoom,
-                            offset = transformableState.offset,
-                            canvasSize = canvasSize,
+                            provideTranslationOffset = { panelSize ->
+                                calculateCellPanelPosition(
+                                    hexCell = cellWithMedia.hexCell,
+                                    zoom = transformableState.zoom,
+                                    offset = transformableState.offset,
+                                    canvasSize = canvasSize,
+                                    panelSize = panelSize
+                                )
+                            },
                             modifier = Modifier
                         )
                     }
@@ -343,35 +344,20 @@ private fun FocusedCellPanel(
     hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia,
     onDismiss: () -> Unit,
     onMediaSelected: (dev.serhiiyaremych.lumina.domain.model.Media) -> Unit,
-    zoom: Float,
-    offset: Offset,
-    canvasSize: androidx.compose.ui.geometry.Size,
+    provideTranslationOffset: (panelSize: Size) -> Offset,
     modifier: Modifier = Modifier
 ) {
-    // Calculate cell bounds from vertices
-    val cellBounds = remember(hexCellWithMedia.hexCell) {
-        val vertices = hexCellWithMedia.hexCell.vertices
-        val minX = vertices.minOf { it.x }
-        val maxX = vertices.maxOf { it.x }
-        val minY = vertices.minOf { it.y }
-        val maxY = vertices.maxOf { it.y }
-        androidx.compose.ui.geometry.Rect(minX, minY, maxX, maxY)
-    }
-    
-    // Transform cell bottom position to screen coordinates  
-    val screenX = (cellBounds.center.x * zoom) + offset.x
-    val screenY = (cellBounds.bottom * zoom) + offset.y
-    
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp)
             .graphicsLayer {
-                translationX = screenX - canvasSize.width / 2
-                translationY = screenY // Panel top edge aligns to cell bottom edge
-            },
+                val offset = provideTranslationOffset(size)
+                translationX = offset.x
+                translationY = offset.y
+            }
+            .padding(16.dp),
         shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
         shadowElevation = 0.dp
     ) {
         // Compact horizontal row of media icons
@@ -404,5 +390,63 @@ private fun FocusedCellPanel(
             }
         }
     }
+}
+
+/**
+ * Calculates the translation offset for positioning a panel relative to a hex cell.
+ * Panel is positioned below the cell's bottom edge, centered horizontally on screen.
+ * Clamps panel position to stay within viewport bounds on all sides.
+ */
+private fun calculateCellPanelPosition(
+    hexCell: dev.serhiiyaremych.lumina.domain.model.HexCell,
+    zoom: Float,
+    offset: Offset,
+    canvasSize: Size,
+    panelSize: Size,
+    viewportRect: androidx.compose.ui.geometry.Rect? = null
+): Offset {
+    // Calculate cell bounds from vertices
+    val vertices = hexCell.vertices
+    val minX = vertices.minOf { it.x }
+    val maxX = vertices.maxOf { it.x }
+    val minY = vertices.minOf { it.y }
+    val maxY = vertices.maxOf { it.y }
+    val cellBounds = androidx.compose.ui.geometry.Rect(minX, minY, maxX, maxY)
+
+    // Transform cell bottom position to screen coordinates
+    val screenX = (cellBounds.center.x * zoom) + offset.x
+    val screenY = (cellBounds.bottom * zoom) + offset.y
+
+    // Use provided viewport or create default from canvas size
+    val viewport = viewportRect ?: androidx.compose.ui.geometry.Rect(
+        offset = Offset.Zero,
+        size = canvasSize
+    )
+
+    // Calculate initial panel position
+    val initialX = screenX - panelSize.width / 2 // Center panel horizontally relative to cell
+    val initialY = screenY - panelSize.height / 2 // Center panel vertically relative to cell bottom
+
+    // Clamp panel horizontally (left and right)
+    val panelLeft = initialX
+    val panelRight = initialX + panelSize.width
+    val clampedX = when {
+        panelLeft < viewport.left -> viewport.left
+        panelRight > viewport.right -> viewport.right - panelSize.width
+        else -> initialX
+    }
+
+    // Clamp panel vertically (bottom)
+    val panelBottom = initialY + panelSize.height
+    val clampedY = if (panelBottom > viewport.bottom) {
+        viewport.bottom - panelSize.height
+    } else {
+        initialY
+    }
+
+    return Offset(
+        x = clampedX,
+        y = clampedY
+    )
 }
 
