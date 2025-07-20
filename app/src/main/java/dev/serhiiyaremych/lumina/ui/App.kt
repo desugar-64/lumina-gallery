@@ -14,11 +14,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -303,7 +305,7 @@ fun App(
                         modifier = Modifier.fillMaxSize()
                     )
                     
-                    // Focused cell panel UI stub
+                    // Focused cell panel UI stub - positioned relative to cell
                     focusedCellWithMedia?.let { cellWithMedia ->
                         FocusedCellPanel(
                             hexCellWithMedia = cellWithMedia,
@@ -311,7 +313,10 @@ fun App(
                             onMediaSelected = { media ->
                                 selectedMedia = media
                             },
-                            modifier = Modifier.align(Alignment.BottomCenter)
+                            zoom = transformableState.zoom,
+                            offset = transformableState.offset,
+                            canvasSize = canvasSize,
+                            modifier = Modifier
                         )
                     }
                 }
@@ -338,88 +343,64 @@ private fun FocusedCellPanel(
     hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia,
     onDismiss: () -> Unit,
     onMediaSelected: (dev.serhiiyaremych.lumina.domain.model.Media) -> Unit,
+    zoom: Float,
+    offset: Offset,
+    canvasSize: androidx.compose.ui.geometry.Size,
     modifier: Modifier = Modifier
 ) {
+    // Calculate cell bounds from vertices
+    val cellBounds = remember(hexCellWithMedia.hexCell) {
+        val vertices = hexCellWithMedia.hexCell.vertices
+        val minX = vertices.minOf { it.x }
+        val maxX = vertices.maxOf { it.x }
+        val minY = vertices.minOf { it.y }
+        val maxY = vertices.maxOf { it.y }
+        androidx.compose.ui.geometry.Rect(minX, minY, maxX, maxY)
+    }
+    
+    // Transform cell bottom position to screen coordinates  
+    val screenX = (cellBounds.center.x * zoom) + offset.x
+    val screenY = (cellBounds.bottom * zoom) + offset.y
+    
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 8.dp
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Cell (${hexCellWithMedia.hexCell.q}, ${hexCellWithMedia.hexCell.r})",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+            .padding(16.dp)
+            .offset {
+                androidx.compose.ui.unit.IntOffset(
+                    x = (screenX - canvasSize.width / 2).toInt(),
+                    y = screenY.toInt() // Panel top edge aligns to cell bottom edge
                 )
-                
-                IconButton(onClick = onDismiss) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close"
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Media count
-            Text(
-                text = "${hexCellWithMedia.mediaItems.size} media items",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Media list (simple stub)
-            LazyColumn(
-                modifier = Modifier.heightIn(max = 200.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                items(hexCellWithMedia.mediaItems) { mediaWithPosition ->
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onMediaSelected(mediaWithPosition.media) },
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant
+            },
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 0.dp
+    ) {
+        // Compact horizontal row of media icons
+        LazyRow(
+            modifier = Modifier.padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            items(hexCellWithMedia.mediaItems) { mediaWithPosition ->
+                Surface(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clickable { onMediaSelected(mediaWithPosition.media) },
+                    shape = RoundedCornerShape(4.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center
                     ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Media type icon
-                            Icon(
-                                imageVector = when (mediaWithPosition.media) {
-                                    is dev.serhiiyaremych.lumina.domain.model.Media.Image -> Icons.Default.Info
-                                    is dev.serhiiyaremych.lumina.domain.model.Media.Video -> Icons.Default.PlayArrow
-                                },
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            
-                            Spacer(modifier = Modifier.width(12.dp))
-                            
-                            // Media name
-                            Text(
-                                text = mediaWithPosition.media.displayName,
-                                style = MaterialTheme.typography.bodyMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+                        Icon(
+                            imageVector = when (mediaWithPosition.media) {
+                                is dev.serhiiyaremych.lumina.domain.model.Media.Image -> Icons.Default.Info
+                                is dev.serhiiyaremych.lumina.domain.model.Media.Video -> Icons.Default.PlayArrow
+                            },
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
                 }
             }
