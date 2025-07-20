@@ -2,12 +2,34 @@ package dev.serhiiyaremych.lumina.ui
 
 import android.util.Log
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -18,6 +40,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
@@ -25,6 +48,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.ui.animation.AnimationConstants
 import dev.serhiiyaremych.lumina.ui.components.MediaPermissionFlow
@@ -73,12 +98,18 @@ fun App(
         // Cell focus debug state
         var significantCells by remember { mutableStateOf(setOf<dev.serhiiyaremych.lumina.domain.model.HexCell>()) }
         
+        // UI state for focused cell panel
+        var focusedCellWithMedia by remember { mutableStateOf<dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia?>(null) }
+        
         // Remember stable cell focus listener
         val cellFocusListener = remember {
             object : CellFocusListener {
                 override fun onCellSignificant(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia, coverage: Float) {
                     Log.d("CellFocus", "Cell SIGNIFICANT: (${hexCellWithMedia.hexCell.q}, ${hexCellWithMedia.hexCell.r}) coverage=${String.format("%.2f", coverage)}")
                     significantCells = significantCells + hexCellWithMedia.hexCell
+                    
+                    // Show focused cell panel
+                    focusedCellWithMedia = hexCellWithMedia
                 }
                 
                 override fun onCellInsignificant(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia) {
@@ -96,6 +127,11 @@ fun App(
                     
                     significantCells = significantCells - hexCell
                     Log.d("CellFocus", "App callback - After removal: ${significantCells.size} cells")
+                    
+                    // Hide focused cell panel if this was the focused cell
+                    if (focusedCellWithMedia?.hexCell == hexCell) {
+                        focusedCellWithMedia = null
+                    }
                 }
             }
         }
@@ -266,6 +302,18 @@ fun App(
                         significantCells = significantCells,
                         modifier = Modifier.fillMaxSize()
                     )
+                    
+                    // Focused cell panel UI stub
+                    focusedCellWithMedia?.let { cellWithMedia ->
+                        FocusedCellPanel(
+                            hexCellWithMedia = cellWithMedia,
+                            onDismiss = { focusedCellWithMedia = null },
+                            onMediaSelected = { media ->
+                                selectedMedia = media
+                            },
+                            modifier = Modifier.align(Alignment.BottomCenter)
+                        )
+                    }
                 }
             } else {
                 // Permission flow - shown when permissions are not granted
@@ -276,6 +324,104 @@ fun App(
                         Log.w("App", "Media permissions denied")
                     }
                 )
+            }
+        }
+    }
+}
+
+/**
+ * Simple UI stub for displaying media items in a focused cell.
+ * This will be replaced with the actual design later.
+ */
+@Composable
+private fun FocusedCellPanel(
+    hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia,
+    onDismiss: () -> Unit,
+    onMediaSelected: (dev.serhiiyaremych.lumina.domain.model.Media) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 8.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Cell (${hexCellWithMedia.hexCell.q}, ${hexCellWithMedia.hexCell.r})",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close"
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Media count
+            Text(
+                text = "${hexCellWithMedia.mediaItems.size} media items",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Media list (simple stub)
+            LazyColumn(
+                modifier = Modifier.heightIn(max = 200.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items(hexCellWithMedia.mediaItems) { mediaWithPosition ->
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onMediaSelected(mediaWithPosition.media) },
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Media type icon
+                            Icon(
+                                imageVector = when (mediaWithPosition.media) {
+                                    is dev.serhiiyaremych.lumina.domain.model.Media.Image -> Icons.Default.Info
+                                    is dev.serhiiyaremych.lumina.domain.model.Media.Video -> Icons.Default.PlayArrow
+                                },
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            
+                            Spacer(modifier = Modifier.width(12.dp))
+                            
+                            // Media name
+                            Text(
+                                text = mediaWithPosition.media.displayName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
