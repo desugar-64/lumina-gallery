@@ -25,26 +25,30 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.geometry.Rect
+import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
+import dev.serhiiyaremych.lumina.domain.model.Media
+import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
+import dev.serhiiyaremych.lumina.ui.SelectionMode
 import dev.serhiiyaremych.lumina.ui.drawStyledPhoto
 import dev.serhiiyaremych.lumina.ui.drawPlaceholderRect
 
 /**
  * Panel displaying media items in a focused cell with photo previews.
  * Shows actual photo thumbnails from atlas textures with gradient fade-out edges.
- * 
- * Supports conditional focus animations:
- * - If canvas has selected photo: triggers focus animation on panel selection
- * - If no photo selected: just updates selection without animation
+ *
+ * Supports conditional focus animations based on selection mode:
+ * - PHOTO_MODE: Panel selections trigger focus animations
+ * - CELL_MODE: Panel selections just update selection without animation
  */
 @Composable
 fun FocusedCellPanel(
-    hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia,
-    atlasState: dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult?,
-    selectedMedia: dev.serhiiyaremych.lumina.domain.model.Media?,
+    hexCellWithMedia: HexCellWithMedia,
+    atlasState: MultiAtlasUpdateResult?,
+    selectionMode: SelectionMode,
     onDismiss: () -> Unit,
-    onMediaSelected: (dev.serhiiyaremych.lumina.domain.model.Media) -> Unit,
+    onMediaSelected: (Media) -> Unit,
     onFocusRequested: (Rect) -> Unit,
-    getMediaBounds: (dev.serhiiyaremych.lumina.domain.model.Media) -> Rect?,
+    getMediaBounds: (Media) -> Rect?,
     provideTranslationOffset: (panelSize: Size) -> Offset,
     modifier: Modifier = Modifier
 ) {
@@ -73,7 +77,7 @@ fun FocusedCellPanel(
                     onDrawWithContent {
                         // First draw the content
                         drawContent()
-                        
+
                         // Then apply gradient masks to fade edges
                         // Left fade-out
                         drawRect(
@@ -85,8 +89,8 @@ fun FocusedCellPanel(
                             size = androidx.compose.ui.geometry.Size(fadeWidth, size.height),
                             blendMode = BlendMode.DstOut
                         )
-                        
-                        // Right fade-out  
+
+                        // Right fade-out
                         drawRect(
                             brush = Brush.horizontalGradient(
                                 colors = listOf(Color.Transparent, Color.Black),
@@ -107,24 +111,21 @@ fun FocusedCellPanel(
                     PhotoPreviewItem(
                         media = mediaWithPosition.media,
                         atlasState = atlasState,
-                        onClick = { 
+                        onClick = {
                             val media = mediaWithPosition.media
-                            
-                            // Check if canvas currently has a selected photo (zoomed to fit)
-                            val hasSelectedPhoto = selectedMedia != null
-                            
+
                             // Always update selection state first
                             onMediaSelected(media)
-                            
-                            // Only trigger focus animation if canvas already has a selected photo
-                            if (hasSelectedPhoto) {
-                                // Trigger focus animation to the newly selected media
+
+                            // Only trigger focus animation if we're in PHOTO_MODE
+                            // PHOTO_MODE: User clicked photo directly or is in deep zoom
+                            // CELL_MODE: User is browsing at cell level
+                            if (selectionMode == dev.serhiiyaremych.lumina.ui.SelectionMode.PHOTO_MODE) {
                                 getMediaBounds(media)?.let { bounds ->
                                     onFocusRequested(bounds)
                                 }
                             }
-                            // If no photo was selected (or only cell was selected), 
-                            // just update selection without animation (current behavior)
+                            // In CELL_MODE, just update selection without focus animation
                         },
                         modifier = Modifier.size(32.dp)
                     )
@@ -162,11 +163,11 @@ private fun PhotoPreviewItem(
 
                             if (atlasAndRegion != null && !atlasAndRegion.first.bitmap.isRecycled) {
                                 val (foundAtlas, foundRegion) = atlasAndRegion
-                                
+
                                 // Calculate aspect-aware bounds to avoid stretching
                                 val srcAspectRatio = foundRegion.atlasRect.width / foundRegion.atlasRect.height
                                 val dstAspectRatio = bounds.width / bounds.height
-                                
+
                                 val aspectAwareBounds = if (srcAspectRatio > dstAspectRatio) {
                                     // Source is wider, fit height and center horizontally
                                     val newWidth = bounds.height * srcAspectRatio
@@ -188,7 +189,7 @@ private fun PhotoPreviewItem(
                                         bottom = bounds.top + offsetY + newHeight
                                     )
                                 }
-                                
+
                                 drawStyledPhoto(
                                     image = foundAtlas.bitmap.asImageBitmap(),
                                     srcOffset = androidx.compose.ui.unit.IntOffset(
@@ -204,7 +205,7 @@ private fun PhotoPreviewItem(
                                     alpha = 1f,
                                     drawBorder = false // No border for small previews
                                 )
-                                
+
                             } else {
                                 // Fallback: placeholder when photo not in atlas
                                 drawPlaceholderRect(media, bounds, zoom = 1f, alpha = 1f)

@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -13,10 +12,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
@@ -24,8 +23,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.ui.animation.AnimationConstants
 import dev.serhiiyaremych.lumina.ui.components.FocusedCellPanel
@@ -34,9 +31,28 @@ import dev.serhiiyaremych.lumina.ui.debug.EnhancedDebugOverlay
 import dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel
 import dev.serhiiyaremych.lumina.ui.theme.LuminaGalleryTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+
+/**
+ * Selection mode enum to differentiate between cell-level and photo-level selections.
+ * Controls whether focus animations should trigger from FocusedCellPanel selections.
+ */
+enum class SelectionMode {
+    /**
+     * Cell mode: User selected a cell or selected from panel while in cell mode.
+     * Panel selections do NOT trigger focus animations.
+     */
+    CELL_MODE,
+
+    /**
+     * Photo mode: User clicked photo directly on canvas or zoomed in significantly.
+     * Panel selections DO trigger focus animations to new photos.
+     */
+    PHOTO_MODE
+}
 
 /**
  * Root composable for the Lumina gallery view.
@@ -70,6 +86,7 @@ fun App(
         var permissionGranted by remember { mutableStateOf(false) }
 
         var selectedMedia by remember { mutableStateOf<dev.serhiiyaremych.lumina.domain.model.Media?>(null) }
+        var selectionMode by remember { mutableStateOf(SelectionMode.CELL_MODE) }
         var significantCells by remember { mutableStateOf(setOf<dev.serhiiyaremych.lumina.domain.model.HexCell>()) }
         var focusedCellWithMedia by remember { mutableStateOf<dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia?>(null) }
 
@@ -89,13 +106,8 @@ fun App(
                     Log.d("CellFocus", "App callback - Cell INSIGNIFICANT: (${hexCell.q}, ${hexCell.r})")
                     Log.d("CellFocus", "App callback - Before removal: ${significantCells.size} cells")
 
-                    // Clear selection if the current selectedMedia belongs to this cell
-                    selectedMedia?.let { currentSelection ->
-                        if (hexCellWithMedia.mediaItems.any { it.media == currentSelection }) {
-                            Log.d("CellFocus", "Clearing selected media as its cell became insignificant")
-                            selectedMedia = null
-                        }
-                    }
+                    // Note: Media deselection is now handled by ViewportStateManager
+                    // This ensures consistent behavior between different viewport scenarios
 
                     significantCells = significantCells - hexCell
                     Log.d("CellFocus", "App callback - After removal: ${significantCells.size} cells")
@@ -119,7 +131,10 @@ fun App(
         )
         val hexGridRenderer = remember { HexGridRenderer() }
         val coroutineScope = rememberCoroutineScope()
-        
+
+        // Unified viewport state manager - single source of truth for all viewport decisions
+        val viewportStateManager = remember { ViewportStateManager() }
+
         // Create media hex state at App level to access GeometryReader for FocusedCellPanel
         val mediaHexState = hexGridLayout?.let { layout ->
             rememberMediaHexState(
@@ -139,6 +154,43 @@ fun App(
                 // Main gallery interface - only shown when permissions are granted
                 BoxWithConstraints {
                     val canvasSize = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat())
+
+                    // Unified viewport state monitoring - handles all viewport decisions
+                    val zoomProvider = rememberUpdatedState { transformableState.zoom }
+                    val offsetProvider = rememberUpdatedState { transformableState.offset }
+
+                    LaunchedEffect(canvasSize) {
+                        snapshotFlow {
+                            Triple(zoomProvider.value(), offsetProvider.value(), focusedCellWithMedia to selectedMedia)
+                        }
+                        .distinctUntilChanged()
+                        .collect { (currentZoom, currentOffset, selectionPair) ->
+                            val (currentFocusedCell, currentSelectedMedia) = selectionPair
+
+                            // Calculate unified viewport state
+                            val viewportState = viewportStateManager.calculateViewportState(
+                                canvasSize = canvasSize,
+                                zoom = currentZoom,
+                                offset = currentOffset,
+                                focusedCell = currentFocusedCell,
+                                selectedMedia = currentSelectedMedia,
+                                currentSelectionMode = selectionMode
+                            )
+
+                            // Apply selection mode changes
+                            if (viewportState.suggestedSelectionMode != selectionMode) {
+                                selectionMode = viewportState.suggestedSelectionMode
+                                Log.d("App", "Selection mode changed: $selectionMode (viewport-based)")
+                            }
+
+                            // Apply media deselection when out of viewport
+                            if (viewportState.shouldDeselectMedia && selectedMedia != null) {
+                                selectedMedia = null
+                                selectionMode = SelectionMode.CELL_MODE
+                                Log.d("App", "Media deselected: out of viewport")
+                            }
+                        }
+                    }
 
                     // Generate hex grid layout when canvas size is available
                     LaunchedEffect(canvasSize, groupedMedia) {
@@ -250,14 +302,19 @@ fun App(
                                             // If the same media is clicked twice, deselect it
                                             selectedMedia = if (selectedMedia == media) {
                                                 Log.d("App", "Deselecting media: ${media.displayName}")
+                                                selectionMode = SelectionMode.CELL_MODE
                                                 null
                                             } else {
+                                                selectionMode = SelectionMode.PHOTO_MODE // Direct canvas photo click
+                                                Log.d("App", "Selection mode: PHOTO_MODE (canvas click)")
                                                 media
                                             }
                                         },
                                         onHexCellClicked = { hexCell ->
                                             Log.d("App", "Hex cell clicked: (${hexCell.q}, ${hexCell.r})")
                                             selectedMedia = null
+                                            selectionMode = SelectionMode.CELL_MODE // Cell click
+                                            Log.d("App", "Selection mode: CELL_MODE (cell click)")
                                         },
                                         onFocusRequested = { bounds ->
                                             Log.d("App", "Focus requested: $bounds")
@@ -295,10 +352,12 @@ fun App(
                             FocusedCellPanel(
                                 hexCellWithMedia = cellWithMedia,
                                 atlasState = atlasState,
-                                selectedMedia = selectedMedia,
+                                selectionMode = selectionMode,
                                 onDismiss = { focusedCellWithMedia = null },
                                 onMediaSelected = { media ->
                                     selectedMedia = media
+                                    // Panel selections preserve current mode - don't change it
+                                    Log.d("App", "Panel selection: ${media.displayName}, mode: $selectionMode")
                                 },
                                 onFocusRequested = { bounds ->
                                     Log.d("App", "Panel focus requested: $bounds")

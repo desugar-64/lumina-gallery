@@ -157,7 +157,8 @@ gemini -p "@app/src/ How are media permissions handled? Show the complete permis
 - `shape/ShapePatternGenerator.kt` - **NEW:** Six organic shape pattern generators with breathing room algorithm
 
 **UI Components (`ui/`):**
-- `App.kt` - Main application composable
+- `App.kt` - Main application composable with **unified viewport state management**
+- `ViewportStateManager.kt` - **NEW:** Unified viewport state management system
 - `MediaHexVisualization.kt` - **Primary renderer** for media on hex grid
 - `TransformableContent.kt` - Gesture handling and matrix transformations
 - `GridCanvas.kt` - Custom canvas with optimized drawing
@@ -165,6 +166,7 @@ gemini -p "@app/src/ How are media permissions handled? Show the complete permis
 - `GeometryReader.kt` - Hit testing and coordinate mapping
 - `gallery/GalleryViewModel.kt` - Main screen state management
 - `components/MediaPermissionManager.kt` - Permission system
+- `components/FocusedCellPanel.kt` - **Enhanced:** Selection mode-aware photo panel with conditional focus animations
 - `debug/AtlasDebugOverlay.kt` - Atlas visualization for debugging
 
 **Benchmarking:**
@@ -277,6 +279,41 @@ The app implements an organic shape pattern system for photo arrangement within 
 - **Landscape photos**: ±20° to ±30° rotation range  
 - **Square photos**: ±16° to ±28° rotation range
 - **Deterministic seeding**: Same cell/media combination produces identical results
+
+### Unified Viewport State Management System
+
+The app implements a comprehensive viewport state management system that serves as the single source of truth for all viewport-aware decisions, eliminating duplicate logic across components:
+
+**Core Components:**
+21. **ViewportStateManager** (`ui/ViewportStateManager.kt`) - Unified viewport state coordinator:
+   - **Single Source of Truth**: Consolidates all viewport calculations from CellFocusManager, App.kt selection logic, and panel positioning
+   - **Screen-space coordinate transformations**: Converts between content coordinates and screen coordinates
+   - **Viewport bounds calculation**: Precise viewport rectangle calculation in content coordinates
+   - **Configurable thresholds**: Cell significance (25%), mode transition (120%), coverage minimums (10%), panel visibility (15%)
+
+22. **SelectionMode System** (`ui/App.kt`) - Explicit selection state machine:
+   - **CELL_MODE**: Panel selections do NOT trigger focus animations (user browsing at cell level)
+   - **PHOTO_MODE**: Panel selections DO trigger focus animations (user focused on specific photos)
+   - **Automatic mode switching**: Based on actual cell size vs viewport size comparison (not hardcoded zoom levels)
+
+**Unified Viewport Decision Logic:**
+23. **Viewport State Monitoring** (`ui/App.kt`):
+   - **snapshotFlow monitoring**: Efficient viewport state tracking with `distinctUntilChanged()` optimization
+   - **Selection mode transitions**: CELL_MODE ↔ PHOTO_MODE based on viewport conditions
+   - **Automatic media deselection**: When content moves out of viewport or cell becomes too small
+   - **Edge case handling**: Zoom-out deselection, pan-out deselection, viewport coverage thresholds
+
+**Enhanced FocusedCellPanel Integration:**
+24. **Conditional Focus Animations** (`ui/components/FocusedCellPanel.kt`):
+   - **Selection mode awareness**: Uses explicit `selectionMode` parameter instead of `selectedMedia != null` check
+   - **Behavioral consistency**: Panel selections preserve current interaction mode
+   - **Focus animation control**: Only triggers when appropriate based on user's current interaction context
+
+**Technical Features:**
+- **Viewport coordinate calculations**: Proper screen-space bounds comparison using actual canvas dimensions
+- **Coverage-based decisions**: Panel visibility, cell significance, media deselection based on viewport coverage percentages
+- **State sharing**: GeometryReader shared between MediaHexVisualization and FocusedCellPanel for consistent coordinate mapping
+- **Debounced updates**: Gesture delay handling to prevent excessive state updates during smooth interactions
 
 ### Performance Optimizations & Instrumentation
 
