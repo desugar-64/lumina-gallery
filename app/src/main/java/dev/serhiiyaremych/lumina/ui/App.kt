@@ -2,39 +2,10 @@ package dev.serhiiyaremych.lumina.ui
 
 import android.util.Log
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -57,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.ui.animation.AnimationConstants
+import dev.serhiiyaremych.lumina.ui.components.FocusedCellPanel
 import dev.serhiiyaremych.lumina.ui.components.MediaPermissionFlow
 import dev.serhiiyaremych.lumina.ui.debug.EnhancedDebugOverlay
 import dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel
@@ -339,48 +311,6 @@ fun App(
     }
 }
 
-/**
- * Simple UI stub for displaying media items in a focused cell.
- * This will be replaced with the actual design later.
- */
-@Composable
-private fun FocusedCellPanel(
-    hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia,
-    atlasState: dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult?,
-    onDismiss: () -> Unit,
-    onMediaSelected: (dev.serhiiyaremych.lumina.domain.model.Media) -> Unit,
-    provideTranslationOffset: (panelSize: Size) -> Offset,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .graphicsLayer {
-                val offset = provideTranslationOffset(size)
-                translationX = offset.x
-                translationY = offset.y
-            }
-            .padding(16.dp),
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-        shadowElevation = 0.dp
-    ) {
-        // Compact horizontal row of photo previews
-        LazyRow(
-            modifier = Modifier.padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            items(hexCellWithMedia.mediaItems) { mediaWithPosition ->
-                PhotoPreviewItem(
-                    media = mediaWithPosition.media,
-                    atlasState = atlasState,
-                    onClick = { onMediaSelected(mediaWithPosition.media) },
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-        }
-    }
-}
 
 /**
  * Calculates the translation offset for positioning a panel relative to a hex cell.
@@ -440,88 +370,4 @@ private fun calculateCellPanelPosition(
     )
 }
 
-/**
- * Photo preview item displaying actual photo from atlas texture instead of icon.
- * Uses lowest LOD atlas for memory efficiency and optimal preview quality.
- */
-@Composable
-private fun PhotoPreviewItem(
-    media: dev.serhiiyaremych.lumina.domain.model.Media,
-    atlasState: dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult?,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .clickable { onClick() }
-            .clip(RoundedCornerShape(4.dp))
-            .drawWithCache {
-                val bounds = androidx.compose.ui.geometry.Rect(Offset.Zero, size)
-
-                onDrawBehind {
-                    when (atlasState) {
-                        is dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult.Success -> {
-                            // Search for photo across all atlases
-                            val atlasAndRegion = atlasState.atlases.firstNotNullOfOrNull { atlas ->
-                                atlas.regions[media.uri]?.let { region -> atlas to region }
-                            }
-
-                            if (atlasAndRegion != null && !atlasAndRegion.first.bitmap.isRecycled) {
-                                val (foundAtlas, foundRegion) = atlasAndRegion
-                                
-                                // Calculate aspect-aware bounds to avoid stretching
-                                val srcAspectRatio = foundRegion.atlasRect.width / foundRegion.atlasRect.height
-                                val dstAspectRatio = bounds.width / bounds.height
-                                
-                                val aspectAwareBounds = if (srcAspectRatio > dstAspectRatio) {
-                                    // Source is wider, fit height and center horizontally
-                                    val newWidth = bounds.height * srcAspectRatio
-                                    val offsetX = (bounds.width - newWidth) / 2
-                                    androidx.compose.ui.geometry.Rect(
-                                        left = bounds.left + offsetX,
-                                        top = bounds.top,
-                                        right = bounds.left + offsetX + newWidth,
-                                        bottom = bounds.bottom
-                                    )
-                                } else {
-                                    // Source is taller, fit width and center vertically
-                                    val newHeight = bounds.width / srcAspectRatio
-                                    val offsetY = (bounds.height - newHeight) / 2
-                                    androidx.compose.ui.geometry.Rect(
-                                        left = bounds.left,
-                                        top = bounds.top + offsetY,
-                                        right = bounds.right,
-                                        bottom = bounds.top + offsetY + newHeight
-                                    )
-                                }
-                                
-                                drawStyledPhoto(
-                                    image = foundAtlas.bitmap.asImageBitmap(),
-                                    srcOffset = androidx.compose.ui.unit.IntOffset(
-                                        foundRegion.atlasRect.left.toInt(),
-                                        foundRegion.atlasRect.top.toInt()
-                                    ),
-                                    srcSize = androidx.compose.ui.unit.IntSize(
-                                        foundRegion.atlasRect.width.toInt(),
-                                        foundRegion.atlasRect.height.toInt()
-                                    ),
-                                    bounds = aspectAwareBounds,
-                                    zoom = 1f,
-                                    alpha = 1f,
-                                    drawBorder = false // No border for small previews
-                                )
-                            } else {
-                                // Fallback: placeholder when photo not in atlas
-                                drawPlaceholderRect(media, bounds, zoom = 1f, alpha = 1f)
-                            }
-                        }
-                        else -> {
-                            // Fallback: placeholder when atlas not available
-                            drawPlaceholderRect(media, bounds, zoom = 1f, alpha = 1f)
-                        }
-                    }
-                }
-            },
-    )
-}
 
