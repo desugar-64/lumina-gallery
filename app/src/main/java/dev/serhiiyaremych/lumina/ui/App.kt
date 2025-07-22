@@ -3,6 +3,9 @@ package dev.serhiiyaremych.lumina.ui
 import android.util.Log
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -304,6 +307,7 @@ fun App(
                     focusedCellWithMedia?.let { cellWithMedia ->
                         FocusedCellPanel(
                             hexCellWithMedia = cellWithMedia,
+                            atlasState = atlasState,
                             onDismiss = { focusedCellWithMedia = null },
                             onMediaSelected = { media ->
                                 selectedMedia = media
@@ -342,6 +346,7 @@ fun App(
 @Composable
 private fun FocusedCellPanel(
     hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia,
+    atlasState: dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult?,
     onDismiss: () -> Unit,
     onMediaSelected: (dev.serhiiyaremych.lumina.domain.model.Media) -> Unit,
     provideTranslationOffset: (panelSize: Size) -> Offset,
@@ -360,33 +365,18 @@ private fun FocusedCellPanel(
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
         shadowElevation = 0.dp
     ) {
-        // Compact horizontal row of media icons
+        // Compact horizontal row of photo previews
         LazyRow(
             modifier = Modifier.padding(8.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             items(hexCellWithMedia.mediaItems) { mediaWithPosition ->
-                Surface(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clickable { onMediaSelected(mediaWithPosition.media) },
-                    shape = RoundedCornerShape(4.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = when (mediaWithPosition.media) {
-                                is dev.serhiiyaremych.lumina.domain.model.Media.Image -> Icons.Default.Info
-                                is dev.serhiiyaremych.lumina.domain.model.Media.Video -> Icons.Default.PlayArrow
-                            },
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
+                PhotoPreviewItem(
+                    media = mediaWithPosition.media,
+                    atlasState = atlasState,
+                    onClick = { onMediaSelected(mediaWithPosition.media) },
+                    modifier = Modifier.size(32.dp)
+                )
             }
         }
     }
@@ -447,6 +437,91 @@ private fun calculateCellPanelPosition(
     return Offset(
         x = clampedX,
         y = clampedY
+    )
+}
+
+/**
+ * Photo preview item displaying actual photo from atlas texture instead of icon.
+ * Uses lowest LOD atlas for memory efficiency and optimal preview quality.
+ */
+@Composable
+private fun PhotoPreviewItem(
+    media: dev.serhiiyaremych.lumina.domain.model.Media,
+    atlasState: dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clickable { onClick() }
+            .clip(RoundedCornerShape(4.dp))
+            .drawWithCache {
+                val bounds = androidx.compose.ui.geometry.Rect(Offset.Zero, size)
+
+                onDrawBehind {
+                    when (atlasState) {
+                        is dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult.Success -> {
+                            // Search for photo across all atlases
+                            val atlasAndRegion = atlasState.atlases.firstNotNullOfOrNull { atlas ->
+                                atlas.regions[media.uri]?.let { region -> atlas to region }
+                            }
+
+                            if (atlasAndRegion != null && !atlasAndRegion.first.bitmap.isRecycled) {
+                                val (foundAtlas, foundRegion) = atlasAndRegion
+                                
+                                // Calculate aspect-aware bounds to avoid stretching
+                                val srcAspectRatio = foundRegion.atlasRect.width / foundRegion.atlasRect.height
+                                val dstAspectRatio = bounds.width / bounds.height
+                                
+                                val aspectAwareBounds = if (srcAspectRatio > dstAspectRatio) {
+                                    // Source is wider, fit height and center horizontally
+                                    val newWidth = bounds.height * srcAspectRatio
+                                    val offsetX = (bounds.width - newWidth) / 2
+                                    androidx.compose.ui.geometry.Rect(
+                                        left = bounds.left + offsetX,
+                                        top = bounds.top,
+                                        right = bounds.left + offsetX + newWidth,
+                                        bottom = bounds.bottom
+                                    )
+                                } else {
+                                    // Source is taller, fit width and center vertically
+                                    val newHeight = bounds.width / srcAspectRatio
+                                    val offsetY = (bounds.height - newHeight) / 2
+                                    androidx.compose.ui.geometry.Rect(
+                                        left = bounds.left,
+                                        top = bounds.top + offsetY,
+                                        right = bounds.right,
+                                        bottom = bounds.top + offsetY + newHeight
+                                    )
+                                }
+                                
+                                drawStyledPhoto(
+                                    image = foundAtlas.bitmap.asImageBitmap(),
+                                    srcOffset = androidx.compose.ui.unit.IntOffset(
+                                        foundRegion.atlasRect.left.toInt(),
+                                        foundRegion.atlasRect.top.toInt()
+                                    ),
+                                    srcSize = androidx.compose.ui.unit.IntSize(
+                                        foundRegion.atlasRect.width.toInt(),
+                                        foundRegion.atlasRect.height.toInt()
+                                    ),
+                                    bounds = aspectAwareBounds,
+                                    zoom = 1f,
+                                    alpha = 1f,
+                                    drawBorder = false // No border for small previews
+                                )
+                            } else {
+                                // Fallback: placeholder when photo not in atlas
+                                drawPlaceholderRect(media, bounds, zoom = 1f, alpha = 1f)
+                            }
+                        }
+                        else -> {
+                            // Fallback: placeholder when atlas not available
+                            drawPlaceholderRect(media, bounds, zoom = 1f, alpha = 1f)
+                        }
+                    }
+                }
+            },
     )
 }
 

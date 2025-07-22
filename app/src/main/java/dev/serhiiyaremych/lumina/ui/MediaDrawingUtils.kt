@@ -7,6 +7,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.layout.ContentScale
+import kotlin.math.max
+import kotlin.math.min
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.IntOffset
@@ -204,30 +207,34 @@ fun DrawScope.drawStyledPhoto(
     srcSize: IntSize,
     bounds: Rect,
     zoom: Float,
-    alpha: Float = 1f
+    alpha: Float = 1f,
+    drawBorder: Boolean = true,
+    contentScale: ContentScale = ContentScale.Fit
 ) {
-    val borderWidth = 2.dp.toPx()
-    val innerCornerRadius = 0.1.dp.toPx()  // Increased for smoother corners
+    val borderWidth = if (drawBorder) 2.dp.toPx() else 0f
+    val innerCornerRadius = if (drawBorder) 0.1.dp.toPx() else 0f  // Increased for smoother corners
     val outerCornerRadius = innerCornerRadius + borderWidth
-    val shadowOffset = 0.1.dp.toPx()
+    val shadowOffset = if (drawBorder) 0.1.dp.toPx() else 0f
 
-    // 1. Draw subtle contact shadow
-    drawRoundRect(
-        color = Color.Black.copy(alpha = 0.4f * alpha),
-        topLeft = bounds.topLeft + Offset(shadowOffset, shadowOffset),
-        size = bounds.size,
-        cornerRadius = CornerRadius(outerCornerRadius)
-    )
+    if (drawBorder) {
+        // 1. Draw subtle contact shadow
+        drawRoundRect(
+            color = Color.Black.copy(alpha = 0.4f * alpha),
+            topLeft = bounds.topLeft + Offset(shadowOffset, shadowOffset),
+            size = bounds.size,
+            cornerRadius = CornerRadius(outerCornerRadius)
+        )
 
-    // 2. Draw white border (photo background)
-    drawRoundRect(
-        color = Color.White.copy(alpha = alpha),
-        topLeft = bounds.topLeft,
-        size = bounds.size,
-        cornerRadius = CornerRadius(outerCornerRadius),
-    )
+        // 2. Draw white border (photo background)
+        drawRoundRect(
+            color = Color.White.copy(alpha = alpha),
+            topLeft = bounds.topLeft,
+            size = bounds.size,
+            cornerRadius = CornerRadius(outerCornerRadius),
+        )
+    }
 
-    // 3. Draw the actual image within the border with rounded corners
+    // 3. Draw the actual image within the border (or full bounds if no border)
     val imageArea = Rect(
         left = bounds.left + borderWidth,
         top = bounds.top + borderWidth,
@@ -250,12 +257,14 @@ fun DrawScope.drawStyledPhoto(
         alpha = alpha
     )
 
-    // 4. Draw hairline dark gray border around the entire photo
-    drawRoundRect(
-        color = Color(0xFF666666).copy(alpha = alpha),
-        topLeft = bounds.topLeft,
-        size = bounds.size,
-        cornerRadius = CornerRadius(outerCornerRadius),
-        style = Stroke(width = Stroke.HairlineWidth / zoom)
-    )
+    if (drawBorder) {
+        // 4. Draw hairline dark gray border around the entire photo
+        drawRoundRect(
+            color = Color(0xFF666666).copy(alpha = alpha),
+            topLeft = bounds.topLeft,
+            size = bounds.size,
+            cornerRadius = CornerRadius(outerCornerRadius),
+            style = Stroke(width = Stroke.HairlineWidth / zoom)
+        )
+    }
 }
