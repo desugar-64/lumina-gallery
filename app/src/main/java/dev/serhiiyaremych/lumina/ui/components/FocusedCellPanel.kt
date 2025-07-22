@@ -24,19 +24,27 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.geometry.Rect
 import dev.serhiiyaremych.lumina.ui.drawStyledPhoto
 import dev.serhiiyaremych.lumina.ui.drawPlaceholderRect
 
 /**
  * Panel displaying media items in a focused cell with photo previews.
  * Shows actual photo thumbnails from atlas textures with gradient fade-out edges.
+ * 
+ * Supports conditional focus animations:
+ * - If canvas has selected photo: triggers focus animation on panel selection
+ * - If no photo selected: just updates selection without animation
  */
 @Composable
 fun FocusedCellPanel(
     hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia,
     atlasState: dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult?,
+    selectedMedia: dev.serhiiyaremych.lumina.domain.model.Media?,
     onDismiss: () -> Unit,
     onMediaSelected: (dev.serhiiyaremych.lumina.domain.model.Media) -> Unit,
+    onFocusRequested: (Rect) -> Unit,
+    getMediaBounds: (dev.serhiiyaremych.lumina.domain.model.Media) -> Rect?,
     provideTranslationOffset: (panelSize: Size) -> Offset,
     modifier: Modifier = Modifier
 ) {
@@ -99,7 +107,25 @@ fun FocusedCellPanel(
                     PhotoPreviewItem(
                         media = mediaWithPosition.media,
                         atlasState = atlasState,
-                        onClick = { onMediaSelected(mediaWithPosition.media) },
+                        onClick = { 
+                            val media = mediaWithPosition.media
+                            
+                            // Check if canvas currently has a selected photo (zoomed to fit)
+                            val hasSelectedPhoto = selectedMedia != null
+                            
+                            // Always update selection state first
+                            onMediaSelected(media)
+                            
+                            // Only trigger focus animation if canvas already has a selected photo
+                            if (hasSelectedPhoto) {
+                                // Trigger focus animation to the newly selected media
+                                getMediaBounds(media)?.let { bounds ->
+                                    onFocusRequested(bounds)
+                                }
+                            }
+                            // If no photo was selected (or only cell was selected), 
+                            // just update selection without animation (current behavior)
+                        },
                         modifier = Modifier.size(32.dp)
                     )
                 }

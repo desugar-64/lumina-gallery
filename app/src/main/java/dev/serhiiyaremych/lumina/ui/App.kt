@@ -119,6 +119,20 @@ fun App(
         )
         val hexGridRenderer = remember { HexGridRenderer() }
         val coroutineScope = rememberCoroutineScope()
+        
+        // Create media hex state at App level to access GeometryReader for FocusedCellPanel
+        val mediaHexState = hexGridLayout?.let { layout ->
+            rememberMediaHexState(
+                hexGridLayout = layout,
+                selectedMedia = selectedMedia,
+                onVisibleCellsChanged = { visibleCells ->
+                    Log.d("App", "Visible cells changed: ${visibleCells.size} cells")
+                    galleryViewModel.onVisibleCellsChanged(visibleCells, transformableState.zoom, selectedMedia)
+                },
+                provideZoom = { transformableState.zoom },
+                provideOffset = { transformableState.offset }
+            )
+        }
 
         Box(modifier = modifier.fillMaxSize()) {
             if (permissionGranted) {
@@ -223,42 +237,42 @@ fun App(
                         ) {
                             // Draw media visualization on hex grid
                             hexGridLayout?.let { layout ->
-                                MediaHexVisualization(
-                                    hexGridLayout = layout,
-                                    hexGridRenderer = hexGridRenderer,
-                                    provideZoom = { transformableState.zoom },
-                                    provideOffset = { transformableState.offset },
-                                    atlasState = atlasState,
-                                    selectedMedia = selectedMedia,
-                                    onMediaClicked = { media ->
-                                        Log.d("App", "Media clicked: ${media.displayName}")
-                                        // If the same media is clicked twice, deselect it
-                                        selectedMedia = if (selectedMedia == media) {
-                                            Log.d("App", "Deselecting media: ${media.displayName}")
-                                            null
-                                        } else {
-                                            media
-                                        }
-                                    },
-                                    onHexCellClicked = { hexCell ->
-                                        Log.d("App", "Hex cell clicked: (${hexCell.q}, ${hexCell.r})")
-                                        selectedMedia = null
-                                    },
-                                    onFocusRequested = { bounds ->
-                                        Log.d("App", "Focus requested: $bounds")
-                                        coroutineScope.launch {
-                                            transformableState.focusOn(bounds)
-                                        }
-                                    },
-                                    onVisibleCellsChanged = { visibleCells ->
-                                        Log.d("App", "Visible cells changed: ${visibleCells.size} cells")
-                                        galleryViewModel.onVisibleCellsChanged(visibleCells, transformableState.zoom, selectedMedia)
-                                    },
-                                    cellFocusListener = cellFocusListener,
-                                    onClearClickedMedia = {
-                                        Log.d("CellFocus", "Clearing clicked media state for red outline")
-                                    }
-                                )
+                                mediaHexState?.let { state ->
+                                    MediaHexVisualization(
+                                        hexGridLayout = layout,
+                                        hexGridRenderer = hexGridRenderer,
+                                        provideZoom = { transformableState.zoom },
+                                        provideOffset = { transformableState.offset },
+                                        atlasState = atlasState,
+                                        selectedMedia = selectedMedia,
+                                        onMediaClicked = { media ->
+                                            Log.d("App", "Media clicked: ${media.displayName}")
+                                            // If the same media is clicked twice, deselect it
+                                            selectedMedia = if (selectedMedia == media) {
+                                                Log.d("App", "Deselecting media: ${media.displayName}")
+                                                null
+                                            } else {
+                                                media
+                                            }
+                                        },
+                                        onHexCellClicked = { hexCell ->
+                                            Log.d("App", "Hex cell clicked: (${hexCell.q}, ${hexCell.r})")
+                                            selectedMedia = null
+                                        },
+                                        onFocusRequested = { bounds ->
+                                            Log.d("App", "Focus requested: $bounds")
+                                            coroutineScope.launch {
+                                                transformableState.focusOn(bounds)
+                                            }
+                                        },
+                                        onVisibleCellsChanged = {}, // Handled by mediaHexState
+                                        cellFocusListener = cellFocusListener,
+                                        onClearClickedMedia = {
+                                            Log.d("CellFocus", "Clearing clicked media state for red outline")
+                                        },
+                                        externalState = state // Share state with FocusedCellPanel
+                                    )
+                                }
                             }
                         }
                     }
@@ -275,26 +289,38 @@ fun App(
                         modifier = Modifier.fillMaxSize()
                     )
 
-                    // Focused cell panel UI stub - positioned relative to cell
+                    // Focused cell panel with conditional focus animations
                     focusedCellWithMedia?.let { cellWithMedia ->
-                        FocusedCellPanel(
-                            hexCellWithMedia = cellWithMedia,
-                            atlasState = atlasState,
-                            onDismiss = { focusedCellWithMedia = null },
-                            onMediaSelected = { media ->
-                                selectedMedia = media
-                            },
-                            provideTranslationOffset = { panelSize ->
-                                calculateCellPanelPosition(
-                                    hexCell = cellWithMedia.hexCell,
-                                    zoom = transformableState.zoom,
-                                    offset = transformableState.offset,
-                                    canvasSize = canvasSize,
-                                    panelSize = panelSize
-                                )
-                            },
-                            modifier = Modifier
-                        )
+                        mediaHexState?.let { state ->
+                            FocusedCellPanel(
+                                hexCellWithMedia = cellWithMedia,
+                                atlasState = atlasState,
+                                selectedMedia = selectedMedia,
+                                onDismiss = { focusedCellWithMedia = null },
+                                onMediaSelected = { media ->
+                                    selectedMedia = media
+                                },
+                                onFocusRequested = { bounds ->
+                                    Log.d("App", "Panel focus requested: $bounds")
+                                    coroutineScope.launch {
+                                        transformableState.focusOn(bounds)
+                                    }
+                                },
+                                getMediaBounds = { media ->
+                                    state.geometryReader.getMediaBounds(media)
+                                },
+                                provideTranslationOffset = { panelSize ->
+                                    calculateCellPanelPosition(
+                                        hexCell = cellWithMedia.hexCell,
+                                        zoom = transformableState.zoom,
+                                        offset = transformableState.offset,
+                                        canvasSize = canvasSize,
+                                        panelSize = panelSize
+                                    )
+                                },
+                                modifier = Modifier
+                            )
+                        }
                     }
                 }
             } else {

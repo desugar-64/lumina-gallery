@@ -61,7 +61,13 @@ fun MediaHexVisualization(
     /**
      * Callback to clear clicked media state (for debug outline).
      */
-    onClearClickedMedia: () -> Unit = {}
+    onClearClickedMedia: () -> Unit = {},
+    /**
+     * Optional external state to use instead of creating internal state.
+     * When provided, MediaHexVisualization will use this state instead of creating its own.
+     * This allows sharing the GeometryReader with external components like FocusedCellPanel.
+     */
+    externalState: MediaHexState? = null
 ) {
     if (hexGridLayout.hexCellsWithMedia.isEmpty()) return
 
@@ -77,8 +83,8 @@ fun MediaHexVisualization(
         }
     }
 
-    // State management - handles all LaunchedEffects, animation management, and state coordination
-    val state = rememberMediaHexState(
+    // State management - use external state if provided, otherwise create internal state
+    val state = externalState ?: rememberMediaHexState(
         hexGridLayout = hexGridLayout,
         selectedMedia = selectedMedia,
         onVisibleCellsChanged = onVisibleCellsChanged,
