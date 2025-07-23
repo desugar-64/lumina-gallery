@@ -1,6 +1,9 @@
 package dev.serhiiyaremych.lumina.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,23 +11,39 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.geometry.Rect
+import androidx.graphics.shapes.CornerRounding
+import androidx.graphics.shapes.Morph
+import androidx.graphics.shapes.RoundedPolygon
+import androidx.graphics.shapes.toPath
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
@@ -45,6 +64,7 @@ fun FocusedCellPanel(
     hexCellWithMedia: HexCellWithMedia,
     atlasState: MultiAtlasUpdateResult?,
     selectionMode: SelectionMode,
+    selectedMedia: Media? = null,
     onDismiss: () -> Unit,
     onMediaSelected: (Media) -> Unit,
     onFocusRequested: (Rect) -> Unit,
@@ -68,7 +88,7 @@ fun FocusedCellPanel(
         // Compact horizontal row of photo previews with gradient fade-out at edges
         Box(
             modifier = Modifier
-                .padding(8.dp)
+                .padding(horizontal = 8.dp, vertical = 12.dp) // Increase vertical padding for shape morphing
                 .graphicsLayer {
                     compositingStrategy = CompositingStrategy.Offscreen
                 }
@@ -105,12 +125,15 @@ fun FocusedCellPanel(
                 }
         ) {
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.padding(vertical = 4.dp) // Add vertical padding to prevent clipping
             ) {
                 items(hexCellWithMedia.mediaItems) { mediaWithPosition ->
+                    val isSelected = selectedMedia == mediaWithPosition.media
                     PhotoPreviewItem(
                         media = mediaWithPosition.media,
                         atlasState = atlasState,
+                        isSelected = isSelected,
                         onClick = {
                             val media = mediaWithPosition.media
 
@@ -136,6 +159,31 @@ fun FocusedCellPanel(
 }
 
 /**
+ * Custom Shape class for smooth polygon morphing using graphics-shapes library
+ */
+class MorphPolygonShape(
+    private val morph: Morph,
+    private val progress: Float
+) : Shape {
+    private val matrix = Matrix()
+    
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density
+    ): Outline {
+        matrix.reset()
+        // Scale to fit the size, centered
+        matrix.scale(size.width / 2f, size.height / 2f)
+        matrix.translate(1f, 1f)
+        
+        val path = morph.toPath(progress = progress).asComposePath()
+        path.transform(matrix)
+        return Outline.Generic(path)
+    }
+}
+
+/**
  * Photo preview item displaying actual photo from atlas texture instead of icon.
  * Uses lowest LOD atlas for memory efficiency and optimal preview quality.
  */
@@ -143,13 +191,68 @@ fun FocusedCellPanel(
 private fun PhotoPreviewItem(
     media: dev.serhiiyaremych.lumina.domain.model.Media,
     atlasState: dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult?,
+    isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Material 3 Expressive shape morphing animation - Pentagon for selected state
+    val targetScale = if (isSelected) 1.15f else 1.0f
+    val morphProgress = if (isSelected) 1.0f else 0.0f
+
+    val animatedScale by animateFloatAsState(
+        targetValue = targetScale,
+        animationSpec = spring(
+            dampingRatio = 0.7f,
+            stiffness = 900f
+        ),
+        label = "photoScale"
+    )
+
+    val animatedMorphProgress by animateFloatAsState(
+        targetValue = morphProgress,
+        animationSpec = spring(
+            dampingRatio = 0.6f,
+            stiffness = 800f
+        ),
+        label = "shapeMorph"
+    )
+
+    // Create polygons for morphing: rounded rectangle to hexagon
+    val startShape = remember {
+        RoundedPolygon(
+            numVertices = 4, // Rectangle (4 vertices)
+            radius = 1f,
+            rounding = CornerRounding(0.3f) // Rounded corners
+        )
+    }
+    
+    val endShape = remember {
+        RoundedPolygon(
+            numVertices = 6, // Hexagon (6 vertices) - matches app's design language
+            radius = 1f,
+            rounding = CornerRounding(0.2f) // ~1dp equivalent corner rounding for softer hexagon
+        )
+    }
+    
+    val morph = remember(startShape, endShape) {
+        Morph(start = startShape, end = endShape)
+    }
+    
+    val morphShape = remember(morph, animatedMorphProgress) {
+        MorphPolygonShape(morph, animatedMorphProgress)
+    }
+
+    // Use custom interaction source with no indication - shape morphing provides feedback
+    val interactionSource = remember { MutableInteractionSource() }
+
     Box(
         modifier = modifier
-            .clickable { onClick() }
-            .clip(RoundedCornerShape(4.dp)) // Restore individual photo clipping
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null // Disable ripple - shape morphing provides visual feedback
+            ) { onClick() }
+            .scale(animatedScale)
+            .clip(morphShape)
             .drawWithCache {
                 val bounds = androidx.compose.ui.geometry.Rect(Offset.Zero, size)
 

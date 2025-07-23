@@ -82,6 +82,9 @@ dependencies {
 
     // ExifInterface for photo orientation handling
     implementation(libs.androidx.exifinterface)
+    
+    // Graphics shapes for polygon morphing
+    implementation("androidx.graphics:graphics-shapes:1.0.1")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

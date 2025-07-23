@@ -353,6 +353,7 @@ fun App(
                                 hexCellWithMedia = cellWithMedia,
                                 atlasState = atlasState,
                                 selectionMode = selectionMode,
+                                selectedMedia = selectedMedia,
                                 onDismiss = { focusedCellWithMedia = null },
                                 onMediaSelected = { media ->
                                     selectedMedia = media
