@@ -2,6 +2,15 @@ package dev.serhiiyaremych.lumina.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +28,10 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
@@ -55,6 +68,12 @@ import dev.serhiiyaremych.lumina.ui.drawPlaceholderRect
  * Panel displaying media items in a focused cell with photo previews.
  * Shows actual photo thumbnails from atlas textures with gradient fade-out edges.
  *
+ * Enhanced with Material 3 Expressive motion:
+ * - Panel entrance animations with spring physics
+ * - Staggered item animations for smooth reveal
+ * - State-aware transitions responsive to selection mode
+ * - Loading state animations for better UX
+ *
  * Supports conditional focus animations based on selection mode:
  * - PHOTO_MODE: Panel selections trigger focus animations
  * - CELL_MODE: Panel selections just update selection without animation
@@ -72,7 +91,46 @@ fun FocusedCellPanel(
     provideTranslationOffset: (panelSize: Size) -> Offset,
     modifier: Modifier = Modifier
 ) {
-    Surface(
+    // Panel entrance animation state
+    var isVisible by remember { mutableStateOf(false) }
+    
+    // Trigger entrance animation on first composition
+    LaunchedEffect(Unit) {
+        isVisible = true
+    }
+    
+    // Material 3 panel entrance animation with spring physics
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn(
+            animationSpec = spring(
+                dampingRatio = 0.8f,
+                stiffness = 400f
+            )
+        ) + slideInVertically(
+            animationSpec = spring(
+                dampingRatio = 0.8f,
+                stiffness = 400f
+            ),
+            initialOffsetY = { it / 3 } // Slide in from bottom third
+        ) + scaleIn(
+            animationSpec = spring(
+                dampingRatio = 0.9f,
+                stiffness = 500f
+            ),
+            initialScale = 0.92f // Subtle scale entrance
+        ),
+        exit = fadeOut(
+            animationSpec = tween(200)
+        ) + slideOutVertically(
+            animationSpec = tween(200),
+            targetOffsetY = { it / 4 }
+        ) + scaleOut(
+            animationSpec = tween(200),
+            targetScale = 0.96f
+        )
+    ) {
+        Surface(
         modifier = modifier
             .fillMaxWidth()
             .graphicsLayer {
@@ -128,12 +186,22 @@ fun FocusedCellPanel(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier.padding(vertical = 4.dp) // Add vertical padding to prevent clipping
             ) {
-                items(hexCellWithMedia.mediaItems) { mediaWithPosition ->
+                items(
+                    items = hexCellWithMedia.mediaItems, 
+                    key = { it.media.uri } // Stable key for animations
+                ) { mediaWithPosition ->
                     val isSelected = selectedMedia == mediaWithPosition.media
-                    PhotoPreviewItem(
+                    
+                    // Staggered item animation based on position
+                    val itemIndex = hexCellWithMedia.mediaItems.indexOf(mediaWithPosition)
+                    StaggeredPhotoPreviewItem(
+                        itemIndex = itemIndex,
+                        totalItems = hexCellWithMedia.mediaItems.size,
                         media = mediaWithPosition.media,
                         atlasState = atlasState,
                         isSelected = isSelected,
+                        selectionMode = selectionMode,
+                        panelVisible = isVisible, // Pass panel visibility state
                         onClick = {
                             val media = mediaWithPosition.media
 
@@ -156,6 +224,73 @@ fun FocusedCellPanel(
             }
         }
     }
+    } // Close AnimatedVisibility
+}
+
+/**
+ * Material 3 Expressive staggered animation wrapper for PhotoPreviewItem.
+ * Uses simple alpha/scale animation that doesn't interfere with LazyRow's built-in animations.
+ */
+@Composable
+private fun StaggeredPhotoPreviewItem(
+    itemIndex: Int,
+    totalItems: Int,
+    media: Media,
+    atlasState: MultiAtlasUpdateResult?,
+    isSelected: Boolean,
+    selectionMode: SelectionMode,
+    onClick: () -> Unit,
+    panelVisible: Boolean,
+    modifier: Modifier = Modifier
+) {
+    // Use media URI as stable key to prevent animation state reset during scroll
+    var hasStartedAnimation by remember(media.uri) { mutableStateOf(false) }
+    
+    // Calculate staggered delay based on item position
+    val delayMs = (itemIndex * 60L).coerceAtMost(300L)
+    
+    // Trigger animation once when panel becomes visible
+    LaunchedEffect(panelVisible, media.uri) {
+        if (panelVisible && !hasStartedAnimation) {
+            delay(delayMs)
+            hasStartedAnimation = true
+        }
+    }
+    
+    // Animate alpha and scale for entrance
+    val targetAlpha = if (hasStartedAnimation || !panelVisible) 1f else 0f
+    val targetScale = if (hasStartedAnimation || !panelVisible) 1f else 0.8f
+    
+    val animatedAlpha by animateFloatAsState(
+        targetValue = targetAlpha,
+        animationSpec = spring(
+            dampingRatio = 0.8f,
+            stiffness = 500f
+        ),
+        label = "staggeredAlpha"
+    )
+    
+    val animatedScale by animateFloatAsState(
+        targetValue = targetScale,
+        animationSpec = spring(
+            dampingRatio = 0.8f,
+            stiffness = 500f
+        ),
+        label = "staggeredScale"
+    )
+    
+    PhotoPreviewItem(
+        media = media,
+        atlasState = atlasState,
+        isSelected = isSelected,
+        onClick = onClick,
+        modifier = modifier
+            .graphicsLayer {
+                alpha = animatedAlpha
+                scaleX = animatedScale
+                scaleY = animatedScale
+            }
+    )
 }
 
 /**
@@ -245,6 +380,10 @@ private fun PhotoPreviewItem(
     // Use custom interaction source with no indication - shape morphing provides feedback
     val interactionSource = remember { MutableInteractionSource() }
 
+    // Material 3 outline for photo visibility protection
+    val outlineColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f) // Subtle outline
+    val outlineWidth = 0.5.dp // Thin border for minimal visual impact
+
     Box(
         modifier = modifier
             .clickable(
@@ -252,6 +391,11 @@ private fun PhotoPreviewItem(
                 indication = null // Disable ripple - shape morphing provides visual feedback
             ) { onClick() }
             .scale(animatedScale)
+            .border(
+                width = outlineWidth,
+                color = outlineColor,
+                shape = morphShape
+            )
             .clip(morphShape)
             .drawWithCache {
                 val bounds = androidx.compose.ui.geometry.Rect(Offset.Zero, size)

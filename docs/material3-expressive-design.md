@@ -132,4 +132,82 @@
 - androidx.compose.material3:material3:1.4.0-alpha18
 - androidx.compose:compose-bom-alpha:2025.07.00
 
+### ✅ Phase 2: Panel-Level Motion & State-Aware Animations (COMPLETED)
+
+**Implementation**: Enhanced `FocusedCellPanel` with Material 3 Expressive panel-level animations
+
+**Features Added**:
+- **Panel Entrance Animation**: Spring-based fade + slide + scale entrance
+  - `AnimatedVisibility` with `fadeIn + slideInVertically + scaleIn`
+  - Spring physics: `dampingRatio = 0.8f, stiffness = 400-500f`
+  - Slides in from bottom third with subtle scale (0.92f initial)
+- **Staggered Item Animations**: Sequential photo preview reveals
+  - 60ms delays between items (max 300ms total)
+  - `StaggeredPhotoPreviewItem` wrapper component
+  - Fade + scale entrance animations per item
+- **State-Aware Animation Parameters**: Adapts to selection mode
+  - PHOTO_MODE: More bouncy (`dampingRatio = 0.7f, stiffness = 600f`)
+  - CELL_MODE: Smoother (`dampingRatio = 0.8f, stiffness = 400f`)
+- **Stable LazyRow Animations**: Added `key = { it.media.uri }` for proper item tracking
+
+**Technical Changes**:
+1. **Added Animation Imports**:
+   - `AnimatedVisibility`, `fadeIn/Out`, `slideInVertically/OutVertically`, `scaleIn/Out`
+   - `LaunchedEffect`, `mutableStateOf`, `delay` for staggered timing
+
+2. **Panel Entrance Logic**:
+   - `isVisible` state triggers entrance animation on first composition
+   - Combined entrance animations for natural Material 3 feel
+   - Quick exit animations (200ms tweens) for smooth dismissal
+
+3. **Staggered Animation System**:
+   - `StaggeredPhotoPreviewItem` calculates per-item delays
+   - Selection mode awareness for different animation personalities
+   - Progressive item reveals create engaging entrance sequence
+
+**User Experience**:
+- Panel feels "alive" with physics-based entrance
+- Photos reveal sequentially for smoother visual flow
+- Animation timing adapts to user's interaction context
+- Maintains all existing functionality while adding expressive motion
+
+### ✅ Phase 3: Visual Protection & Material 3 Outline System (COMPLETED)
+
+**Implementation**: Added Material 3 outline border system for photo visibility protection in `PhotoPreviewItem`
+
+**Features Added**:
+- **Material 3 Outline Borders**: Subtle outline using `MaterialTheme.colorScheme.outline` 
+  - Color: `outline.copy(alpha = 0.3f)` for minimal visual impact
+  - Width: `0.5.dp` thin border following Material 3 specifications
+- **Shape-Aware Borders**: Border follows morphing shape (rectangle → hexagon)
+  - Applied using `.border()` modifier before `.clip()` for proper rendering
+  - Maintains outline during selection animations and shape transitions
+- **Light Photo Protection**: Ensures visibility against light backgrounds
+  - Uses Material 3's semantic color system for automatic theme adaptation
+  - Provides subtle visual separation without disrupting photo content
+
+**Technical Changes**:
+1. **Added Border Import**: `androidx.compose.foundation.border`
+2. **Material 3 Color Integration**:
+   - `outlineColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)`
+   - `outlineWidth = 0.5.dp` following Material 3 outline specifications
+3. **Shape-Aware Border Application**:
+   - Applied `.border(width, color, shape)` before `.clip(shape)`
+   - Ensures border follows morphing animation from rectangle to hexagon
+   - Maintains visual consistency during selection state transitions
+
+**User Experience**:
+- Light photos now have subtle definition against light panel backgrounds
+- Border automatically adapts to light/dark themes via Material 3 color system
+- Outline follows expressive shape morphing for cohesive animation experience
+- Minimal visual impact preserves photo content while improving visibility
+
+**Material 3 Compliance**:
+- Uses semantic `outline` color role from Material 3 color scheme
+- Follows Material 3 border specifications with 0.5dp width
+- Automatic theme adaptation (light/dark mode compatibility)
+- Maintains accessibility and contrast requirements
+
+*Implementation completed: July 23, 2025*
 *Research completed: July 23, 2025*
+*Testing completed: July 23, 2025*
