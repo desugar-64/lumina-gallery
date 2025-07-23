@@ -3,6 +3,7 @@ package dev.serhiiyaremych.lumina.ui.animation
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -96,7 +97,11 @@ class AnimatableMediaItem(
 
     // Explicit animation function (called from composable)
     suspend fun animateToSelectionState(
-        animationSpec: AnimationSpec<Float> = tween(AnimationConstants.ANIMATION_DURATION_MS)
+        animationSpec: AnimationSpec<Float> = spring(
+            // Material 3 Expressive spring physics for natural rotation restoration
+            stiffness = 800f, // Higher stiffness for responsive rotation changes
+            dampingRatio = 0.7f // Moderate damping for smooth, natural motion without bounce
+        )
     ) {
         val targetRotation = if (isSelected) 0f else originalRotation
         rotationAnimatable.animateTo(targetRotation, animationSpec)
