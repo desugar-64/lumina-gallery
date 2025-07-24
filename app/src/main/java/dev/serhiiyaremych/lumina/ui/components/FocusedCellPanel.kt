@@ -4,6 +4,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -59,6 +61,7 @@ import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.toPath
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.domain.model.Media
+import dev.serhiiyaremych.lumina.domain.model.MediaWithPosition
 import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
 import dev.serhiiyaremych.lumina.ui.SelectionMode
 import dev.serhiiyaremych.lumina.ui.drawStyledPhoto
@@ -91,7 +94,33 @@ fun FocusedCellPanel(
     provideTranslationOffset: (panelSize: Size) -> Offset,
     modifier: Modifier = Modifier
 ) {
-    // Panel entrance animation state
+    val panelAnimations = rememberPanelAnimations()
+    
+    AnimatedVisibility(
+        visible = panelAnimations.isVisible,
+        enter = panelAnimations.enterTransition,
+        exit = panelAnimations.exitTransition
+    ) {
+        FocusedCellPanelContent(
+            hexCellWithMedia = hexCellWithMedia,
+            atlasState = atlasState,
+            selectionMode = selectionMode,
+            selectedMedia = selectedMedia,
+            isVisible = panelAnimations.isVisible,
+            onMediaSelected = onMediaSelected,
+            onFocusRequested = onFocusRequested,
+            getMediaBounds = getMediaBounds,
+            modifier = modifier.panelTransformation(provideTranslationOffset)
+        )
+    }
+}
+
+/**
+ * Animation state and transitions for the FocusedCellPanel.
+ * Encapsulates Material 3 Expressive entrance/exit animations.
+ */
+@Composable
+private fun rememberPanelAnimations(): PanelAnimations {
     var isVisible by remember { mutableStateOf(false) }
     
     // Trigger entrance animation on first composition
@@ -99,132 +128,195 @@ fun FocusedCellPanel(
         isVisible = true
     }
     
-    // Material 3 panel entrance animation with spring physics
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = fadeIn(
-            animationSpec = spring(
-                dampingRatio = 0.8f,
-                stiffness = 400f
+    return remember(isVisible) {
+        PanelAnimations(
+            isVisible = isVisible,
+            enterTransition = fadeIn(
+                animationSpec = spring(
+                    dampingRatio = 0.8f,
+                    stiffness = 400f
+                )
+            ) + slideInVertically(
+                animationSpec = spring(
+                    dampingRatio = 0.8f,
+                    stiffness = 400f
+                ),
+                initialOffsetY = { it / 3 }
+            ) + scaleIn(
+                animationSpec = spring(
+                    dampingRatio = 0.9f,
+                    stiffness = 500f
+                ),
+                initialScale = 0.92f
+            ),
+            exitTransition = fadeOut(
+                animationSpec = tween(200)
+            ) + slideOutVertically(
+                animationSpec = tween(200),
+                targetOffsetY = { it / 4 }
+            ) + scaleOut(
+                animationSpec = tween(200),
+                targetScale = 0.96f
             )
-        ) + slideInVertically(
-            animationSpec = spring(
-                dampingRatio = 0.8f,
-                stiffness = 400f
-            ),
-            initialOffsetY = { it / 3 } // Slide in from bottom third
-        ) + scaleIn(
-            animationSpec = spring(
-                dampingRatio = 0.9f,
-                stiffness = 500f
-            ),
-            initialScale = 0.92f // Subtle scale entrance
-        ),
-        exit = fadeOut(
-            animationSpec = tween(200)
-        ) + slideOutVertically(
-            animationSpec = tween(200),
-            targetOffsetY = { it / 4 }
-        ) + scaleOut(
-            animationSpec = tween(200),
-            targetScale = 0.96f
         )
-    ) {
-        Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .graphicsLayer {
-                val offset = provideTranslationOffset(size)
-                translationX = offset.x
-                translationY = offset.y
-            }
-            .padding(16.dp),
+    }
+}
+
+/**
+ * Data class holding panel animation state and transitions.
+ */
+private data class PanelAnimations(
+    val isVisible: Boolean,
+    val enterTransition: EnterTransition,
+    val exitTransition: ExitTransition
+)
+
+/**
+ * Extension function to apply panel transformation modifiers.
+ */
+private fun Modifier.panelTransformation(
+    provideTranslationOffset: (panelSize: Size) -> Offset
+): Modifier = this
+    .fillMaxWidth()
+    .graphicsLayer {
+        val offset = provideTranslationOffset(size)
+        translationX = offset.x
+        translationY = offset.y
+    }
+    .padding(16.dp)
+
+/**
+ * Main content component of the FocusedCellPanel.
+ * Contains the Surface and photo preview grid.
+ */
+@Composable
+private fun FocusedCellPanelContent(
+    hexCellWithMedia: HexCellWithMedia,
+    atlasState: MultiAtlasUpdateResult?,
+    selectionMode: SelectionMode,
+    selectedMedia: Media?,
+    isVisible: Boolean,
+    onMediaSelected: (Media) -> Unit,
+    onFocusRequested: (Rect) -> Unit,
+    getMediaBounds: (Media) -> Rect?,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
         shadowElevation = 0.dp
     ) {
-        // Compact horizontal row of photo previews with gradient fade-out at edges
-        Box(
-            modifier = Modifier
-                .padding(horizontal = 8.dp, vertical = 12.dp) // Increase vertical padding for shape morphing
-                .graphicsLayer {
-                    compositingStrategy = CompositingStrategy.Offscreen
-                }
-                .drawWithCache {
-                    val fadeWidth = 16.dp.toPx() // Fixed fade width for visibility
-                    onDrawWithContent {
-                        // First draw the content
-                        drawContent()
+        PhotoPreviewGrid(
+            mediaItems = hexCellWithMedia.mediaItems,
+            atlasState = atlasState,
+            selectionMode = selectionMode,
+            selectedMedia = selectedMedia,
+            panelVisible = isVisible,
+            onMediaClick = createMediaClickHandler(
+                onMediaSelected = onMediaSelected,
+                onFocusRequested = onFocusRequested,
+                getMediaBounds = getMediaBounds,
+                selectionMode = selectionMode
+            )
+        )
+    }
+}
 
-                        // Then apply gradient masks to fade edges
-                        // Left fade-out
-                        drawRect(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(Color.Black, Color.Transparent),
-                                startX = 0f,
-                                endX = fadeWidth
-                            ),
-                            size = androidx.compose.ui.geometry.Size(fadeWidth, size.height),
-                            blendMode = BlendMode.DstOut
-                        )
+/**
+ * Creates a click handler for media items with proper focus behavior.
+ */
+private fun createMediaClickHandler(
+    onMediaSelected: (Media) -> Unit,
+    onFocusRequested: (Rect) -> Unit,
+    getMediaBounds: (Media) -> Rect?,
+    selectionMode: SelectionMode
+): (Media) -> Unit = { media ->
+    // Always update selection state first
+    onMediaSelected(media)
+    
+    // Only trigger focus animation if we're in PHOTO_MODE
+    if (selectionMode == SelectionMode.PHOTO_MODE) {
+        getMediaBounds(media)?.let { bounds ->
+            onFocusRequested(bounds)
+        }
+    }
+    // In CELL_MODE, just update selection without focus animation
+}
 
-                        // Right fade-out
-                        drawRect(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(Color.Transparent, Color.Black),
-                                startX = size.width - fadeWidth,
-                                endX = size.width
-                            ),
-                            topLeft = androidx.compose.ui.geometry.Offset(size.width - fadeWidth, 0f),
-                            size = androidx.compose.ui.geometry.Size(fadeWidth, size.height),
-                            blendMode = BlendMode.DstOut
-                        )
-                    }
-                }
-        ) {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.padding(vertical = 4.dp) // Add vertical padding to prevent clipping
-            ) {
-                items(
-                    items = hexCellWithMedia.mediaItems, 
-                    key = { it.media.uri } // Stable key for animations
-                ) { mediaWithPosition ->
-                    val isSelected = selectedMedia == mediaWithPosition.media
+/**
+ * Grid component displaying photo previews with gradient fade-out edges.
+ * Handles the LazyRow layout and staggered animations.
+ */
+@Composable
+private fun PhotoPreviewGrid(
+    mediaItems: List<MediaWithPosition>,
+    atlasState: MultiAtlasUpdateResult?,
+    selectionMode: SelectionMode,
+    selectedMedia: Media?,
+    panelVisible: Boolean,
+    onMediaClick: (Media) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .padding(horizontal = 8.dp, vertical = 12.dp)
+            .graphicsLayer {
+                compositingStrategy = CompositingStrategy.Offscreen
+            }
+            .drawWithCache {
+                val fadeWidth = 16.dp.toPx()
+                onDrawWithContent {
+                    drawContent()
                     
-                    // Staggered item animation based on position
-                    val itemIndex = hexCellWithMedia.mediaItems.indexOf(mediaWithPosition)
-                    StaggeredPhotoPreviewItem(
-                        itemIndex = itemIndex,
-                        totalItems = hexCellWithMedia.mediaItems.size,
-                        media = mediaWithPosition.media,
-                        atlasState = atlasState,
-                        isSelected = isSelected,
-                        selectionMode = selectionMode,
-                        panelVisible = isVisible, // Pass panel visibility state
-                        onClick = {
-                            val media = mediaWithPosition.media
-
-                            // Always update selection state first
-                            onMediaSelected(media)
-
-                            // Only trigger focus animation if we're in PHOTO_MODE
-                            // PHOTO_MODE: User clicked photo directly or is in deep zoom
-                            // CELL_MODE: User is browsing at cell level
-                            if (selectionMode == dev.serhiiyaremych.lumina.ui.SelectionMode.PHOTO_MODE) {
-                                getMediaBounds(media)?.let { bounds ->
-                                    onFocusRequested(bounds)
-                                }
-                            }
-                            // In CELL_MODE, just update selection without focus animation
-                        },
-                        modifier = Modifier.size(32.dp)
+                    // Left fade-out
+                    drawRect(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(Color.Black, Color.Transparent),
+                            startX = 0f,
+                            endX = fadeWidth
+                        ),
+                        size = Size(fadeWidth, size.height),
+                        blendMode = BlendMode.DstOut
+                    )
+                    
+                    // Right fade-out
+                    drawRect(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(Color.Transparent, Color.Black),
+                            startX = size.width - fadeWidth,
+                            endX = size.width
+                        ),
+                        topLeft = Offset(size.width - fadeWidth, 0f),
+                        size = Size(fadeWidth, size.height),
+                        blendMode = BlendMode.DstOut
                     )
                 }
             }
+    ) {
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.padding(vertical = 4.dp)
+        ) {
+            items(
+                items = mediaItems,
+                key = { it.media.uri }
+            ) { mediaWithPosition ->
+                val isSelected = selectedMedia == mediaWithPosition.media
+                val itemIndex = mediaItems.indexOf(mediaWithPosition)
+                
+                StaggeredPhotoPreviewItem(
+                    itemIndex = itemIndex,
+                    media = mediaWithPosition.media,
+                    atlasState = atlasState,
+                    isSelected = isSelected,
+                    panelVisible = panelVisible,
+                    onClick = { onMediaClick(mediaWithPosition.media) },
+                    modifier = Modifier.size(44.dp)
+                )
+            }
         }
     }
-    } // Close AnimatedVisibility
 }
 
 /**
@@ -234,11 +326,9 @@ fun FocusedCellPanel(
 @Composable
 private fun StaggeredPhotoPreviewItem(
     itemIndex: Int,
-    totalItems: Int,
     media: Media,
     atlasState: MultiAtlasUpdateResult?,
     isSelected: Boolean,
-    selectionMode: SelectionMode,
     onClick: () -> Unit,
     panelVisible: Boolean,
     modifier: Modifier = Modifier
