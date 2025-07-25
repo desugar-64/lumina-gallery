@@ -55,6 +55,15 @@ class EnhancedAtlasGenerator @Inject constructor(
         priorityMapping: Map<Uri, dev.serhiiyaremych.lumina.domain.model.PhotoPriority> = emptyMap()
     ): EnhancedAtlasResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
 
+        Log.d(TAG, "EnhancedAtlasGenerator.generateAtlasEnhanced called:")
+        Log.d(TAG, "  - Photo URIs: ${photoUris.size} total")
+        Log.d(TAG, "  - LOD Level: $lodLevel")
+        Log.d(TAG, "  - Priority mapping: ${priorityMapping.size} entries")
+        val highPriorityCount = priorityMapping.values.count { it == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.HIGH }
+        val normalPriorityCount = priorityMapping.values.count { it == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.NORMAL }
+        Log.d(TAG, "  - High priority: $highPriorityCount, Normal priority: $normalPriorityCount")
+        Log.d(TAG, "  - Photo URIs (first 5): ${photoUris.take(5)}")
+
         if (photoUris.isEmpty()) {
             return@trace EnhancedAtlasResult.empty()
         }

@@ -57,11 +57,11 @@ class SmartMemoryManager @Inject constructor(
 
     private val capabilities = deviceCapabilities.getCapabilities()
     private val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-    
+
     // Dynamic memory budget that can be adjusted at runtime
     private val baseBudgetBytes = (capabilities.memoryBudgetMB * 1024 * 1024).toLong()
     private var memoryBudgetBytes = AtomicLong((baseBudgetBytes * (1 - SAFETY_MARGIN)).toLong())
-    
+
     private val currentMemoryUsage = AtomicInteger(0)
     private val atlasRegistry = ConcurrentHashMap<AtlasKey, AtlasEntry>()
     private val memorySnapshots = mutableListOf<MemorySnapshot>()
@@ -70,7 +70,7 @@ class SmartMemoryManager @Inject constructor(
 
     private val _memoryPressure = MutableStateFlow(MemoryPressure.NORMAL)
     val memoryPressure: StateFlow<MemoryPressure> = _memoryPressure.asStateFlow()
-    
+
     // Register for system memory callbacks
     init {
         context.registerComponentCallbacks(this)
@@ -87,7 +87,7 @@ class SmartMemoryManager @Inject constructor(
         HIGH,       // 90-95% usage, high pressure
         CRITICAL    // > 95% usage, emergency cleanup needed
     }
-    
+
     /**
      * System memory pressure information
      */
@@ -98,7 +98,7 @@ class SmartMemoryManager @Inject constructor(
         val backgroundAppCount: Int,
         val trimLevel: Int
     )
-    
+
     /**
      * Enhanced memory pressure combining app and system metrics
      */
@@ -108,7 +108,7 @@ class SmartMemoryManager @Inject constructor(
         val combinedPressure: Float,
         val isSystemUnderStress: Boolean
     )
-    
+
     /**
      * Dynamic threshold configuration
      */
@@ -118,7 +118,7 @@ class SmartMemoryManager @Inject constructor(
         val high: Float,
         val critical: Float
     )
-    
+
     /**
      * Background app memory usage information
      */
@@ -127,7 +127,7 @@ class SmartMemoryManager @Inject constructor(
         val highMemoryAppCount: Int,
         val memoryPressureFactor: Float
     )
-    
+
     /**
      * Memory snapshot for leak detection
      */
@@ -136,7 +136,7 @@ class SmartMemoryManager @Inject constructor(
         val atlasCount: Int,
         val memoryUsage: Long
     )
-    
+
     /**
      * Memory leak detection report
      */
@@ -145,7 +145,7 @@ class SmartMemoryManager @Inject constructor(
         val severity: Float,
         val recommendation: String
     )
-    
+
     /**
      * Pre-allocation analysis result
      */
@@ -311,7 +311,7 @@ class SmartMemoryManager @Inject constructor(
             deviceCapabilities = capabilities
         )
     }
-    
+
     /**
      * Predictive memory usage calculation
      */
@@ -319,13 +319,13 @@ class SmartMemoryManager @Inject constructor(
         val predictedUsage = predictMemoryUsage(photoUris.size, lodLevel)
         val currentBudget = calculateContextAwareBudget()
         val availableMemory = currentBudget - currentMemoryUsage.get()
-        
+
         val recommendedLOD = if (predictedUsage > availableMemory) {
             suggestLowerLOD(lodLevel, availableMemory) ?: lodLevel
         } else {
             lodLevel
         }
-        
+
         return PreAllocationResult(
             predictedUsage = predictedUsage,
             availableMemory = availableMemory,
@@ -334,17 +334,17 @@ class SmartMemoryManager @Inject constructor(
             confidence = calculateConfidence(photoUris.size, lodLevel)
         )
     }
-    
+
     /**
      * Detect potential memory leaks
      */
     fun detectMemoryLeak(): MemoryLeakReport? {
         if (memorySnapshots.size < 10) return null
-        
+
         val recentSnapshots = memorySnapshots.takeLast(10)
         val atlasCountStable = recentSnapshots.map { it.atlasCount }.distinct().size <= 2
         val memoryIncreasing = recentSnapshots.zipWithNext().all { (a, b) -> b.memoryUsage > a.memoryUsage }
-        
+
         return if (atlasCountStable && memoryIncreasing) {
             MemoryLeakReport(
                 detected = true,
@@ -355,20 +355,20 @@ class SmartMemoryManager @Inject constructor(
             null
         }
     }
-    
+
     /**
      * Recalculate memory budget based on current conditions
      */
     fun recalculateBudget() {
         val newBudget = calculateContextAwareBudget()
         val oldBudget = memoryBudgetBytes.get()
-        
+
         if (newBudget != oldBudget) {
             memoryBudgetBytes.set(newBudget)
-            
+
             // Trigger pressure update with new budget
             updateMemoryPressureWithContext()
-            
+
             Log.i(TAG, "Memory budget updated: ${oldBudget / 1024 / 1024}MB -> ${newBudget / 1024 / 1024}MB")
         }
     }
@@ -484,7 +484,7 @@ class SmartMemoryManager @Inject constructor(
     private fun updateMemoryPressureWithContext() {
         val enhancedPressure = calculateEnhancedMemoryPressure()
         val dynamicThresholds = getDynamicThresholds()
-        
+
         val newPressure = when {
             enhancedPressure.combinedPressure >= dynamicThresholds.critical -> MemoryPressure.CRITICAL
             enhancedPressure.combinedPressure >= dynamicThresholds.high -> MemoryPressure.HIGH
@@ -492,24 +492,24 @@ class SmartMemoryManager @Inject constructor(
             enhancedPressure.combinedPressure >= dynamicThresholds.low -> MemoryPressure.LOW
             else -> MemoryPressure.NORMAL
         }
-        
+
         if (newPressure != _memoryPressure.value) {
             _memoryPressure.value = newPressure
             Log.d(TAG, "Memory pressure updated: $newPressure (combined: ${"%.1f".format(enhancedPressure.combinedPressure * 100)}%)")
-            
-            // Trigger emergency cleanup if critical
-            if (newPressure == MemoryPressure.CRITICAL) {
-                emergencyCleanup()
-            }
+
+            // TEMPORARILY DISABLED: Trigger emergency cleanup if critical
+            // if (newPressure == MemoryPressure.CRITICAL) {
+            //     emergencyCleanup()
+            // }
         }
     }
-    
+
     /**
      * Get system-wide memory pressure information
      */
     private fun getSystemMemoryPressure(): SystemMemoryPressure {
         val currentTime = System.currentTimeMillis()
-        
+
         // Throttle system memory checks to avoid overhead
         if (currentTime - lastSystemMemoryCheck < MEMORY_CHECK_INTERVAL_MS) {
             // Use cached values for frequent calls
@@ -521,14 +521,14 @@ class SmartMemoryManager @Inject constructor(
                 trimLevel = lastTrimLevel
             )
         }
-        
+
         lastSystemMemoryCheck = currentTime
-        
+
         val memInfo = ActivityManager.MemoryInfo()
         activityManager.getMemoryInfo(memInfo)
-        
+
         val backgroundAppCount = getBackgroundAppCount()
-        
+
         return SystemMemoryPressure(
             systemUsagePercent = 1.0f - (memInfo.availMem.toFloat() / memInfo.totalMem),
             isLowMemory = memInfo.lowMemory,
@@ -537,17 +537,17 @@ class SmartMemoryManager @Inject constructor(
             trimLevel = lastTrimLevel
         )
     }
-    
+
     /**
      * Calculate enhanced memory pressure combining app and system metrics
      */
     private fun calculateEnhancedMemoryPressure(): EnhancedMemoryPressure {
         val appPressure = currentMemoryUsage.get().toFloat() / memoryBudgetBytes.get().toFloat()
         val systemPressure = getSystemMemoryPressure()
-        
+
         // Weight: 60% app budget, 40% system pressure
         val combinedPressure = (appPressure * 0.6f) + (systemPressure.systemUsagePercent * 0.4f)
-        
+
         return EnhancedMemoryPressure(
             appPressure = appPressure,
             systemPressure = systemPressure.systemUsagePercent,
@@ -555,67 +555,67 @@ class SmartMemoryManager @Inject constructor(
             isSystemUnderStress = systemPressure.isLowMemory || systemPressure.isNearThreshold
         )
     }
-    
+
     /**
      * Get dynamic thresholds based on system state
      */
     private fun getDynamicThresholds(): DynamicThresholds {
         val systemPressure = getSystemMemoryPressure()
-        
+
         val isSystemUnderStress = systemPressure.isLowMemory || systemPressure.isNearThreshold
-        
+
         return when {
             // High-end device with system stress - more relaxed
             capabilities.memoryTier == DeviceCapabilities.MemoryTier.HIGH && isSystemUnderStress ->
                 DynamicThresholds(0.65f, 0.78f, 0.88f, 0.93f)  // Was: 0.7f, 0.8f, 0.9f, 0.95f
-                
+
             // Low-end device under normal conditions - more permissive
             capabilities.memoryTier == DeviceCapabilities.MemoryTier.MINIMAL && !isSystemUnderStress ->
                 DynamicThresholds(0.55f, 0.7f, 0.82f, 0.9f)   // Was: 0.6f, 0.75f, 0.85f, 0.92f
-                
+
             // Background apps consuming memory - less aggressive
             systemPressure.backgroundAppCount > 10 ->
                 DynamicThresholds(0.6f, 0.75f, 0.85f, 0.92f)  // Was: 0.65f, 0.78f, 0.88f, 0.94f
-                
+
             else ->
                 DynamicThresholds(DEFAULT_PRESSURE_LOW, DEFAULT_PRESSURE_MEDIUM, DEFAULT_PRESSURE_HIGH, DEFAULT_PRESSURE_CRITICAL)
         }
     }
-    
+
     /**
      * Calculate context-aware memory budget
      */
     private fun calculateContextAwareBudget(): Long {
         val backgroundUsage = getBackgroundAppMemoryUsage()
         val systemPressure = getSystemMemoryPressure()
-        
+
         val isSystemUnderStress = systemPressure.isLowMemory || systemPressure.isNearThreshold
-        
+
         val contextFactor = when {
             backgroundUsage.totalBackgroundMemoryMB > 3000 -> 0.8f  // Heavy background usage (was 2000 -> 0.7f)
             backgroundUsage.highMemoryAppCount > 8 -> 0.85f         // Many memory-intensive apps (was 5 -> 0.8f)
             isSystemUnderStress -> 0.85f                            // System under stress (was 0.75f)
             else -> 1.0f
         }
-        
+
         return (baseBudgetBytes * contextFactor * (1 - SAFETY_MARGIN)).toLong()
     }
-    
+
     /**
      * Get background app memory usage information
      */
     private fun getBackgroundAppMemoryUsage(): BackgroundMemoryUsage {
         val runningApps = activityManager.runningAppProcesses ?: return BackgroundMemoryUsage(0, 0, 0.0f)
-        
+
         var backgroundMemoryMB = 0
         var highMemoryApps = 0
-        
+
         for (processInfo in runningApps) {
             if (processInfo.importance >= ActivityManager.RunningAppProcessInfo.IMPORTANCE_BACKGROUND) {
                 try {
                     val memoryInfo = activityManager.getProcessMemoryInfo(intArrayOf(processInfo.pid))[0]
                     val memoryMB = memoryInfo.totalPss / 1024
-                    
+
                     backgroundMemoryMB += memoryMB
                     if (memoryMB > 100) highMemoryApps++
                 } catch (e: Exception) {
@@ -623,14 +623,14 @@ class SmartMemoryManager @Inject constructor(
                 }
             }
         }
-        
+
         return BackgroundMemoryUsage(
             totalBackgroundMemoryMB = backgroundMemoryMB,
             highMemoryAppCount = highMemoryApps,
             memoryPressureFactor = (backgroundMemoryMB / 1000.0f).coerceAtMost(1.0f)
         )
     }
-    
+
     /**
      * Get count of background apps
      */
@@ -638,7 +638,7 @@ class SmartMemoryManager @Inject constructor(
         val runningApps = activityManager.runningAppProcesses ?: return 0
         return runningApps.count { it.importance >= ActivityManager.RunningAppProcessInfo.IMPORTANCE_BACKGROUND }
     }
-    
+
     /**
      * Predict memory usage for given photos and LOD level
      */
@@ -646,10 +646,10 @@ class SmartMemoryManager @Inject constructor(
         val avgPhotoSize = LODLevel.getMemoryUsageKB(lodLevel) * 1024L
         val estimatedAtlasCount = ceil(photoCount.toFloat() / LODLevel.getAtlasCapacity2K(lodLevel))
         val packingOverhead = 1.2f // 20% overhead for packing inefficiency
-        
+
         return (photoCount * avgPhotoSize * packingOverhead).toLong()
     }
-    
+
     /**
      * Calculate confidence level for memory prediction
      */
@@ -661,7 +661,7 @@ class SmartMemoryManager @Inject constructor(
             else -> 0.6f  // Lower confidence for very large sets
         }
     }
-    
+
     /**
      * Record memory snapshot for leak detection
      */
@@ -671,25 +671,25 @@ class SmartMemoryManager @Inject constructor(
             atlasCount = atlasRegistry.size,
             memoryUsage = currentMemoryUsage.get().toLong()
         ))
-        
+
         // Keep only last snapshots
         if (memorySnapshots.size > MEMORY_SNAPSHOT_LIMIT) {
             memorySnapshots.removeAt(0)
         }
     }
-    
+
     /**
      * Calculate memory leak severity
      */
     private fun calculateLeakSeverity(snapshots: List<MemorySnapshot>): Float {
         if (snapshots.size < 2) return 0.0f
-        
+
         val memoryIncrease = snapshots.last().memoryUsage - snapshots.first().memoryUsage
         val timeSpan = snapshots.last().timestamp - snapshots.first().timestamp
-        
+
         // Calculate leak rate (bytes per minute)
         val leakRateBytesPerMin = (memoryIncrease * 60000) / timeSpan
-        
+
         return when {
             leakRateBytesPerMin > 20 * 1024 * 1024 -> 1.0f  // > 20MB/min = critical (was 10MB/min)
             leakRateBytesPerMin > 10 * 1024 * 1024 -> 0.8f  // > 10MB/min = high (was 5MB/min)
@@ -698,26 +698,26 @@ class SmartMemoryManager @Inject constructor(
             else -> 0.2f  // < 1MB/min = minimal
         }
     }
-    
+
     // ComponentCallbacks2 implementation
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         // No-op
     }
-    
+
     override fun onLowMemory() {
         Log.w(TAG, "System onLowMemory() callback received")
         lastTrimLevel = ComponentCallbacks2.TRIM_MEMORY_COMPLETE
-        
+
         // Trigger emergency cleanup
         emergencyCleanup()
-        
+
         // Force garbage collection
         System.gc()
     }
-    
+
     override fun onTrimMemory(level: Int) {
         lastTrimLevel = level
-        
+
         when (level) {
             ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE -> {
                 Log.d(TAG, "System memory pressure: MODERATE")
@@ -748,24 +748,24 @@ class SmartMemoryManager @Inject constructor(
                 emergencyCleanup()
             }
         }
-        
+
         // Recalculate budget based on new system state
         recalculateBudget()
     }
-    
+
     /**
      * Evict oldest atlases based on last access time
      */
     private fun evictOldestAtlases(count: Int) {
         if (count <= 0) return
-        
+
         val sortedEntries = atlasRegistry.entries
             .filter { !protectedAtlases.containsKey(it.key) }
             .sortedBy { it.value.lastAccessTime }
             .take(count)
-        
+
         Log.d(TAG, "Evicting $count oldest atlases")
-        
+
         for ((key, _) in sortedEntries) {
             unregisterAtlas(key)
         }
@@ -804,7 +804,7 @@ class SmartMemoryManager @Inject constructor(
             }
         }
     }
-    
+
     /**
      * Cleanup resources when manager is destroyed
      */
@@ -814,12 +814,12 @@ class SmartMemoryManager @Inject constructor(
         } catch (e: Exception) {
             Log.w(TAG, "Error unregistering component callbacks", e)
         }
-        
+
         // Clear all atlases
         atlasRegistry.clear()
         memorySnapshots.clear()
         protectedAtlases.clear()
-        
+
         Log.d(TAG, "SmartMemoryManager cleanup completed")
     }
 }
