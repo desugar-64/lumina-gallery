@@ -37,19 +37,20 @@ import kotlin.time.measureTimedValue
 @Singleton
 class AtlasManager @Inject constructor(
     private val enhancedAtlasGenerator: EnhancedAtlasGenerator,
-    private val smartMemoryManager: SmartMemoryManager
+    private val smartMemoryManager: SmartMemoryManager,
+    private val atlasBucketManager: dev.serhiiyaremych.lumina.domain.bucket.AtlasBucketManager
 ) {
     companion object {
         private const val TAG = "AtlasManager"
         private const val DEFAULT_MARGIN_RINGS = 1
     }
 
-    // Multi-atlas state management
-    private var currentAtlases: List<TextureAtlas> = emptyList()
+    // Multi-atlas state management - now using bucket system
     private var currentCellIds: Set<String> = emptySet()
     private var currentLODLevel: LODLevel = LODLevel.LEVEL_2
     private var lastReportedZoom: Float = 1.0f
     private var currentSelectedMedia: Media? = null
+    private var currentFocusedCell: HexCellWithMedia? = null
 
     /**
      * Atlas Request Sequence Counter - Race Condition Protection
@@ -95,22 +96,22 @@ class AtlasManager @Inject constructor(
 
                 // Check what type of regeneration is needed
                 Log.d(TAG, "Check regeneration: cellSetKey=${cellSetKey.take(3)}...(${cellSetKey.size}), lodLevel=$lodLevel")
-                Log.d(TAG, "Current state: currentCellIds=${currentCellIds.take(3)}...(${currentCellIds.size}), currentLODLevel=$currentLODLevel, atlases=${currentAtlases.size}")
+                val bucketAtlases = atlasBucketManager.snapshotAll()
+                Log.d(TAG, "Current state: currentCellIds=${currentCellIds.take(3)}...(${currentCellIds.size}), currentLODLevel=$currentLODLevel, atlases=${bucketAtlases.size}")
 
                 val regenerationDecision = isRegenerationNeeded(cellSetKey, lodLevel, currentZoom, selectedMedia)
 
                 when (regenerationDecision) {
                     RegenerationDecision.NO_REGENERATION -> {
                         Log.d(TAG, "Atlas regeneration not needed - returning existing atlases")
-                        return@withContext atlasMutex.withLock {
-                            if (currentAtlases.isNotEmpty()) {
-                                val totalRegions = currentAtlases.sumOf { it.regions.size }
-                                Log.d(TAG, "Returning ${currentAtlases.size} existing atlases with $totalRegions total regions")
-                                MultiAtlasUpdateResult.Success(currentAtlases, requestSequence, currentLODLevel)
-                            } else {
-                                Log.w(TAG, "No current atlases available but regeneration not needed - this shouldn't happen")
-                                MultiAtlasUpdateResult.GenerationFailed("No atlases available", requestSequence, null)
-                            }
+                        val currentAtlases = atlasBucketManager.snapshotAll()
+                        return@withContext if (currentAtlases.isNotEmpty()) {
+                            val totalRegions = currentAtlases.sumOf { it.regions.size }
+                            Log.d(TAG, "Returning ${currentAtlases.size} existing atlases with $totalRegions total regions")
+                            MultiAtlasUpdateResult.Success(currentAtlases, requestSequence, currentLODLevel)
+                        } else {
+                            Log.w(TAG, "No current atlases available but regeneration not needed - this shouldn't happen")
+                            MultiAtlasUpdateResult.GenerationFailed("No atlases available", requestSequence, null)
                         }
                     }
 
@@ -146,36 +147,36 @@ class AtlasManager @Inject constructor(
 
     /**
      * Get current atlases for rendering.
+     * Returns combined view of all buckets with proper priority ordering.
      */
-    suspend fun getCurrentAtlases(): List<TextureAtlas> = atlasMutex.withLock { currentAtlases }
+    suspend fun getCurrentAtlases(): List<TextureAtlas> = atlasBucketManager.snapshotAll()
 
     /**
      * Get atlas region for a specific photo.
      * Searches across all current atlases to find the photo.
      */
-    suspend fun getPhotoRegion(photoId: Uri): AtlasRegion? = atlasMutex.withLock {
-        currentAtlases.firstNotNullOfOrNull { atlas ->
-            atlas.regions[photoId]
-        }
+    suspend fun getPhotoRegion(photoId: Uri): AtlasRegion? {
+        return atlasBucketManager.getBestRegion(photoId)
     }
 
     /**
      * Get atlas and region for a specific photo.
      * Returns both the atlas containing the photo and the region within that atlas.
      */
-    suspend fun getPhotoAtlasAndRegion(photoId: Uri): Pair<TextureAtlas, AtlasRegion>? = atlasMutex.withLock {
-        currentAtlases.forEach { atlas ->
-            atlas.regions[photoId]?.let { region ->
-                return@withLock atlas to region
-            }
-        }
-        return@withLock null
+    suspend fun getPhotoAtlasAndRegion(photoId: Uri): Pair<TextureAtlas, AtlasRegion>? {
+        val region = atlasBucketManager.getBestRegion(photoId) ?: return null
+        val allAtlases = atlasBucketManager.snapshotAll()
+        val atlas = allAtlases.find { it.regions.containsKey(photoId) }
+        return atlas?.let { it to region }
     }
 
     /**
      * Check if atlases are available and ready for rendering.
      */
-    suspend fun hasAtlas(): Boolean = atlasMutex.withLock { currentAtlases.isNotEmpty() }
+    suspend fun hasAtlas(): Boolean {
+        val allAtlases = atlasBucketManager.snapshotAll()
+        return allAtlases.isNotEmpty()
+    }
 
     /**
      * Get current memory status from the smart memory manager.
@@ -192,9 +193,9 @@ class AtlasManager @Inject constructor(
     }
 
     /**
-     * Check if atlas regeneration is needed without launching coroutine.
+     * Check if atlas regeneration is needed (suspend version).
      */
-    fun shouldRegenerateAtlas(
+    suspend fun shouldRegenerateAtlas(
         visibleCells: List<HexCellWithMedia>,
         currentZoom: Float,
         marginRings: Int = DEFAULT_MARGIN_RINGS
@@ -203,9 +204,9 @@ class AtlasManager @Inject constructor(
     }
 
     /**
-     * Check if atlas regeneration is needed without launching coroutine, considering selected media.
+     * Check if atlas regeneration is needed, considering selected media (suspend version).
      */
-    fun shouldRegenerateAtlas(
+    suspend fun shouldRegenerateAtlas(
         visibleCells: List<HexCellWithMedia>,
         currentZoom: Float,
         marginRings: Int = DEFAULT_MARGIN_RINGS,
@@ -219,18 +220,75 @@ class AtlasManager @Inject constructor(
     }
 
     /**
+     * Update focused cell for the focus bucket.
+     * This generates a +1 LOD level atlas for the focused cell photos.
+     * Should be called from ViewModel's coroutine scope.
+     */
+    suspend fun updateFocusedCell(focusedCell: HexCellWithMedia?, currentZoom: Float) {
+        withContext(Dispatchers.Default) {
+            atlasMutex.withLock {
+                if (currentFocusedCell == focusedCell) {
+                    Log.d(TAG, "Focused cell unchanged, skipping update")
+                    return@withLock
+                }
+                
+                currentFocusedCell = focusedCell
+                
+                if (focusedCell == null) {
+                    Log.d(TAG, "Clearing focused cell")
+                    atlasBucketManager.clearFocus()
+                    return@withLock
+                }
+                
+                Log.d(TAG, "Updating focused cell: ${focusedCell.hexCell.q},${focusedCell.hexCell.r}")
+                
+                // Generate atlas for focused cell at +1 LOD level
+                val currentLOD = selectOptimalLODLevel(listOf(focusedCell), currentZoom)
+                val higherLOD = getHigherLOD(currentLOD)
+                
+                // Extract photos from focused cell
+                val photoUris = focusedCell.mediaItems
+                    .mapNotNull { it.media as? Media.Image }
+                    .map { it.uri }
+                
+                if (photoUris.isNotEmpty()) {
+                    Log.d(TAG, "Generating focus atlas: ${photoUris.size} photos at $higherLOD (+1 from $currentLOD)")
+                    
+                    val focusResult = enhancedAtlasGenerator.generateAtlasEnhanced(
+                        photoUris = photoUris,
+                        lodLevel = higherLOD,
+                        currentZoom = currentZoom,
+                        priorityMapping = emptyMap()
+                    )
+                    
+                    if (focusResult.hasResults) {
+                        atlasBucketManager.replaceFocus(focusResult.allAtlases)
+                        Log.d(TAG, "Focus atlas generated: ${focusResult.allAtlases.size} atlases")
+                    } else {
+                        Log.w(TAG, "Focus atlas generation failed")
+                        atlasBucketManager.clearFocus()
+                    }
+                } else {
+                    Log.d(TAG, "No photos in focused cell, clearing focus bucket")
+                    atlasBucketManager.clearFocus()
+                }
+            }
+        }
+    }
+    
+    /**
      * Clear current atlases and free memory.
      */
     suspend fun clearAtlases() = atlasMutex.withLock {
-        Log.d(TAG, "Clearing ${currentAtlases.size} current atlases")
-        currentAtlases.forEach { atlas ->
-            if (!atlas.bitmap.isRecycled) {
-                atlas.bitmap.recycle()
-            }
-        }
-        currentAtlases = emptyList()
+        val currentAtlases = atlasBucketManager.snapshotAll()
+        Log.d(TAG, "Clearing ${currentAtlases.size} current atlases via bucket manager")
+        
+        // Clear all transient buckets (keeps L0 base)
+        atlasBucketManager.clearTransient()
+        
         currentCellIds = emptySet()
         currentSelectedMedia = null
+        currentFocusedCell = null
     }
 
     // Private helper methods
@@ -263,13 +321,23 @@ class AtlasManager @Inject constructor(
     ): Set<String> {
         return cells.map { "${it.hexCell.q},${it.hexCell.r}-${lodLevel.name}" }.toSet()
     }
+    
+    /**
+     * Get higher LOD level for focus bucket (+1 from current)
+     */
+    private fun getHigherLOD(currentLOD: LODLevel): LODLevel {
+        val currentIndex = LODLevel.entries.indexOf(currentLOD)
+        val higherIndex = (currentIndex + 1).coerceAtMost(LODLevel.entries.lastIndex)
+        return LODLevel.entries[higherIndex]
+    }
 
-    private fun isRegenerationNeeded(
+    private suspend fun isRegenerationNeeded(
         cellSetKey: Set<String>,
         lodLevel: LODLevel,
         currentZoom: Float,
         selectedMedia: Media?
     ): RegenerationDecision {
+        val currentAtlases = atlasBucketManager.snapshotAll()
         return when {
             // First time or no atlases available
             currentAtlases.isEmpty() -> {
@@ -392,7 +460,8 @@ class AtlasManager @Inject constructor(
     /**
      * Protect current atlases from emergency cleanup by coordinating with SmartMemoryManager
      */
-    private fun protectCurrentAtlasesFromCleanup() {
+    private suspend fun protectCurrentAtlasesFromCleanup() {
+        val currentAtlases = atlasBucketManager.snapshotAll()
         if (currentAtlases.isEmpty()) {
             smartMemoryManager.protectAtlases(emptySet())
             return
@@ -463,7 +532,7 @@ class AtlasManager @Inject constructor(
     }
 
     /**
-     * Handle result of selective atlas generation by merging with existing atlases
+     * Handle result of selective atlas generation by using highlight bucket
      */
     private suspend fun handleSelectiveAtlasResult(
         selectiveResult: EnhancedAtlasGenerator.EnhancedAtlasResult,
@@ -472,21 +541,9 @@ class AtlasManager @Inject constructor(
     ): MultiAtlasUpdateResult = atlasMutex.withLock {
         if (!selectiveResult.hasResults) {
             Log.w(TAG, "Selective atlas generation failed, keeping existing atlases")
+            val currentAtlases = atlasBucketManager.snapshotAll()
             return@withLock MultiAtlasUpdateResult.Success(currentAtlases, requestSequence, currentLODLevel)
         }
-
-        // Find and remove any existing atlas containing the selected photo
-        val selectedPhotoUri = (selectedMedia as? Media.Image)?.uri
-        val existingAtlasesWithoutSelected = if (selectedPhotoUri != null) {
-            currentAtlases.filter { atlas ->
-                !atlas.regions.containsKey(selectedPhotoUri)
-            }
-        } else {
-            currentAtlases
-        }
-
-        // Merge existing atlases with new high-priority atlas
-        val mergedAtlases = existingAtlasesWithoutSelected + selectiveResult.allAtlases
 
         // Protect new atlases
         val newAtlasKeys = selectiveResult.allAtlases.mapNotNull { atlas ->
@@ -495,20 +552,13 @@ class AtlasManager @Inject constructor(
         Log.d(TAG, "Protecting ${newAtlasKeys.size} new selective atlases")
         smartMemoryManager.protectAtlases(newAtlasKeys)
 
-        // Unregister replaced atlases if any
-        if (selectedPhotoUri != null) {
-            currentAtlases.forEach { atlas ->
-                if (atlas.regions.containsKey(selectedPhotoUri)) {
-                    smartMemoryManager.unregisterAtlas(generateAtlasKey(atlas))
-                    Log.d(TAG, "Unregistered replaced atlas containing selected photo")
-                }
-            }
-        }
-
-        // Update state with merged atlases
-        currentAtlases = mergedAtlases
+        // Replace highlight bucket with new high-priority atlases
+        atlasBucketManager.replaceHighlight(selectiveResult.allAtlases)
+        
+        // Update state
         currentSelectedMedia = selectedMedia
 
+        val mergedAtlases = atlasBucketManager.snapshotAll()
         val totalRegions = mergedAtlases.sumOf { it.regions.size }
         Log.d(TAG, "Selective atlas merge complete: ${mergedAtlases.size} total atlases, $totalRegions regions")
 
@@ -516,7 +566,7 @@ class AtlasManager @Inject constructor(
     }
 
     /**
-     * Handle result of full atlas generation (original behavior)
+     * Handle result of full atlas generation using bucket system
      */
     private suspend fun handleFullAtlasResult(
         enhancedResult: EnhancedAtlasGenerator.EnhancedAtlasResult,
@@ -534,12 +584,20 @@ class AtlasManager @Inject constructor(
             Log.d(TAG, "Pre-protecting ${newAtlasKeys.size} new atlases during full regeneration")
             smartMemoryManager.protectAtlases(newAtlasKeys)
 
+            // Unregister old atlases from memory manager
+            val currentAtlases = atlasBucketManager.snapshotAll()
             currentAtlases.forEach { atlas ->
                 smartMemoryManager.unregisterAtlas(generateAtlasKey(atlas))
             }
 
-            // Update all state atomically
-            currentAtlases = enhancedResult.allAtlases
+            // Send atlases to appropriate bucket based on LOD level
+            if (lodLevel == LODLevel.LEVEL_0) {
+                atlasBucketManager.populateBase(enhancedResult.allAtlases)
+            } else {
+                atlasBucketManager.addToRolling(enhancedResult.allAtlases)
+            }
+            
+            // Update state
             currentCellIds = cellSetKey
             currentLODLevel = lodLevel
             lastReportedZoom = currentZoom

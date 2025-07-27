@@ -11,6 +11,7 @@ import dev.serhiiyaremych.lumina.data.PhotoScaler
 import dev.serhiiyaremych.lumina.data.datasource.MediaDataSource
 import dev.serhiiyaremych.lumina.data.datasource.MediaStoreDataSource
 import dev.serhiiyaremych.lumina.data.repository.MediaRepositoryImpl
+import dev.serhiiyaremych.lumina.domain.bucket.AtlasBucketManager
 import dev.serhiiyaremych.lumina.domain.repository.MediaRepository
 import dev.serhiiyaremych.lumina.domain.usecase.AtlasManager
 import dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities
@@ -49,7 +50,7 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideBitmapPool(smartMemoryManager: SmartMemoryManager): BitmapPool = 
+    fun provideBitmapPool(smartMemoryManager: SmartMemoryManager): BitmapPool =
         BitmapPool(smartMemoryManager)
 
     @Singleton
@@ -68,6 +69,7 @@ object AppModule {
     @Provides
     fun provideAtlasManager(
         enhancedAtlasGenerator: EnhancedAtlasGenerator,
-        smartMemoryManager: SmartMemoryManager
-    ): AtlasManager = AtlasManager(enhancedAtlasGenerator, smartMemoryManager)
+        smartMemoryManager: SmartMemoryManager,
+        bucketManager: AtlasBucketManager
+    ): AtlasManager = AtlasManager(enhancedAtlasGenerator, smartMemoryManager, bucketManager)
 }

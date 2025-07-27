@@ -141,7 +141,7 @@ class AtlasGenerator @Inject constructor(
         val atlas = TextureAtlas(
             bitmap = atlasBitmap,
             regions = atlasRegions.associateBy { it.photoId },
-            lodLevel = lodLevel.level,
+            lodLevel = lodLevel,
             size = atlasSize
         )
 

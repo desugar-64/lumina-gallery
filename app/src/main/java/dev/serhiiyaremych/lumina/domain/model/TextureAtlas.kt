@@ -22,7 +22,7 @@ data class TextureAtlas(
     /**
      * LOD level this atlas represents
      */
-    val lodLevel: Int,
+    val lodLevel: LODLevel,
 
     /**
      * Size of the atlas bitmap

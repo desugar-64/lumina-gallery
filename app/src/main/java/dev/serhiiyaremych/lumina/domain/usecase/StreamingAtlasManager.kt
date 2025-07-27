@@ -51,7 +51,8 @@ import kotlin.time.measureTimedValue
 @Singleton
 class StreamingAtlasManager @Inject constructor(
     private val lodSpecificGenerator: LODSpecificGenerator,
-    private val bitmapAtlasPool: BitmapAtlasPool
+    private val bitmapAtlasPool: BitmapAtlasPool,
+    private val atlasBucketManager: dev.serhiiyaremych.lumina.domain.bucket.AtlasBucketManager
 ) {
     companion object {
         private const val TAG = "StreamingAtlasManager"
@@ -59,12 +60,146 @@ class StreamingAtlasManager @Inject constructor(
         private const val THROTTLE_DELAY_MS = 16L // ~60fps
     }
 
-    // Persistent cache for ALL canvas photos at LEVEL_0 (never cleared)
-    private var persistentCache: List<TextureAtlas>? = null
-
-    // Active atlas state management
-    private val currentAtlases = mutableMapOf<LODLevel, List<TextureAtlas>>()
+    // Active atlas state management - now using bucket system
     private val atlasMutex = Mutex()
+    private var currentFocusedCell: HexCellWithMedia? = null
+    private var currentSelectedMedia: Media? = null
+
+    /**
+     * Update focused cell for bucket-based focus management.
+     * Uses efficient bucket lookups to determine if regeneration is needed.
+     */
+    suspend fun updateFocusedCell(focusedCell: HexCellWithMedia?, currentZoom: Float) {
+        withContext(Dispatchers.Default) {
+            atlasMutex.withLock {
+                val currentLOD = LODLevel.forZoom(currentZoom)
+                val requiredLOD = getHigherLOD(currentLOD) // +1 LOD for focus
+                
+                if (focusedCell == null) {
+                    if (currentFocusedCell != null) {
+                        Log.d(TAG, "Clearing focused cell")
+                        atlasBucketManager.clearFocus()
+                        currentFocusedCell = null
+                    }
+                    return@withLock
+                }
+                
+                // Extract photo URIs from focused cell
+                val photoUris = focusedCell.mediaItems
+                    .mapNotNull { it.media as? Media.Image }
+                    .map { it.uri }
+                
+                if (photoUris.isEmpty()) {
+                    Log.d(TAG, "No photos in focused cell, clearing focus bucket")
+                    atlasBucketManager.clearFocus()
+                    currentFocusedCell = focusedCell
+                    return@withLock
+                }
+                
+                // Check if we need to update using efficient bucket lookups
+                val cellChanged = currentFocusedCell?.hexCell != focusedCell.hexCell
+                val existingFocusLOD = atlasBucketManager.getFocusLODForPhotos(photoUris)
+                val needsRegeneration = cellChanged || existingFocusLOD == null || existingFocusLOD.level < requiredLOD.level
+                
+                if (!needsRegeneration) {
+                    Log.d(TAG, "Focus cell atlas already exists at adequate LOD (${existingFocusLOD?.name} >= ${requiredLOD.name}), skipping update")
+                    currentFocusedCell = focusedCell // Update tracking even if no regeneration
+                    return@withLock
+                }
+                
+                currentFocusedCell = focusedCell
+                Log.d(TAG, "Updating focused cell: ${focusedCell.hexCell.q},${focusedCell.hexCell.r} at zoom $currentZoom -> LOD $requiredLOD (existing: ${existingFocusLOD?.name ?: "none"})")
+                
+                val focusResult = lodSpecificGenerator.generateLODAtlas(
+                    photos = photoUris,
+                    lodLevel = requiredLOD,
+                    currentZoom = currentZoom,
+                    priority = TypeSafeLODPriority(
+                        priority = AtlasPriority.ActiveCell,
+                        photos = focusedCell.mediaItems.mapNotNull { it.media as? Media.Image },
+                        reason = "Focus cell enhancement at zoom $currentZoom"
+                    )
+                )
+                
+                when (focusResult) {
+                    is LODGenerationResult.Success -> {
+                        atlasBucketManager.replaceFocus(focusResult.atlases)
+                        Log.d(TAG, "Focus atlas generated: ${focusResult.atlases.size} atlases")
+                    }
+                    is LODGenerationResult.Failed -> {
+                        Log.w(TAG, "Focus atlas generation failed: ${focusResult.error}")
+                        atlasBucketManager.clearFocus()
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Update selected media for bucket-based highlight management.
+     * Uses efficient bucket lookups to determine if regeneration is needed.
+     */
+    suspend fun updateSelectedMedia(selectedMedia: Media?, currentZoom: Float, selectionMode: SelectionMode) {
+        withContext(Dispatchers.Default) {
+            atlasMutex.withLock {
+                if (selectedMedia == null || selectionMode != SelectionMode.PHOTO_MODE) {
+                    if (currentSelectedMedia != null) {
+                        Log.d(TAG, "Clearing selected media")
+                        atlasBucketManager.clearHighlight()
+                        currentSelectedMedia = null
+                    }
+                    return@withLock
+                }
+                
+                if (selectedMedia !is Media.Image) {
+                    Log.d(TAG, "Selected media is not an image, clearing highlight bucket")
+                    atlasBucketManager.clearHighlight()
+                    currentSelectedMedia = null
+                    return@withLock
+                }
+                
+                // Check if we need to update using efficient bucket lookups
+                val mediaChanged = currentSelectedMedia?.uri != selectedMedia.uri
+                val requiredLOD = LODLevel.LEVEL_7 // Always max quality for selected photo
+                val hasAdequateLOD = atlasBucketManager.hasHighlightPhotoAtLOD(selectedMedia.uri, requiredLOD)
+                
+                val needsRegeneration = mediaChanged || !hasAdequateLOD
+                
+                if (!needsRegeneration) {
+                    val existingLOD = atlasBucketManager.getHighlightLODForPhoto(selectedMedia.uri)
+                    Log.d(TAG, "Selected media atlas already exists at adequate LOD (${existingLOD?.name} >= ${requiredLOD.name}), skipping update")
+                    currentSelectedMedia = selectedMedia // Update tracking even if no regeneration
+                    return@withLock
+                }
+                
+                currentSelectedMedia = selectedMedia
+                val existingLOD = atlasBucketManager.getHighlightLODForPhoto(selectedMedia.uri)
+                Log.d(TAG, "Updating selected media: ${selectedMedia.displayName} at zoom $currentZoom -> LOD $requiredLOD (existing: ${existingLOD?.name ?: "none"})")
+                
+                val highlightResult = lodSpecificGenerator.generateLODAtlas(
+                    photos = listOf(selectedMedia.uri),
+                    lodLevel = requiredLOD,
+                    currentZoom = currentZoom,
+                    priority = TypeSafeLODPriority(
+                        priority = AtlasPriority.SelectedPhoto,
+                        photos = listOf(selectedMedia),
+                        reason = "Selected photo maximum quality at zoom $currentZoom"
+                    )
+                )
+                
+                when (highlightResult) {
+                    is LODGenerationResult.Success -> {
+                        atlasBucketManager.replaceHighlight(highlightResult.atlases)
+                        Log.d(TAG, "Highlight atlas generated: ${highlightResult.atlases.size} atlases")
+                    }
+                    is LODGenerationResult.Failed -> {
+                        Log.w(TAG, "Highlight atlas generation failed: ${highlightResult.error}")
+                        atlasBucketManager.clearHighlight()
+                    }
+                }
+            }
+        }
+    }
 
     // Generation job tracking for cancellation
     private val activeJobs = mutableMapOf<LODLevel, Job>()
@@ -96,8 +231,8 @@ class StreamingAtlasManager @Inject constructor(
      * Call this during app launch to ensure immediate UI feedback.
      */
     suspend fun initializePersistentCache(allCanvasPhotos: List<Media.Image>) {
-        if (persistentCache != null) {
-            Log.d(TAG, "Persistent cache already initialized with ${persistentCache!!.sumOf { it.regions.size }} photos")
+        if (atlasBucketManager.isBaseBucketInitialized()) {
+            Log.d(TAG, "Persistent cache already initialized")
             return
         }
 
@@ -118,10 +253,7 @@ class StreamingAtlasManager @Inject constructor(
 
         when (result) {
             is LODGenerationResult.Success -> {
-                atlasMutex.withLock {
-                    persistentCache = result.atlases
-                    currentAtlases[LODLevel.LEVEL_0] = result.atlases
-                }
+                atlasBucketManager.populateBase(result.atlases)
 
                 Log.d(TAG, "Persistent cache initialized: ${result.atlases.size} atlases, ${result.atlases.sumOf { it.regions.size }} photos in ${duration.inWholeMilliseconds}ms")
 
@@ -150,26 +282,19 @@ class StreamingAtlasManager @Inject constructor(
     fun cleanupL7AtlasSync() {
         runBlocking {
             atlasMutex.withLock {
-                val l7Atlases = currentAtlases[LODLevel.LEVEL_7]
-                if (l7Atlases != null && l7Atlases.isNotEmpty()) {
-                    Log.d(TAG, "CleanupL7Sync: Removing ${l7Atlases.size} L7 atlases after deselection")
+                val existingHighlightAtlases = atlasBucketManager.getAtlasesByLOD(LODLevel.LEVEL_7)
+                if (existingHighlightAtlases.isNotEmpty()) {
+                    Log.d(TAG, "CleanupL7Sync: Removing ${existingHighlightAtlases.size} L7 atlases after deselection")
 
-                    // Recycle bitmaps
-                    l7Atlases.forEach { atlas ->
-                        if (!atlas.bitmap.isRecycled) {
-                            atlas.bitmap.recycle()
-                        }
-                    }
-
-                    // Remove from state
-                    currentAtlases.remove(LODLevel.LEVEL_7)
+                    // Clear highlight bucket (this handles bitmap recycling)
+                    atlasBucketManager.clearHighlight()
 
                     // Notify UI immediately
                     atlasResultFlow.tryEmit(AtlasStreamResult.AtlasRemoved(
                         requestSequence = ++requestSequence,
                         lodLevel = LODLevel.LEVEL_7,
                         reason = "Photo deselected - L7 no longer needed",
-                        removedAtlasCount = l7Atlases.size
+                        removedAtlasCount = existingHighlightAtlases.size
                     ))
 
                     Log.d(TAG, "CleanupL7Sync: Successfully removed L7 atlas and notified UI")
@@ -222,12 +347,13 @@ class StreamingAtlasManager @Inject constructor(
             }
 
             // Step 2: Check if persistent cache covers current request
-            if (persistentCache != null) {
+            if (atlasBucketManager.isBaseBucketInitialized()) {
                 Log.d(TAG, "Persistent cache available - immediate fallback rendering")
+                val persistentAtlases = atlasBucketManager.getBaseBucketAtlases()
                 atlasResultFlow.tryEmit(AtlasStreamResult.LODReady(
                     requestSequence = sequence,
                     lodLevel = LODLevel.LEVEL_0,
-                    atlases = persistentCache!!,
+                    atlases = persistentAtlases,
                     generationTimeMs = 0,
                     reason = "Persistent cache - immediate rendering"
                 ))
@@ -242,7 +368,7 @@ class StreamingAtlasManager @Inject constructor(
                     val effectiveLOD = calculateEffectiveLOD(priority, currentZoom)
 
                     // Skip LEVEL_0 if we already have persistent cache
-                    if (effectiveLOD == LODLevel.LEVEL_0 && persistentCache != null) {
+                    if (effectiveLOD == LODLevel.LEVEL_0 && atlasBucketManager.isBaseBucketInitialized()) {
                         Log.d(TAG, "Skipping LEVEL_0 generation - persistent cache available")
                         return@forEach
                     }
@@ -251,7 +377,8 @@ class StreamingAtlasManager @Inject constructor(
                         generateLODIndependently(
                             priority = priority,
                             effectiveLOD = effectiveLOD,
-                            requestSequence = sequence
+                            requestSequence = sequence,
+                            currentZoom = currentZoom
                         )
                     }
 
@@ -272,7 +399,8 @@ class StreamingAtlasManager @Inject constructor(
     private suspend fun generateLODIndependently(
         priority: TypeSafeLODPriority,
         effectiveLOD: LODLevel,
-        requestSequence: Long
+        requestSequence: Long,
+        currentZoom: Float
     ) = trace("${BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS}_${effectiveLOD}") {
         try {
             currentCoroutineContext().ensureActive()
@@ -291,7 +419,7 @@ class StreamingAtlasManager @Inject constructor(
                 lodSpecificGenerator.generateLODAtlas(
                     photos = priority.photos.map { it.uri },
                     lodLevel = effectiveLOD,
-                    currentZoom = 1.0f, // Use base zoom for LOD-specific generation
+                    currentZoom = currentZoom,
                     priority = priority
                 )
             }
@@ -300,18 +428,26 @@ class StreamingAtlasManager @Inject constructor(
 
             when (result) {
                 is LODGenerationResult.Success -> {
-                    // Update internal state and clean up redundant atlases
+                    // Update bucket storage based on LOD level and context
                     atlasMutex.withLock {
-                        currentAtlases[effectiveLOD] = result.atlases
-
-                        // If this is LEVEL_0 and we don't have persistent cache, set it
-                        if (effectiveLOD == LODLevel.LEVEL_0 && persistentCache == null) {
-                            persistentCache = result.atlases
-                            Log.d(TAG, "Set persistent cache from LEVEL_0 generation")
+                        when (effectiveLOD) {
+                            LODLevel.LEVEL_0 -> {
+                                if (!atlasBucketManager.isBaseBucketInitialized()) {
+                                    atlasBucketManager.populateBase(result.atlases)
+                                    Log.d(TAG, "Populated base bucket from LEVEL_0 generation")
+                                }
+                            }
+                            LODLevel.LEVEL_7 -> {
+                                // L7 goes to highlight bucket for selected photos
+                                atlasBucketManager.replaceHighlight(result.atlases)
+                                Log.d(TAG, "Updated highlight bucket with L7 atlases")
+                            }
+                            else -> {
+                                // Other LODs go to rolling bucket
+                                atlasBucketManager.addToRolling(result.atlases)
+                                Log.d(TAG, "Added ${effectiveLOD.name} to rolling bucket")
+                            }
                         }
-
-                        // Note: Redundant atlas cleanup removed to prevent LOD gaps
-                        // Previous cleanup was too aggressive and removed intermediate LOD levels
                     }
 
                     Log.d(TAG, "LOD $effectiveLOD generation complete: ${result.atlases.size} atlases in ${duration.inWholeMilliseconds}ms")
@@ -375,71 +511,51 @@ class StreamingAtlasManager @Inject constructor(
     }
 
     /**
-     * Get current atlases for specific LOD level
+     * Get current atlases for specific LOD level from bucket system
      */
     suspend fun getCurrentAtlases(lodLevel: LODLevel): List<TextureAtlas> = atlasMutex.withLock {
-        currentAtlases[lodLevel] ?: emptyList()
+        atlasBucketManager.getAtlasesByLOD(lodLevel)
     }
 
     /**
-     * Get all current atlases across all LOD levels
+     * Get all current atlases across all LOD levels from bucket system
      */
     suspend fun getAllCurrentAtlases(): Map<LODLevel, List<TextureAtlas>> = atlasMutex.withLock {
-        currentAtlases.toMap()
+        atlasBucketManager.snapshotAll().groupBy { it.lodLevel }
     }
 
     /**
-     * Get persistent cache atlases (LEVEL_0 with ALL photos)
+     * Get persistent cache atlases (LEVEL_0 with ALL photos) from base bucket
      */
     suspend fun getPersistentCache(): List<TextureAtlas>? = atlasMutex.withLock {
-        persistentCache
+        return@withLock if (atlasBucketManager.isBaseBucketInitialized()) {
+            atlasBucketManager.getBaseBucketAtlases()
+        } else {
+            null
+        }
     }
 
     /**
-     * Get best available atlas region for photo (highest LOD available)
+     * Get best available atlas region for photo (highest LOD available) from bucket system
      */
     suspend fun getBestPhotoRegion(photoId: Uri): Pair<TextureAtlas, AtlasRegion>? = atlasMutex.withLock {
-        // Search from highest to lowest LOD for best quality
-        LODLevel.entries.reversed().forEach { lodLevel ->
-            currentAtlases[lodLevel]?.forEach { atlas ->
-                atlas.regions[photoId]?.let { region ->
+        atlasBucketManager.getBestRegion(photoId)?.let { region ->
+            // Find the atlas containing this region
+            atlasBucketManager.snapshotAll().forEach { atlas ->
+                if (atlas.regions.containsKey(photoId)) {
                     return@withLock atlas to region
                 }
             }
         }
-
-        // Fallback to persistent cache if available
-        persistentCache?.forEach { atlas ->
-            atlas.regions[photoId]?.let { region ->
-                return@withLock atlas to region
-            }
-        }
-
         return@withLock null
     }
 
     /**
-     * Get atlas region for specific photo at specific LOD (with fallback to persistent cache)
+     * Get atlas region for specific photo at specific LOD (with fallback using bucket system)
      */
     suspend fun getPhotoRegion(photoId: Uri, preferredLOD: LODLevel? = null): AtlasRegion? = atlasMutex.withLock {
-        // First try preferred LOD
-        preferredLOD?.let { lod ->
-            currentAtlases[lod]?.firstNotNullOfOrNull { atlas ->
-                atlas.regions[photoId]
-            }?.let { return@withLock it }
-        }
-
-        // Then try any available LOD (highest first)
-        LODLevel.entries.reversed().forEach { lodLevel ->
-            currentAtlases[lodLevel]?.firstNotNullOfOrNull { atlas ->
-                atlas.regions[photoId]
-            }?.let { return@withLock it }
-        }
-
-        // Finally fallback to persistent cache
-        persistentCache?.firstNotNullOfOrNull { atlas ->
-            atlas.regions[photoId]
-        }
+        // Use bucket system's built-in best region lookup
+        atlasBucketManager.getBestRegion(photoId)
     }
 
     /**
@@ -447,6 +563,13 @@ class StreamingAtlasManager @Inject constructor(
      */
     fun getSmartMemoryManager(): SmartMemoryManager {
         return lodSpecificGenerator.getSmartMemoryManager()
+    }
+
+    /**
+     * Get AtlasBucketManager for direct bucket access
+     */
+    fun getAtlasBucketManager(): dev.serhiiyaremych.lumina.domain.bucket.AtlasBucketManager {
+        return atlasBucketManager
     }
 
     // Helper methods
@@ -465,12 +588,14 @@ class StreamingAtlasManager @Inject constructor(
      */
     private fun calculateEffectiveLOD(priority: TypeSafeLODPriority, currentZoom: Float): LODLevel {
         val visibleLOD = LODLevel.forZoom(currentZoom)
-        return when (priority.priority) {
+        val result = when (priority.priority) {
             AtlasPriority.PersistentCache -> LODLevel.LEVEL_0
             AtlasPriority.VisibleCells -> visibleLOD
             AtlasPriority.ActiveCell -> getHigherLOD(visibleLOD)
             AtlasPriority.SelectedPhoto -> LODLevel.LEVEL_7
         }
+        Log.d(TAG, "calculateEffectiveLOD: ${priority.priority::class.simpleName} at zoom $currentZoom -> visibleLOD=$visibleLOD, result=$result, photos=${priority.photos.size}")
+        return result
     }
 
 
@@ -481,7 +606,7 @@ class StreamingAtlasManager @Inject constructor(
      * Create type-safe LOD priorities from context information.
      * Replaces the unsafe integer-based priority system with clear semantics.
      */
-    private fun createLODPrioritiesList(
+    private suspend fun createLODPrioritiesList(
         visibleCells: List<HexCellWithMedia>,
         currentZoom: Float,
         selectedMedia: Media?,
@@ -494,7 +619,7 @@ class StreamingAtlasManager @Inject constructor(
         }
 
         // Persistent cache priority - only if not initialized
-        if (persistentCache == null && allPhotos.isNotEmpty()) {
+        if (!atlasBucketManager.isBaseBucketInitialized() && allPhotos.isNotEmpty()) {
             priorities.add(TypeSafeLODPriority(
                 priority = AtlasPriority.PersistentCache,
                 photos = allPhotos,
@@ -521,6 +646,7 @@ class StreamingAtlasManager @Inject constructor(
         if (activeCell != null && selectionMode == SelectionMode.CELL_MODE) {
             val activePhotos = activeCell.mediaItems.mapNotNull { it.media as? Media.Image }
             if (activePhotos.isNotEmpty()) {
+                Log.d(TAG, "Creating ActiveCell priority: activeCell=${activeCell.hexCell.q},${activeCell.hexCell.r}, selectionMode=$selectionMode, photos=${activePhotos.size}")
                 priorities.add(TypeSafeLODPriority(
                     priority = AtlasPriority.ActiveCell,
                     photos = activePhotos,
@@ -546,24 +672,23 @@ class StreamingAtlasManager @Inject constructor(
      * Apply upfront deduplication to prevent unnecessary atlas generation.
      * Filters out photos that already exist at higher LOD levels.
      */
-    private fun applyUpfrontDeduplication(
+    private suspend fun applyUpfrontDeduplication(
         priorities: List<TypeSafeLODPriority>,
         currentZoom: Float
     ): List<TypeSafeLODPriority> {
         if (priorities.isEmpty()) return priorities
 
         Log.d(TAG, "UpfrontDeduplication: Checking ${priorities.size} priorities against existing atlases")
-        Log.d(TAG, "UpfrontDeduplication: Current atlas state: ${currentAtlases.keys.map { "${it.name}(${currentAtlases[it]?.size ?: 0})" }}")
+        val bucketSummary = atlasBucketManager.snapshotAll().groupBy { it.lodLevel }.mapValues { it.value.size }
+        Log.d(TAG, "UpfrontDeduplication: Current bucket state: ${bucketSummary.map { "${it.key.name}(${it.value})" }}")
 
-        // Build map of existing photos at their highest LOD levels
+        // Build map of existing photos at their highest LOD levels from bucket system
         val existingPhotoToHighestLOD = mutableMapOf<Uri, LODLevel>()
-        currentAtlases.forEach { (lodLevel, atlases) ->
-            atlases.forEach { atlas ->
-                atlas.regions.keys.forEach { photoUri ->
-                    val current = existingPhotoToHighestLOD[photoUri]
-                    if (current == null || lodLevel.level > current.level) {
-                        existingPhotoToHighestLOD[photoUri] = lodLevel
-                    }
+        atlasBucketManager.snapshotAll().forEach { atlas ->
+            atlas.regions.keys.forEach { photoUri ->
+                val current = existingPhotoToHighestLOD[photoUri]
+                if (current == null || atlas.lodLevel.level > current.level) {
+                    existingPhotoToHighestLOD[photoUri] = atlas.lodLevel
                 }
             }
         }

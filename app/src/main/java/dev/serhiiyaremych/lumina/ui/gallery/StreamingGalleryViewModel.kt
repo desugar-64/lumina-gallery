@@ -79,7 +79,8 @@ class StreamingGalleryViewModel @Inject constructor(
 
     init {
         loadMedia()
-        setupAtlasStreaming()
+        // setupAtlasStreaming() // DISABLED: Using bucket system instead
+        setupBucketStreaming()
     }
 
     /**
@@ -186,6 +187,30 @@ class StreamingGalleryViewModel @Inject constructor(
                 } else {
                     android.util.Log.d("StreamingGalleryVM", "Ignoring stale result: ${result.requestSequence} <= $currentRequestSequence")
                 }
+            }
+        }
+    }
+
+    /**
+     * Setup bucket atlas streaming - sync UI state with bucket atlas changes
+     */
+    private fun setupBucketStreaming() {
+        viewModelScope.launch {
+            streamingAtlasManager.getAtlasBucketManager().atlasFlow.collectLatest { bucketAtlases ->
+                android.util.Log.d("StreamingGalleryVM", "Bucket atlas flow update: ${bucketAtlases.size} total atlases")
+                
+                // Group bucket atlases by LOD level for UI state
+                val atlasesByLOD = bucketAtlases.groupBy { it.lodLevel }
+                val level0Atlases = atlasesByLOD[LODLevel.LEVEL_0]
+                
+                updateUiState { currentState ->
+                    currentState.copy(
+                        streamingAtlases = atlasesByLOD,
+                        persistentCache = level0Atlases
+                    )
+                }
+                
+                android.util.Log.d("StreamingGalleryVM", "Updated UI state with bucket atlases: ${atlasesByLOD.map { "${it.key.name}(${it.value.size})" }}")
             }
         }
     }
@@ -334,6 +359,13 @@ class StreamingGalleryViewModel @Inject constructor(
      */
     fun updateSelectedMedia(media: Media?) {
         updateUiState { it.copy(selectedMedia = media) }
+        
+        // Clear highlight bucket when media is deselected
+        if (media == null) {
+            viewModelScope.launch {
+                streamingAtlasManager.updateSelectedMedia(null, 1.0f, SelectionMode.CELL_MODE)
+            }
+        }
     }
 
     /**

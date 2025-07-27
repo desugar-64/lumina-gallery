@@ -42,9 +42,10 @@ object StreamingAtlasModule {
     @Provides
     fun provideStreamingAtlasManager(
         lodSpecificGenerator: LODSpecificGenerator,
-        bitmapAtlasPool: BitmapAtlasPool
+        bitmapAtlasPool: BitmapAtlasPool,
+        atlasBucketManager: dev.serhiiyaremych.lumina.domain.bucket.AtlasBucketManager
     ): StreamingAtlasManager {
-        return StreamingAtlasManager(lodSpecificGenerator, bitmapAtlasPool)
+        return StreamingAtlasManager(lodSpecificGenerator, bitmapAtlasPool, atlasBucketManager)
     }
 
     // TEMPORARY: Commented out disabled memory manager - causes type conflicts

@@ -161,7 +161,7 @@ class SmartMemoryManager @Inject constructor(
      * Atlas registration key
      */
     data class AtlasKey(
-        val lodLevel: Int,
+        val lodLevel: LODLevel,
         val atlasSize: IntSize,
         val photosHash: Int // Hash of photo URIs for identification
     )

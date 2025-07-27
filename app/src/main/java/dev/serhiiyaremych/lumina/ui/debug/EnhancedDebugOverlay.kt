@@ -237,7 +237,7 @@ private fun MultiLODAtlasView(
         when (atlasState) {
             is MultiAtlasUpdateResult.Success -> {
                 val validAtlases = atlasState.atlases.filter { !it.bitmap.isRecycled }
-                val lodGroups = validAtlases.groupBy { LODLevel.fromLevel(it.lodLevel) }
+                val lodGroups = validAtlases.groupBy { it.lodLevel }
 
                 Column(
                     verticalArrangement = Arrangement.spacedBy(3.dp)
@@ -246,7 +246,7 @@ private fun MultiLODAtlasView(
                     AtlasStrategyIndicator(atlasState)
 
                     // LOD groups - main focus
-                    lodGroups.entries.sortedBy { it.key?.level ?: -1 }.forEach { (lod, atlases) ->
+                    lodGroups.entries.sortedBy { it.key.level }.forEach { (lod, atlases) ->
                         LODGroupView(lod, atlases)
                     }
                 }
@@ -361,7 +361,7 @@ private fun AtlasStrategyIndicator(atlasState: MultiAtlasUpdateResult.Success) {
     // Detect strategy from atlas distribution
     val strategy = when {
         atlasState.atlases.size == 1 -> "SINGLE"
-        atlasState.atlases.groupBy { LODLevel.fromLevel(it.lodLevel) }.size > 1 -> "PRIORITY"
+        atlasState.atlases.groupBy { it.lodLevel }.size > 1 -> "PRIORITY"
         else -> "MULTI"
     }
 
@@ -598,7 +598,7 @@ private fun ExpandedAtlasCard(atlas: dev.serhiiyaremych.lumina.domain.model.Text
                 fontWeight = FontWeight.Bold
             )
 
-            val lodLevel = LODLevel.fromLevel(atlas.lodLevel) ?: LODLevel.LEVEL_0
+            val lodLevel = atlas.lodLevel
             Text(
                 text = "LOD ${lodLevel.level}, ${lodLevel.resolution}x${lodLevel.resolution}px",
                 color = lodColor,
