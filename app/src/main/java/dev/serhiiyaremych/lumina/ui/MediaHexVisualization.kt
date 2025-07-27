@@ -25,9 +25,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.Media
-import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
 import kotlinx.coroutines.flow.distinctUntilChanged
-
 
 @Composable
 fun MediaHexVisualization(
@@ -35,7 +33,7 @@ fun MediaHexVisualization(
     hexGridRenderer: HexGridRenderer,
     provideZoom: () -> Float,
     provideOffset: () -> Offset,
-    atlasState: MultiAtlasUpdateResult? = null,
+    streamingAtlases: Map<dev.serhiiyaremych.lumina.domain.model.LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>? = null,
     selectedMedia: Media? = null,
     onMediaClicked: (Media) -> Unit = {},
     onHexCellClicked: (HexCell) -> Unit = {},
@@ -163,14 +161,14 @@ fun MediaHexVisualization(
             val clampedZoom = zoom.coerceIn(0.01f, 100f)
             val canvasSize = IntSize(size.width.toInt(), size.height.toInt())
 
-            // Layer rendering configuration
-            val layerConfig = MediaLayerConfig(
+            // Layer rendering configuration with streaming atlases
+            val layerConfig = StreamingMediaLayerConfig(
                 hexGridLayout = hexGridLayout,
                 hexGridRenderer = hexGridRenderer,
                 animationManager = state.animationManager,
                 geometryReader = state.geometryReader,
                 selectedMedia = selectedMedia,
-                atlasState = atlasState,
+                streamingAtlases = streamingAtlases,
                 zoom = zoom
             )
 

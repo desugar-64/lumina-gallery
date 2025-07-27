@@ -29,7 +29,7 @@ import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaItem
 import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaManager
 
 /**
- * Configuration for media layer rendering.
+ * Configuration for media layer rendering (legacy).
  */
 data class MediaLayerConfig(
     val hexGridLayout: dev.serhiiyaremych.lumina.domain.model.HexGridLayout,
@@ -38,6 +38,19 @@ data class MediaLayerConfig(
     val geometryReader: GeometryReader,
     val selectedMedia: Media?,
     val atlasState: MultiAtlasUpdateResult?,
+    val zoom: Float
+)
+
+/**
+ * Configuration for streaming media layer rendering.
+ */
+data class StreamingMediaLayerConfig(
+    val hexGridLayout: dev.serhiiyaremych.lumina.domain.model.HexGridLayout,
+    val hexGridRenderer: HexGridRenderer,
+    val animationManager: AnimatableMediaManager,
+    val geometryReader: GeometryReader,
+    val selectedMedia: Media?,
+    val streamingAtlases: Map<dev.serhiiyaremych.lumina.domain.model.LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>?,
     val zoom: Float
 )
 
@@ -209,7 +222,7 @@ class MediaLayerManager(
     }
 
     /**
-     * Records and draws both content and selected layers with proper layering.
+     * Records and draws both content and selected layers with proper layering (legacy).
      */
     fun DrawScope.recordAndDrawLayers(
         config: MediaLayerConfig,
@@ -252,6 +265,158 @@ class MediaLayerManager(
         // Draw both layers in order: content first, then selected on top
         drawLayer(contentLayer)
         drawLayer(selectedLayer)
+    }
+
+    /**
+     * Records and draws both content and selected layers with streaming atlases.
+     */
+    fun DrawScope.recordAndDrawLayers(
+        config: StreamingMediaLayerConfig,
+        canvasSize: IntSize,
+        zoom: Float,
+        offset: Offset
+    ) {
+        val clampedZoom = zoom.coerceIn(0.01f, 100f)
+
+        // Record content layer with all non-selected media
+        recordStreamingContentLayer(config, canvasSize, clampedZoom, offset)
+
+        // Record selected layer with only the selected media item
+        recordStreamingSelectedLayer(config, canvasSize, clampedZoom, offset)
+
+        // Configure content layer composition strategy and effects when there's a selection
+        val currentDesaturation = desaturationAnimatable.value
+        val currentGradientAlpha = gradientAlphaAnimatable.value
+        val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
+        val hasSelection = effectiveSelectedMedia != null
+
+        if (hasSelection) {
+            // Set content layer to offscreen compositing for blend mode effects
+            contentLayer.compositingStrategy = CompositingStrategy.Offscreen
+
+            // Apply desaturation if needed
+            if (currentDesaturation > 0f) {
+                applyDesaturationToContentLayer(currentDesaturation)
+            }
+        } else {
+            // Reset to default compositing strategy when no selection
+            contentLayer.compositingStrategy = CompositingStrategy.Auto
+            contentLayer.colorFilter = null
+        }
+
+        // Selected layer always uses default settings (no alpha fade)
+        selectedLayer.compositingStrategy = CompositingStrategy.Auto
+        selectedLayer.alpha = 1f
+
+        // Draw both layers in order: content first, then selected on top
+        drawLayer(contentLayer)
+        drawLayer(selectedLayer)
+    }
+
+    /**
+     * Records the streaming content layer with hex grid background and all non-selected media items.
+     */
+    private fun recordStreamingContentLayer(
+        config: StreamingMediaLayerConfig,
+        canvasSize: IntSize,
+        clampedZoom: Float,
+        offset: Offset
+    ) {
+        contentLayer.record(
+            density = density,
+            layoutDirection = layoutDirection,
+            size = canvasSize
+        ) {
+            withTransform({
+                scale(clampedZoom, clampedZoom, pivot = Offset.Zero)
+                translate(offset.x / clampedZoom, offset.y / clampedZoom)
+            }) {
+                // Store hex cell bounds for hit testing (world coordinates)
+                config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
+                    config.geometryReader.storeHexCellBounds(hexCellWithMedia.hexCell)
+                }
+
+                // Draw hex grid background
+                config.hexGridRenderer.drawHexGrid(
+                    drawScope = this,
+                    hexGrid = config.hexGridLayout.hexGrid,
+                    zoom = 1f,
+                    offset = Offset.Zero
+                )
+
+                // Draw all non-selected media items
+                var selectedMedia: AnimatableMediaItem? = null
+                val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
+                config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
+                    hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
+                        val animatableItem = config.animationManager.getOrCreateAnimatable(mediaWithPosition)
+                        val isSelected = animatableItem.mediaWithPosition.media == effectiveSelectedMedia
+
+                        if (isSelected) selectedMedia = animatableItem
+
+                        config.geometryReader.storeMediaBounds(
+                            media = animatableItem.mediaWithPosition.media,
+                            bounds = animatableItem.mediaWithPosition.absoluteBounds,
+                            hexCell = hexCellWithMedia.hexCell
+                        )
+
+                        // Only draw non-selected items in content layer
+                        if (!isSelected) {
+                            drawAnimatableMediaFromStreamingAtlas(
+                                animatableItem = animatableItem,
+                                streamingAtlases = config.streamingAtlases,
+                                zoom = config.zoom
+                            )
+                        }
+                        config.geometryReader.debugDrawBounds(this, config.zoom)
+                    }
+                }
+
+                // Draw gradient for effective selected media
+                selectedMedia?.let { item -> drawSelectionGradient(item) }
+            }
+        }
+    }
+
+    /**
+     * Records the streaming selected layer with only the selected media item.
+     */
+    private fun recordStreamingSelectedLayer(
+        config: StreamingMediaLayerConfig,
+        canvasSize: IntSize,
+        clampedZoom: Float,
+        offset: Offset
+    ) {
+        selectedLayer.record(
+            density = density,
+            layoutDirection = layoutDirection,
+            size = canvasSize
+        ) {
+            withTransform({
+                scale(clampedZoom, clampedZoom, pivot = Offset.Zero)
+                translate(offset.x / clampedZoom, offset.y / clampedZoom)
+            }) {
+                // Draw only the selected media item
+                val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
+                effectiveSelectedMedia?.let { media ->
+                    config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
+                        hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
+                            val animatableItem = config.animationManager.getOrCreateAnimatable(mediaWithPosition)
+                            val isSelected = animatableItem.mediaWithPosition.media == media
+
+                            if (isSelected) {
+                                // Draw the selected media item (gradient is now in content layer)
+                                drawAnimatableMediaFromStreamingAtlas(
+                                    animatableItem = animatableItem,
+                                    streamingAtlases = config.streamingAtlases,
+                                    zoom = config.zoom
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**

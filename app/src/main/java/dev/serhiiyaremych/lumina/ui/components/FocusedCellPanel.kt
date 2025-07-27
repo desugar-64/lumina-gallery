@@ -62,14 +62,14 @@ import androidx.graphics.shapes.toPath
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.model.MediaWithPosition
-import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
+import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
 import dev.serhiiyaremych.lumina.ui.SelectionMode
 import dev.serhiiyaremych.lumina.ui.drawStyledPhoto
 import dev.serhiiyaremych.lumina.ui.drawPlaceholderRect
 
 /**
  * Panel displaying media items in a focused cell with photo previews.
- * Shows actual photo thumbnails from atlas textures with gradient fade-out edges.
+ * Shows actual photo thumbnails from L0 atlas (persistent cache) with gradient fade-out edges.
  *
  * Enhanced with Material 3 Expressive motion:
  * - Panel entrance animations with spring physics
@@ -80,11 +80,14 @@ import dev.serhiiyaremych.lumina.ui.drawPlaceholderRect
  * Supports conditional focus animations based on selection mode:
  * - PHOTO_MODE: Panel selections trigger focus animations
  * - CELL_MODE: Panel selections just update selection without animation
+ *
+ * Uses only L0 atlases (32px thumbnails) which are always cached and contain all photos.
+ * This provides optimal performance for thumbnail display in 44dp previews.
  */
 @Composable
 fun FocusedCellPanel(
     hexCellWithMedia: HexCellWithMedia,
-    atlasState: MultiAtlasUpdateResult?,
+    level0Atlases: List<TextureAtlas>?,
     selectionMode: SelectionMode,
     selectedMedia: Media? = null,
     onDismiss: () -> Unit,
@@ -103,7 +106,7 @@ fun FocusedCellPanel(
     ) {
         FocusedCellPanelContent(
             hexCellWithMedia = hexCellWithMedia,
-            atlasState = atlasState,
+            level0Atlases = level0Atlases,
             selectionMode = selectionMode,
             selectedMedia = selectedMedia,
             isVisible = panelAnimations.isVisible,
@@ -192,7 +195,7 @@ private fun Modifier.panelTransformation(
 @Composable
 private fun FocusedCellPanelContent(
     hexCellWithMedia: HexCellWithMedia,
-    atlasState: MultiAtlasUpdateResult?,
+    level0Atlases: List<TextureAtlas>?,
     selectionMode: SelectionMode,
     selectedMedia: Media?,
     isVisible: Boolean,
@@ -209,7 +212,7 @@ private fun FocusedCellPanelContent(
     ) {
         PhotoPreviewGrid(
             mediaItems = hexCellWithMedia.mediaItems,
-            atlasState = atlasState,
+            level0Atlases = level0Atlases,
             selectionMode = selectionMode,
             selectedMedia = selectedMedia,
             panelVisible = isVisible,
@@ -251,7 +254,7 @@ private fun createMediaClickHandler(
 @Composable
 private fun PhotoPreviewGrid(
     mediaItems: List<MediaWithPosition>,
-    atlasState: MultiAtlasUpdateResult?,
+    level0Atlases: List<TextureAtlas>?,
     selectionMode: SelectionMode,
     selectedMedia: Media?,
     panelVisible: Boolean,
@@ -308,7 +311,7 @@ private fun PhotoPreviewGrid(
                 StaggeredPhotoPreviewItem(
                     itemIndex = itemIndex,
                     media = mediaWithPosition.media,
-                    atlasState = atlasState,
+                    level0Atlases = level0Atlases,
                     isSelected = isSelected,
                     panelVisible = panelVisible,
                     onClick = { onMediaClick(mediaWithPosition.media) },
@@ -327,7 +330,7 @@ private fun PhotoPreviewGrid(
 private fun StaggeredPhotoPreviewItem(
     itemIndex: Int,
     media: Media,
-    atlasState: MultiAtlasUpdateResult?,
+    level0Atlases: List<TextureAtlas>?,
     isSelected: Boolean,
     onClick: () -> Unit,
     panelVisible: Boolean,
@@ -371,7 +374,7 @@ private fun StaggeredPhotoPreviewItem(
     
     PhotoPreviewItem(
         media = media,
-        atlasState = atlasState,
+        level0Atlases = level0Atlases,
         isSelected = isSelected,
         onClick = onClick,
         modifier = modifier
@@ -409,13 +412,13 @@ class MorphPolygonShape(
 }
 
 /**
- * Photo preview item displaying actual photo from atlas texture instead of icon.
- * Uses lowest LOD atlas for memory efficiency and optimal preview quality.
+ * Photo preview item displaying actual photo from L0 atlas texture.
+ * Uses only L0 atlases (32px thumbnails) which are always cached and contain all photos.
  */
 @Composable
 private fun PhotoPreviewItem(
     media: dev.serhiiyaremych.lumina.domain.model.Media,
-    atlasState: dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult?,
+    level0Atlases: List<TextureAtlas>?,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -491,11 +494,14 @@ private fun PhotoPreviewItem(
                 val bounds = androidx.compose.ui.geometry.Rect(Offset.Zero, size)
 
                 onDrawBehind {
-                    when (atlasState) {
-                        is dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult.Success -> {
-                            // Search for photo across all atlases
-                            val atlasAndRegion = atlasState.atlases.firstNotNullOfOrNull { atlas ->
-                                atlas.regions[media.uri]?.let { region -> atlas to region }
+                    when {
+                        level0Atlases != null && level0Atlases.isNotEmpty() -> {
+                            // Search in L0 atlases for this photo (simple and direct)
+                            val photoId = media.uri
+                            val atlasAndRegion = level0Atlases.firstNotNullOfOrNull { atlas ->
+                                atlas.regions[photoId]?.let { region ->
+                                    atlas to region
+                                }
                             }
 
                             if (atlasAndRegion != null && !atlasAndRegion.first.bitmap.isRecycled) {
@@ -544,12 +550,12 @@ private fun PhotoPreviewItem(
                                 )
 
                             } else {
-                                // Fallback: placeholder when photo not in atlas
+                                // Fallback: placeholder when photo not in L0 atlases
                                 drawPlaceholderRect(media, bounds, zoom = 1f, alpha = 1f)
                             }
                         }
                         else -> {
-                            // Fallback: placeholder when atlas not available
+                            // Fallback: placeholder when no L0 atlases available
                             drawPlaceholderRect(media, bounds, zoom = 1f, alpha = 1f)
                         }
                     }

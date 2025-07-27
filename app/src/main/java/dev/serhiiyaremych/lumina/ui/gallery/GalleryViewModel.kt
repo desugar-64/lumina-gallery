@@ -67,7 +67,10 @@ class GalleryViewModel @Inject constructor(
     // Track current request sequence to prevent stale results
     private var currentRequestSequence: Long = 0
 
-    private val updateAtlasFlow = MutableStateFlow<Triple<List<HexCellWithMedia>, Float, Media?>>(Triple(emptyList(), 1.0f, null))
+    private val updateAtlasFlow = MutableStateFlow<Tuple4<List<HexCellWithMedia>, Float, Media?, dev.serhiiyaremych.lumina.ui.SelectionMode>>(Tuple4(emptyList(), 1.0f, null, dev.serhiiyaremych.lumina.ui.SelectionMode.CELL_MODE))
+
+    // Helper data class for atlas flow parameters
+    data class Tuple4<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
     init {
         loadMedia()
@@ -87,14 +90,15 @@ class GalleryViewModel @Inject constructor(
             updateAtlasFlow
                 .filter { it.first.isNotEmpty() }
                 .distinctUntilChanged()
-                .collectLatest { (visibleCells, currentZoom, selectedMedia) ->
+                .collectLatest { (visibleCells, currentZoom, selectedMedia, selectionMode) ->
                     _isAtlasGenerating.value = true
                     
                     runCatching {
                         atlasManager.updateVisibleCells(
                             visibleCells = visibleCells,
                             currentZoom = currentZoom,
-                            selectedMedia = selectedMedia
+                            selectedMedia = selectedMedia,
+                            selectionMode = selectionMode
                         )
                     }.fold(
                         onSuccess = { result ->
@@ -173,10 +177,11 @@ class GalleryViewModel @Inject constructor(
     fun onVisibleCellsChanged(
         visibleCells: List<HexCellWithMedia>,
         currentZoom: Float,
-        selectedMedia: Media? = null
+        selectedMedia: Media? = null,
+        selectionMode: dev.serhiiyaremych.lumina.ui.SelectionMode = dev.serhiiyaremych.lumina.ui.SelectionMode.CELL_MODE
     ) {
-        android.util.Log.d("GalleryViewModel", "onVisibleCellsChanged: ${visibleCells.size} cells, zoom=$currentZoom, selectedMedia=${selectedMedia?.let { "present" } ?: "none"}")
-        updateAtlasFlow.value = Triple(visibleCells, currentZoom, selectedMedia)
+        android.util.Log.d("GalleryViewModel", "onVisibleCellsChanged: ${visibleCells.size} cells, zoom=$currentZoom, selectedMedia=${selectedMedia?.let { "present" } ?: "none"}, selectionMode=$selectionMode")
+        updateAtlasFlow.value = Tuple4(visibleCells, currentZoom, selectedMedia, selectionMode)
         
         // Update memory status for debug panel
         updateMemoryStatus()

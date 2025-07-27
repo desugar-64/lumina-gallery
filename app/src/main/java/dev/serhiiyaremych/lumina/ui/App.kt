@@ -24,11 +24,13 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
+import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
 import dev.serhiiyaremych.lumina.ui.animation.AnimationConstants
 import dev.serhiiyaremych.lumina.ui.components.FocusedCellPanel
 import dev.serhiiyaremych.lumina.ui.components.MediaPermissionFlow
 import dev.serhiiyaremych.lumina.ui.debug.EnhancedDebugOverlay
 import dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel
+import dev.serhiiyaremych.lumina.ui.gallery.StreamingGalleryViewModel
 import dev.serhiiyaremych.lumina.ui.theme.LuminaGalleryTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -55,16 +57,293 @@ enum class SelectionMode {
 }
 
 /**
- * Root composable for the Lumina gallery view.
+ * Root composable for the Lumina gallery view with streaming atlas system.
  *
  * Responsibilities:
- * - Initializes and connects ViewModel for media data
+ * - Initializes and connects StreamingViewModel for media data
  * - Calculates optimal hex grid layout based on media groups
  * - Manages transformation state for zoom/pan interactions
- * - Coordinates between visualization and transformation systems
+ * - Coordinates between visualization and streaming atlas systems
  *
  * @param modifier Compose modifier for layout
- * @param galleryViewModel Gallery view model instance (passed from MainActivity)
+ * @param streamingGalleryViewModel Streaming gallery view model instance
+ */
+@Composable
+fun App(
+    modifier: Modifier = Modifier,
+    streamingGalleryViewModel: StreamingGalleryViewModel,
+    isBenchmarkMode: Boolean = false,
+    autoZoom: Boolean = false,
+) {
+    LuminaGalleryTheme {
+        // Single UI state following UDF architecture
+        val uiState by streamingGalleryViewModel.uiState.collectAsState()
+        val density = LocalDensity.current
+
+        // Remember stable cell focus listener
+        val cellFocusListener = remember {
+            object : CellFocusListener {
+                override fun onCellSignificant(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia, coverage: Float) {
+                    Log.d("CellFocus", "Cell SIGNIFICANT: (${hexCellWithMedia.hexCell.q}, ${hexCellWithMedia.hexCell.r}) coverage=${String.format("%.2f", coverage)}")
+                    streamingGalleryViewModel.updateSignificantCells(uiState.significantCells + hexCellWithMedia.hexCell)
+
+                    // Show focused cell panel
+                    streamingGalleryViewModel.updateFocusedCell(hexCellWithMedia)
+                }
+
+                override fun onCellInsignificant(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia) {
+                    val hexCell = hexCellWithMedia.hexCell
+                    Log.d("CellFocus", "App streaming callback - Cell INSIGNIFICANT: (${hexCell.q}, ${hexCell.r})")
+                    Log.d("CellFocus", "App streaming callback - Before removal: ${uiState.significantCells.size} cells")
+
+                    streamingGalleryViewModel.updateSignificantCells(uiState.significantCells - hexCell)
+                    Log.d("CellFocus", "App streaming callback - After removal: ${uiState.significantCells.size} cells")
+
+                    // Hide focused cell panel if this was the focused cell
+                    if (uiState.focusedCellWithMedia?.hexCell == hexCell) {
+                        streamingGalleryViewModel.updateFocusedCell(null)
+                    }
+                }
+            }
+        }
+
+        Log.d(
+            "StreamingApp",
+            "Media loaded: ${uiState.media.size} items, grouped into ${uiState.groupedMedia.size} groups, layout: ${uiState.hexGridLayout?.totalMediaCount ?: 0} positioned"
+        )
+
+        val gridState = rememberGridCanvasState()
+        val transformableState = rememberTransformableState(
+            animationSpec = tween(durationMillis = AnimationConstants.ANIMATION_DURATION_MS)
+        )
+        val hexGridRenderer = remember { HexGridRenderer() }
+        val coroutineScope = rememberCoroutineScope()
+
+        // Unified viewport state manager - single source of truth for all viewport decisions
+        val viewportStateManager = remember { ViewportStateManager() }
+
+        // Create media hex state for streaming system
+        val mediaHexState = uiState.hexGridLayout?.let { layout ->
+            rememberMediaHexState(
+                hexGridLayout = layout,
+                selectedMedia = uiState.selectedMedia,
+                onVisibleCellsChanged = { visibleCells ->
+                    Log.d("StreamingApp", "Visible cells changed: ${visibleCells.size} cells")
+                    streamingGalleryViewModel.onVisibleCellsChanged(
+                        visibleCells = visibleCells,
+                        currentZoom = transformableState.zoom,
+                        selectedMedia = uiState.selectedMedia,
+                        selectionMode = uiState.selectionMode,
+                        activeCell = uiState.focusedCellWithMedia
+                    )
+                },
+                provideZoom = { transformableState.zoom },
+                provideOffset = { transformableState.offset }
+            )
+        }
+
+        Box(modifier = modifier.fillMaxSize()) {
+            if (uiState.permissionGranted) {
+                // Main gallery interface - only shown when permissions are granted
+                BoxWithConstraints {
+                    val canvasSize = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat())
+
+                    // Unified viewport state monitoring
+                    val zoomProvider = rememberUpdatedState { transformableState.zoom }
+                    val offsetProvider = rememberUpdatedState { transformableState.offset }
+
+                    LaunchedEffect(canvasSize) {
+                        snapshotFlow {
+                            Triple(zoomProvider.value(), offsetProvider.value(), uiState.focusedCellWithMedia to uiState.selectedMedia)
+                        }
+                        .distinctUntilChanged()
+                        .collect { (currentZoom, currentOffset, selectionPair) ->
+                            val (currentFocusedCell, currentSelectedMedia) = selectionPair
+
+                            // Calculate unified viewport state
+                            val viewportState = viewportStateManager.calculateViewportState(
+                                canvasSize = canvasSize,
+                                zoom = currentZoom,
+                                offset = currentOffset,
+                                focusedCell = currentFocusedCell,
+                                selectedMedia = currentSelectedMedia,
+                                currentSelectionMode = uiState.selectionMode
+                            )
+
+                            // Apply selection mode changes
+                            if (viewportState.suggestedSelectionMode != uiState.selectionMode) {
+                                streamingGalleryViewModel.updateSelectionMode(viewportState.suggestedSelectionMode)
+                                Log.d("StreamingApp", "Selection mode changed: ${viewportState.suggestedSelectionMode} (viewport-based)")
+                            }
+
+                            // Apply media deselection when out of viewport
+                            if (viewportState.shouldDeselectMedia && uiState.selectedMedia != null) {
+                                streamingGalleryViewModel.updateSelectedMedia(null)
+                                streamingGalleryViewModel.updateSelectionMode(SelectionMode.CELL_MODE)
+                                Log.d("StreamingApp", "Media deselected: out of viewport")
+                            }
+                        }
+                    }
+
+                    // Generate hex grid layout when canvas size is available
+                    LaunchedEffect(canvasSize, uiState.groupedMedia) {
+                        if (uiState.groupedMedia.isNotEmpty()) {
+                            streamingGalleryViewModel.generateHexGridLayout(density, canvasSize)
+                        }
+                    }
+
+                    // Center the view on the grid when layout is first generated
+                    LaunchedEffect(uiState.hexGridLayout) {
+                        uiState.hexGridLayout?.let { layout ->
+                            if (layout.hexCellsWithMedia.isNotEmpty()) {
+                                // Center on the grid bounds
+                                val gridCenter = layout.bounds.center
+                                val canvasCenter = Offset(canvasSize.width / 2f, canvasSize.height / 2f)
+                                val centerOffset = canvasCenter - gridCenter
+
+                                Log.d("StreamingApp", "Centering grid: gridCenter=$gridCenter, canvasCenter=$canvasCenter, offset=$centerOffset")
+                                transformableState.updateMatrix {
+                                    reset()
+                                    postScale(1f, 1f)
+                                    postTranslate(centerOffset.x, centerOffset.y)
+                                }
+                            }
+                        }
+                    }
+
+                    TransformableContent(
+                        modifier = Modifier.fillMaxSize(),
+                        state = transformableState
+                    ) {
+                        GridCanvas(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .semantics {
+                                    testTagsAsResourceId = true
+                                    contentDescription = "Streaming gallery canvas"
+                                }
+                                .testTag(BenchmarkLabels.GALLERY_CANVAS_TEST_TAG),
+                            zoom = transformableState.zoom,
+                            offset = transformableState.offset,
+                            state = gridState
+                        ) {
+                            // Draw media visualization with streaming atlas
+                            uiState.hexGridLayout?.let { layout ->
+                                mediaHexState?.let { state ->
+                                    // Debug: Log what atlases we're passing to the UI
+                                    Log.d("StreamingApp", "Passing to UI: ${uiState.availableAtlases.keys.map { "${it.name}(${uiState.availableAtlases[it]?.size ?: 0})" }}")
+
+                                    MediaHexVisualization(
+                                        hexGridLayout = layout,
+                                        hexGridRenderer = hexGridRenderer,
+                                        provideZoom = { transformableState.zoom },
+                                        provideOffset = { transformableState.offset },
+                                        streamingAtlases = uiState.availableAtlases,
+                                        selectedMedia = uiState.selectedMedia,
+                                        onMediaClicked = { media ->
+                                            Log.d("StreamingApp", "Media clicked: ${media.displayName}")
+                                            if (uiState.selectedMedia == media) {
+                                                Log.d("StreamingApp", "Deselecting media: ${media.displayName}")
+                                                streamingGalleryViewModel.updateSelectionMode(SelectionMode.CELL_MODE)
+                                                streamingGalleryViewModel.updateSelectedMedia(null)
+                                            } else {
+                                                streamingGalleryViewModel.updateSelectionMode(SelectionMode.PHOTO_MODE)
+                                                streamingGalleryViewModel.updateSelectedMedia(media)
+                                                Log.d("StreamingApp", "Selection mode: PHOTO_MODE (canvas click)")
+                                            }
+                                        },
+                                        onHexCellClicked = { hexCell ->
+                                            Log.d("StreamingApp", "Hex cell clicked: (${hexCell.q}, ${hexCell.r})")
+                                            streamingGalleryViewModel.updateSelectedMedia(null)
+                                            streamingGalleryViewModel.updateSelectionMode(SelectionMode.CELL_MODE)
+                                            Log.d("StreamingApp", "Selection mode: CELL_MODE (cell click)")
+                                        },
+                                        onFocusRequested = { bounds ->
+                                            Log.d("StreamingApp", "Focus requested: $bounds")
+                                            coroutineScope.launch {
+                                                transformableState.focusOn(bounds)
+                                            }
+                                        },
+                                        onVisibleCellsChanged = {}, // Handled by mediaHexState
+                                        cellFocusListener = cellFocusListener,
+                                        onClearClickedMedia = {
+                                            Log.d("CellFocus", "Clearing clicked media state for red outline")
+                                        },
+                                        externalState = state
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Debug overlay with streaming info
+                    EnhancedDebugOverlay(
+                        atlasState = null, // Legacy atlas state (not used with streaming)
+                        isAtlasGenerating = uiState.isAtlasGenerating,
+                        currentZoom = transformableState.zoom,
+                        memoryStatus = null, // TODO: Get memory status from streaming manager
+                        smartMemoryManager = streamingGalleryViewModel.getStreamingAtlasManager().getSmartMemoryManager(),
+                        deviceCapabilities = null, // TODO: Add device capabilities to streaming system
+                        significantCells = uiState.significantCells,
+                        streamingAtlases = uiState.availableAtlases,
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    // Focused cell panel with conditional focus animations
+                    uiState.focusedCellWithMedia?.let { cellWithMedia ->
+                        mediaHexState?.let { state ->
+                            FocusedCellPanel(
+                                hexCellWithMedia = cellWithMedia,
+                                level0Atlases = uiState.availableAtlases[dev.serhiiyaremych.lumina.domain.model.LODLevel.LEVEL_0],
+                                selectionMode = uiState.selectionMode,
+                                selectedMedia = uiState.selectedMedia,
+                                onDismiss = { streamingGalleryViewModel.updateFocusedCell(null) },
+                                onMediaSelected = { media ->
+                                    streamingGalleryViewModel.updateSelectedMedia(media)
+                                    // Panel selections preserve current mode - don't change it
+                                    Log.d("App", "Panel selection: ${media.displayName}, mode: ${uiState.selectionMode}")
+                                },
+                                onFocusRequested = { bounds ->
+                                    Log.d("App", "Panel focus requested: $bounds")
+                                    coroutineScope.launch {
+                                        transformableState.focusOn(bounds)
+                                    }
+                                },
+                                getMediaBounds = { media ->
+                                    state.geometryReader.getMediaBounds(media)
+                                },
+                                provideTranslationOffset = { panelSize ->
+                                    calculateCellPanelPosition(
+                                        hexCell = cellWithMedia.hexCell,
+                                        zoom = transformableState.zoom,
+                                        offset = transformableState.offset,
+                                        canvasSize = canvasSize,
+                                        panelSize = panelSize
+                                    )
+                                },
+                                modifier = Modifier
+                            )
+                        }
+                    }
+
+                }
+            } else {
+                // Permission flow - shown when permissions are not granted
+                MediaPermissionFlow(
+                    onPermissionGranted = { streamingGalleryViewModel.updatePermissionGranted(true) },
+                    onPermissionDenied = {
+                        Log.w("StreamingApp", "Media permissions denied")
+                    }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Legacy root composable for the Lumina gallery view.
+ *
+ * @deprecated Use the StreamingGalleryViewModel version for better performance
  */
 @Composable
 fun App(
@@ -142,7 +421,7 @@ fun App(
                 selectedMedia = selectedMedia,
                 onVisibleCellsChanged = { visibleCells ->
                     Log.d("App", "Visible cells changed: ${visibleCells.size} cells")
-                    galleryViewModel.onVisibleCellsChanged(visibleCells, transformableState.zoom, selectedMedia)
+                    galleryViewModel.onVisibleCellsChanged(visibleCells, transformableState.zoom, selectedMedia, selectionMode)
                 },
                 provideZoom = { transformableState.zoom },
                 provideOffset = { transformableState.offset }
@@ -295,7 +574,7 @@ fun App(
                                         hexGridRenderer = hexGridRenderer,
                                         provideZoom = { transformableState.zoom },
                                         provideOffset = { transformableState.offset },
-                                        atlasState = atlasState,
+                                        streamingAtlases = emptyMap(), // Legacy app uses old atlas system, convert atlasState to streaming format
                                         selectedMedia = selectedMedia,
                                         onMediaClicked = { media ->
                                             Log.d("App", "Media clicked: ${media.displayName}")
@@ -351,7 +630,15 @@ fun App(
                         mediaHexState?.let { state ->
                             FocusedCellPanel(
                                 hexCellWithMedia = cellWithMedia,
-                                atlasState = atlasState,
+                                level0Atlases = atlasState?.let { atlasResult ->
+                                    when (atlasResult) {
+                                        is MultiAtlasUpdateResult.Success -> {
+                                            // Convert legacy atlas to L0 format for simplified panel
+                                            atlasResult.atlases
+                                        }
+                                        else -> null
+                                    }
+                                },
                                 selectionMode = selectionMode,
                                 selectedMedia = selectedMedia,
                                 onDismiss = { focusedCellWithMedia = null },

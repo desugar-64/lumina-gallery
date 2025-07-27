@@ -8,6 +8,7 @@ import dev.serhiiyaremych.lumina.data.ScaleStrategy
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.domain.model.PhotoPriority
 import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
+import dev.serhiiyaremych.lumina.domain.model.TypeSafeLODPriority
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import javax.inject.Inject
@@ -34,13 +35,13 @@ class LODSpecificGenerator @Inject constructor(
     }
 
     /**
-     * Generate atlas for specific LOD level with given priority context
+     * Generate atlas for specific LOD level with type-safe priority context
      */
     suspend fun generateLODAtlas(
         photos: List<Uri>,
         lodLevel: LODLevel,
         currentZoom: Float,
-        priority: LODPriority
+        priority: TypeSafeLODPriority
     ): LODGenerationResult = trace("${BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS}_${lodLevel}") {
         
         if (photos.isEmpty()) {
@@ -54,10 +55,10 @@ class LODSpecificGenerator @Inject constructor(
         try {
             currentCoroutineContext().ensureActive()
             
-            Log.d(TAG, "Generating LOD $lodLevel: ${photos.size} photos, priority=${priority.level} (${priority.reason})")
+            Log.d(TAG, "Generating LOD $lodLevel: ${photos.size} photos, priority=${priority.priority::class.simpleName} (${priority.reason})")
 
-            // Create priority mapping based on LOD priority context
-            val priorityMapping = createPriorityMapping(photos, priority)
+            // Create priority mapping based on type-safe LOD priority context
+            val priorityMapping = createTypeSafePriorityMapping(photos, priority)
             
             // Use existing enhanced atlas generator with specific LOD
             val result = enhancedAtlasGenerator.generateAtlasEnhanced(
@@ -101,30 +102,25 @@ class LODSpecificGenerator @Inject constructor(
             )
         }
     }
+    
 
     /**
-     * Create priority mapping based on LOD priority context
+     * Create type-safe priority mapping based on AtlasPriority context
      */
-    private fun createPriorityMapping(
+    private fun createTypeSafePriorityMapping(
         photos: List<Uri>,
-        priority: LODPriority
+        priority: TypeSafeLODPriority
     ): Map<Uri, PhotoPriority> {
-        return when (priority.level) {
-            // Priority 1: Persistent cache (LEVEL_0) - all photos normal priority
-            1 -> photos.associateWith { PhotoPriority.NORMAL }
-            
-            // Priority 2: Visible cells - all photos normal priority
-            2 -> photos.associateWith { PhotoPriority.NORMAL }
-            
-            // Priority 3: Active cell - slightly higher priority for better quality
-            3 -> photos.associateWith { PhotoPriority.NORMAL }
-            
-            // Priority 4: Selected photo - maximum priority for best quality
-            4 -> photos.associateWith { PhotoPriority.HIGH }
-            
-            // Default: normal priority
-            else -> photos.associateWith { PhotoPriority.NORMAL }
-        }
+        // Use the type-safe priority system's built-in conversion
+        return priority.createPriorityMapping()
+    }
+
+    
+    /**
+     * Get SmartMemoryManager for debug overlay and memory status
+     */
+    fun getSmartMemoryManager(): SmartMemoryManager {
+        return enhancedAtlasGenerator.getSmartMemoryManager()
     }
 }
 

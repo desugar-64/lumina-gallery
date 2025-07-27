@@ -77,6 +77,7 @@ fun EnhancedDebugOverlay(
     smartMemoryManager: SmartMemoryManager? = null,
     deviceCapabilities: dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities? = null,
     significantCells: Set<dev.serhiiyaremych.lumina.domain.model.HexCell> = emptySet(),
+    streamingAtlases: Map<LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>? = null,
     modifier: Modifier = Modifier
 ) {
     var isDebugVisible by remember { mutableStateOf(false) }
@@ -115,6 +116,7 @@ fun EnhancedDebugOverlay(
                 smartMemoryManager = smartMemoryManager,
                 deviceCapabilities = deviceCapabilities,
                 significantCells = significantCells,
+                streamingAtlases = streamingAtlases,
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .windowInsetsPadding(WindowInsets.systemBars)
@@ -133,6 +135,7 @@ private fun CompactDebugInfo(
     smartMemoryManager: SmartMemoryManager?,
     deviceCapabilities: dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities?,
     significantCells: Set<dev.serhiiyaremych.lumina.domain.model.HexCell> = emptySet(),
+    streamingAtlases: Map<LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -141,7 +144,7 @@ private fun CompactDebugInfo(
     ) {
         // Compact zoom and expected LOD info
         CompactZoomInfo(currentZoom, isAtlasGenerating)
-        
+
         // Cell focus debug info
         CompactCellFocusInfo(significantCells)
 
@@ -149,10 +152,10 @@ private fun CompactDebugInfo(
         deviceCapabilities?.let { CompactDeviceInfo(it) }
 
         // Multi-LOD atlas visualization - main focus
-        MultiLODAtlasView(atlasState)
+        MultiLODAtlasView(atlasState, streamingAtlases)
 
         // Enhanced memory management display
-        memoryStatus?.let { 
+        memoryStatus?.let {
             EnhancedMemoryDisplay(it, smartMemoryManager)
         }
     }
@@ -209,43 +212,147 @@ private fun CompactZoomInfo(currentZoom: Float, isAtlasGenerating: Boolean) {
 }
 
 @Composable
-private fun MultiLODAtlasView(atlasState: MultiAtlasUpdateResult?) {
-    when (atlasState) {
-        is MultiAtlasUpdateResult.Success -> {
-            val validAtlases = atlasState.atlases.filter { !it.bitmap.isRecycled }
-            val lodGroups = validAtlases.groupBy { LODLevel.fromLevel(it.lodLevel) }
+private fun MultiLODAtlasView(
+    atlasState: MultiAtlasUpdateResult?,
+    streamingAtlases: Map<LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>? = null
+) {
+    // Prefer streaming atlases when available
+    if (streamingAtlases != null && streamingAtlases.isNotEmpty()) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            // Streaming atlas strategy indicator
+            StreamingAtlasStrategyIndicator(streamingAtlases)
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                // Strategy info with priority distribution
-                AtlasStrategyIndicator(atlasState)
-
-                // LOD groups - main focus
-                lodGroups.entries.sortedBy { it.key?.level ?: -1 }.forEach { (lod, atlases) ->
-                    LODGroupView(lod, atlases)
+            // LOD groups from streaming atlases
+            streamingAtlases.entries.sortedBy { it.key.level }.forEach { (lod, atlases) ->
+                val validAtlases = atlases.filter { !it.bitmap.isRecycled }
+                if (validAtlases.isNotEmpty()) {
+                    LODGroupView(lod, validAtlases)
                 }
             }
         }
+    } else {
+        // Fallback to legacy atlas state
+        when (atlasState) {
+            is MultiAtlasUpdateResult.Success -> {
+                val validAtlases = atlasState.atlases.filter { !it.bitmap.isRecycled }
+                val lodGroups = validAtlases.groupBy { LODLevel.fromLevel(it.lodLevel) }
 
-        is MultiAtlasUpdateResult.GenerationFailed -> {
-            CompactErrorView("Gen Failed: ${atlasState.error.take(30)}...")
-        }
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    // Strategy info with priority distribution
+                    AtlasStrategyIndicator(atlasState)
 
-        is MultiAtlasUpdateResult.Error -> {
-            CompactErrorView("Error: ${atlasState.exception.message?.take(30) ?: "Unknown"}...")
-        }
+                    // LOD groups - main focus
+                    lodGroups.entries.sortedBy { it.key?.level ?: -1 }.forEach { (lod, atlases) ->
+                        LODGroupView(lod, atlases)
+                    }
+                }
+            }
 
-        null -> {
-            Text(
-                text = "No atlas data",
-                color = Color.Gray.copy(alpha = 0.7f),
-                fontSize = DebugTextSizes.TERTIARY_TEXT,
-                modifier = Modifier
-                    .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
-                    .padding(4.dp)
-            )
+            is MultiAtlasUpdateResult.GenerationFailed -> {
+                CompactErrorView("Gen Failed: ${atlasState.error.take(30)}...")
+            }
+
+            is MultiAtlasUpdateResult.Error -> {
+                CompactErrorView("Error: ${atlasState.exception.message?.take(30) ?: "Unknown"}...")
+            }
+
+            null -> {
+                Text(
+                    text = "No atlas data",
+                    color = Color.Gray.copy(alpha = 0.7f),
+                    fontSize = DebugTextSizes.TERTIARY_TEXT,
+                    modifier = Modifier
+                        .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                        .padding(4.dp)
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun StreamingAtlasStrategyIndicator(streamingAtlases: Map<LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>) {
+    val totalAtlases = streamingAtlases.values.sumOf { it.size }
+    val totalPhotos = streamingAtlases.values.sumOf { atlases -> atlases.sumOf { it.regions.size } }
+    val lodLevels = streamingAtlases.keys.size
+
+    // Determine strategy based on streaming atlas distribution
+    val strategy = when {
+        lodLevels == 1 -> "SINGLE"
+        lodLevels > 3 -> "STREAMING"
+        else -> "MULTI"
+    }
+
+    val strategyColor = when (strategy) {
+        "STREAMING" -> Color(0xFF9C27B0) // Purple for streaming
+        "MULTI" -> Color(0xFF2196F3)    // Blue for multi-size
+        else -> Color(0xFFFF9800)       // Orange for single
+    }
+
+    val strategyIcon = when (strategy) {
+        "STREAMING" -> "🌊"  // Wave for streaming
+        "MULTI" -> "🔄"     // Recycle for multi
+        else -> "📄"        // Single page for single
+    }
+
+    Row(
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = strategyIcon,
+            fontSize = DebugTextSizes.SECONDARY_TEXT
+        )
+
+        Text(
+            text = strategy,
+            color = strategyColor,
+            fontSize = DebugTextSizes.TERTIARY_TEXT,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = "📋",
+            fontSize = DebugTextSizes.DETAIL_TEXT
+        )
+
+        Text(
+            text = "$totalAtlases atlas${if (totalAtlases != 1) "es" else ""}",
+            color = Color.White,
+            fontSize = DebugTextSizes.DETAIL_TEXT,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = "📸",
+            fontSize = DebugTextSizes.DETAIL_TEXT
+        )
+
+        Text(
+            text = "$totalPhotos photos",
+            color = Color.White,
+            fontSize = DebugTextSizes.DETAIL_TEXT,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = "🎯",
+            fontSize = DebugTextSizes.DETAIL_TEXT
+        )
+
+        Text(
+            text = "${lodLevels}L",
+            color = strategyColor,
+            fontSize = DebugTextSizes.DETAIL_TEXT,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -498,7 +605,7 @@ private fun ExpandedAtlasCard(atlas: dev.serhiiyaremych.lumina.domain.model.Text
                 fontSize = DebugTextSizes.MICRO_TEXT,
                 fontWeight = FontWeight.Bold
             )
-            
+
             // Show bitmap config
             val configText = when (atlas.bitmap.config) {
                 Bitmap.Config.RGB_565 -> "RGB565"
@@ -507,13 +614,13 @@ private fun ExpandedAtlasCard(atlas: dev.serhiiyaremych.lumina.domain.model.Text
                 Bitmap.Config.ALPHA_8 -> "ALPHA8"
                 else -> "UNKNOWN"
             }
-            
+
             val configColor = when (atlas.bitmap.config) {
                 Bitmap.Config.RGB_565 -> Color(0xFF4CAF50) // Green for optimized
                 Bitmap.Config.ARGB_8888 -> Color(0xFF2196F3) // Blue for full quality
                 else -> Color.Gray
             }
-            
+
             Text(
                 text = "📊 $configText",
                 color = configColor,
@@ -669,7 +776,7 @@ private fun SystemMemoryPressureIndicator(smartMemoryManager: SmartMemoryManager
 private fun MemoryLeakDetectionStatus(smartMemoryManager: SmartMemoryManager) {
     // Try to get leak detection result
     val leakReport = remember { smartMemoryManager.detectMemoryLeak() }
-    
+
     Row(
         modifier = Modifier
             .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
@@ -802,7 +909,7 @@ private fun CompactErrorView(message: String) {
 private fun CompactDeviceInfo(deviceCapabilities: dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities) {
     val capabilities = deviceCapabilities.getCapabilities()
     val recommendedSizes = deviceCapabilities.getRecommendedAtlasSizes()
-    
+
     // Atlas optimization config for debugging
     val optimizationConfig = dev.serhiiyaremych.lumina.domain.model.AtlasOptimizationConfig.default()
 
@@ -895,7 +1002,7 @@ private fun CompactCellFocusInfo(significantCells: Set<dev.serhiiyaremych.lumina
             text = "🎯",
             fontSize = 12.sp
         )
-        
+
         // Significant cells count
         Text(
             text = "${significantCells.size} cells",
@@ -903,7 +1010,7 @@ private fun CompactCellFocusInfo(significantCells: Set<dev.serhiiyaremych.lumina
             fontWeight = FontWeight.Medium,
             color = Color.White
         )
-        
+
         // Cell coordinates (show first few)
         if (significantCells.isNotEmpty()) {
             val cellsText = significantCells.take(3).joinToString(", ") { "(${it.q},${it.r})" }

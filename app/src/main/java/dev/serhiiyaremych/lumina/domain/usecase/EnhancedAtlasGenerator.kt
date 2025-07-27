@@ -159,4 +159,11 @@ class EnhancedAtlasGenerator @Inject constructor(
             }
         }
     }
+    
+    /**
+     * Get SmartMemoryManager for debug overlay and memory status
+     */
+    fun getSmartMemoryManager(): SmartMemoryManager {
+        return smartMemoryManager
+    }
 }

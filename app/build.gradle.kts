@@ -23,7 +23,6 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -82,7 +81,7 @@ dependencies {
 
     // ExifInterface for photo orientation handling
     implementation(libs.androidx.exifinterface)
-    
+
     // Graphics shapes for polygon morphing
     implementation("androidx.graphics:graphics-shapes:1.0.1")
 

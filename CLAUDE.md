@@ -95,6 +95,33 @@ adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity
 ./gradlew -q installDebug && adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity
 ```
 
+### Debugging with ADB Logcat
+```bash
+# Debug streaming atlas system (dump current logs and exit)
+adb logcat -d -s StreamingAtlasManager:D
+
+# Debug UI rendering and media drawing
+adb logcat -d -s MediaDrawing:D
+
+# Debug gallery view model state changes
+adb logcat -d -s GalleryViewModel:D
+
+# Debug app-level selection and focus events
+adb logcat -d -s App:D
+
+# Combine multiple tags for comprehensive debugging
+adb logcat -d -s StreamingAtlasManager:D -s MediaDrawing:D -s App:D
+
+# Alternative: Real-time monitoring (use Ctrl+C to stop)
+adb logcat -s StreamingAtlasManager:D
+
+# Clear logcat buffer before testing
+adb logcat -c
+
+# Note: The -d flag dumps current logcat and exits immediately
+# Without -d, logcat runs continuously until Ctrl+C
+```
+
 ### Codebase Analysis with Gemini CLI
 ```bash
 # Use Gemini CLI for large codebase analysis when Claude's context is insufficient

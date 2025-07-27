@@ -23,7 +23,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import javax.inject.Singleton
 
-@Module
+@Module(includes = [StreamingAtlasModule::class])
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
