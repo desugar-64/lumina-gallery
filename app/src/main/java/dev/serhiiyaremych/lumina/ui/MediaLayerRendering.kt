@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.layer.CompositingStrategy
 import dev.serhiiyaremych.lumina.domain.model.Media
@@ -340,8 +341,12 @@ class MediaLayerManager(
                 config.hexGridRenderer.drawHexGrid(
                     drawScope = this,
                     hexGrid = config.hexGridLayout.hexGrid,
-                    zoom = 1f,
-                    offset = Offset.Zero
+                    config = HexRenderConfig(
+                        baseStrokeWidth = 1.0.dp,
+                        cellPadding = 8.dp,
+                        cornerRadius = 8.dp, // Add subtle rounded corners
+                        gridColor = Color.Gray.copy(alpha = 0.25f)
+                    )
                 )
 
                 // Draw all non-selected media items
@@ -446,8 +451,12 @@ class MediaLayerManager(
                 config.hexGridRenderer.drawHexGrid(
                     drawScope = this,
                     hexGrid = config.hexGridLayout.hexGrid,
-                    zoom = 1f,
-                    offset = Offset.Zero
+                    config = HexRenderConfig(
+                        baseStrokeWidth = 1.0.dp,
+                        cellPadding = 8.dp,
+                        cornerRadius = 8.dp, // Add subtle rounded corners
+                        gridColor = Color.Gray.copy(alpha = 0.25f)
+                    )
                 )
 
                 // Draw all non-selected media items

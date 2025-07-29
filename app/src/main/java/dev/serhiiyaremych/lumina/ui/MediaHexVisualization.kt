@@ -194,24 +194,6 @@ fun MediaHexVisualization(
                     }
                 }
 
-                // Debug outline for clicked hex cell
-                state.clickedHexCell?.let { hexCell ->
-                    state.geometryReader.getHexCellBounds(hexCell)?.let { bounds ->
-                        drawPath(
-                            path = Path().apply {
-                                hexCell.vertices.firstOrNull()?.let { first ->
-                                    moveTo(first.x, first.y)
-                                }
-                                hexCell.vertices.forEach { vertex ->
-                                    lineTo(vertex.x, vertex.y)
-                                }
-                                close()
-                            },
-                            color = Color.Green,
-                            style = Stroke(width = 1.dp.toPx() / zoom)
-                        )
-                    }
-                }
 
             }
 
