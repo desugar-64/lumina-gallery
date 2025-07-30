@@ -3,14 +3,11 @@ package dev.serhiiyaremych.lumina.ui
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asComposeColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -23,6 +20,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.layer.CompositingStrategy
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
@@ -66,6 +64,7 @@ data class StreamingMediaLayerConfig(
 fun rememberMediaLayers(): MediaLayerManager {
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
+    val gridLayer = rememberGraphicsLayer()
     val contentLayer = rememberGraphicsLayer()
     val selectedLayer = rememberGraphicsLayer()
 
@@ -77,6 +76,7 @@ fun rememberMediaLayers(): MediaLayerManager {
 
     return remember {
         MediaLayerManager(
+            gridLayer = gridLayer,
             contentLayer = contentLayer,
             selectedLayer = selectedLayer,
             density = density,
@@ -88,9 +88,10 @@ fun rememberMediaLayers(): MediaLayerManager {
 }
 
 /**
- * Manages the two GraphicsLayers for content and selected media rendering.
+ * Manages the three GraphicsLayers for grid, content and selected media rendering.
  */
 class MediaLayerManager(
+    private val gridLayer: GraphicsLayer,
     private val contentLayer: GraphicsLayer,
     private val selectedLayer: GraphicsLayer,
     private val density: androidx.compose.ui.unit.Density,
@@ -226,53 +227,7 @@ class MediaLayerManager(
     }
 
     /**
-     * Records and draws both content and selected layers with proper layering (legacy).
-     */
-    fun DrawScope.recordAndDrawLayers(
-        config: MediaLayerConfig,
-        canvasSize: IntSize,
-        zoom: Float,
-        offset: Offset
-    ) {
-        val clampedZoom = zoom.coerceIn(0.01f, 100f)
-
-        // Record content layer with all non-selected media
-        recordContentLayer(config, canvasSize, clampedZoom, offset)
-
-        // Record selected layer with only the selected media item
-        recordSelectedLayer(config, canvasSize, clampedZoom, offset)
-
-        // Configure content layer composition strategy and effects when there's a selection
-        val currentDesaturation = desaturationAnimatable.value
-        val currentGradientAlpha = gradientAlphaAnimatable.value
-        val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
-        val hasSelection = effectiveSelectedMedia != null
-
-        if (hasSelection) {
-            // Set content layer to offscreen compositing for blend mode effects
-            contentLayer.compositingStrategy = CompositingStrategy.Offscreen
-
-            // Apply desaturation if needed
-            if (currentDesaturation > 0f) {
-                applyDesaturationToContentLayer(currentDesaturation)
-            }
-        } else {
-            // Reset to default compositing strategy when no selection
-            contentLayer.compositingStrategy = CompositingStrategy.Auto
-            contentLayer.colorFilter = null
-        }
-
-        // Selected layer always uses default settings (no alpha fade)
-        selectedLayer.compositingStrategy = CompositingStrategy.Auto
-        selectedLayer.alpha = 1f
-
-        // Draw both layers in order: content first, then selected on top
-        drawLayer(contentLayer)
-        drawLayer(selectedLayer)
-    }
-
-    /**
-     * Records and draws both content and selected layers with streaming atlases.
+     * Records and draws all three layers (grid, content, selected) with streaming atlases.
      */
     fun DrawScope.recordAndDrawLayers(
         config: StreamingMediaLayerConfig,
@@ -282,7 +237,10 @@ class MediaLayerManager(
     ) {
         val clampedZoom = zoom.coerceIn(0.01f, 100f)
 
-        // Record content layer with all non-selected media
+        // Record grid layer with hex grid and effects (unaffected by content layer desaturation)
+        recordStreamingGridLayer(config, canvasSize, clampedZoom, offset)
+
+        // Record content layer with all non-selected media (no grid)
         recordStreamingContentLayer(config, canvasSize, clampedZoom, offset)
 
         // Record selected layer with only the selected media item
@@ -290,7 +248,7 @@ class MediaLayerManager(
 
         // Configure content layer composition strategy and effects when there's a selection
         val currentDesaturation = desaturationAnimatable.value
-        val currentGradientAlpha = gradientAlphaAnimatable.value
+        gradientAlphaAnimatable.value
         val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
         val hasSelection = effectiveSelectedMedia != null
 
@@ -308,17 +266,70 @@ class MediaLayerManager(
             contentLayer.colorFilter = null
         }
 
+        // Grid layer always uses default settings (no effects applied)
+        gridLayer.compositingStrategy = CompositingStrategy.Auto
+        gridLayer.alpha = 1f
+
         // Selected layer always uses default settings (no alpha fade)
         selectedLayer.compositingStrategy = CompositingStrategy.Auto
         selectedLayer.alpha = 1f
 
-        // Draw both layers in order: content first, then selected on top
+        // Draw all layers in order: grid -> content -> selected
+        drawLayer(gridLayer)
         drawLayer(contentLayer)
         drawLayer(selectedLayer)
     }
 
     /**
-     * Records the streaming content layer with hex grid background and all non-selected media items.
+     * Records the streaming grid layer with hex grid and effects only (unaffected by content desaturation).
+     */
+    private fun recordStreamingGridLayer(
+        config: StreamingMediaLayerConfig,
+        canvasSize: IntSize,
+        clampedZoom: Float,
+        offset: Offset
+    ) {
+        gridLayer.record(
+            density = density,
+            layoutDirection = layoutDirection,
+            size = canvasSize
+        ) {
+            withTransform({
+                scale(clampedZoom, clampedZoom, pivot = Offset.Zero)
+                translate(offset.x / clampedZoom, offset.y / clampedZoom)
+            }) {
+                // Calculate hex cell states based on selected media and clicked hex cells
+                val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
+                val cellStates = calculateHexCellStates(config.hexGridLayout, effectiveSelectedMedia, config.clickedHexCell)
+
+                // Calculate cell scales for bounce animations using the bounce animation manager
+                val cellScales = config.bounceAnimationManager?.let { bounceManager ->
+                    config.hexGridLayout.hexGrid.cells.associateWith { cell ->
+                        bounceManager.getCellScale(cell)
+                    }
+                } ?: emptyMap()
+
+                // Draw hex grid with Material 3 Expressive enhancements and radial gradient effects
+                config.hexGridRenderer.drawHexGrid(
+                    drawScope = this,
+                    hexGrid = config.hexGridLayout.hexGrid,
+                    config = HexRenderConfig(
+                        baseStrokeWidth = 1.0.dp,
+                        cornerRadius = 8.dp, // Add subtle rounded corners
+                        gridColor = Color.Gray.copy(alpha = 0.25f),
+                        selectedColor = Color(0xFF1976D2).copy(alpha = 0.9f), // Material 3 Primary Blue
+                        mutedColorAlpha = 0.4f, // Reduced alpha for non-selected cells
+                        selectedStrokeWidth = 2.5.dp // Thicker stroke for selected cells - this provides the "emphasis" effect
+                    ),
+                    cellStates = cellStates,
+                    cellScales = cellScales
+                )
+            }
+        }
+    }
+
+    /**
+     * Records the streaming content layer with all non-selected media items (no grid).
      */
     private fun recordStreamingContentLayer(
         config: StreamingMediaLayerConfig,
@@ -339,33 +350,6 @@ class MediaLayerManager(
                 config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
                     config.geometryReader.storeHexCellBounds(hexCellWithMedia.hexCell)
                 }
-
-                // Calculate hex cell states based on selected media and clicked hex cells
-                val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
-                val cellStates = calculateHexCellStates(config.hexGridLayout, effectiveSelectedMedia, config.clickedHexCell)
-                
-                // Calculate cell scales for bounce animations using the bounce animation manager
-                val cellScales = config.bounceAnimationManager?.let { bounceManager ->
-                    config.hexGridLayout.hexGrid.cells.associateWith { cell ->
-                        bounceManager.getCellScale(cell)
-                    }
-                } ?: emptyMap()
-                
-                // Draw hex grid background with Material 3 Expressive enhancements
-                config.hexGridRenderer.drawHexGrid(
-                    drawScope = this,
-                    hexGrid = config.hexGridLayout.hexGrid,
-                    config = HexRenderConfig(
-                        baseStrokeWidth = 1.0.dp,
-                        cornerRadius = 8.dp, // Add subtle rounded corners
-                        gridColor = Color.Gray.copy(alpha = 0.25f),
-                        selectedColor = Color(0xFF1976D2).copy(alpha = 0.9f), // Material 3 Primary Blue
-                        mutedColorAlpha = 0.4f, // Reduced alpha for non-selected cells
-                        selectedStrokeWidth = 2.5.dp // Thicker stroke for selected cells - this provides the "emphasis" effect
-                    ),
-                    cellStates = cellStates,
-                    cellScales = cellScales
-                )
 
                 // Draw all non-selected media items
                 var selectedMediaItem: AnimatableMediaItem? = null
@@ -468,10 +452,10 @@ class MediaLayerManager(
                 // Calculate hex cell states based on selected media and clicked hex cells
                 val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
                 val cellStates = calculateHexCellStates(config.hexGridLayout, effectiveSelectedMedia, config.clickedHexCell)
-                
+
                 // Calculate cell scales for bounce animations (legacy config doesn't support bounce animations)
                 val cellScales = emptyMap<dev.serhiiyaremych.lumina.domain.model.HexCell, Float>()
-                
+
                 // Draw hex grid background with Material 3 Expressive enhancements
                 config.hexGridRenderer.drawHexGrid(
                     drawScope = this,
@@ -585,7 +569,7 @@ class MediaLayerManager(
      * Uses animated alpha channel to create growing/shrinking circle effect.
      * Radius is 30% bigger than the largest side of the selected item.
      */
-    private fun DrawScope.drawSelectionGradient(animatableItem: dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaItem) {
+    private fun DrawScope.drawSelectionGradient(animatableItem: AnimatableMediaItem) {
         // Get current animation progress for growing/shrinking effect
         val currentGradientAlpha = gradientAlphaAnimatable.value
 
@@ -608,8 +592,6 @@ class MediaLayerManager(
                 Color.Black.copy(alpha = 1f * currentGradientAlpha),             // Edges: animated opacity
                 Color.Black.copy(alpha = 1f * currentGradientAlpha),
                 Color.Black.copy(alpha = 1f * currentGradientAlpha),
-                Color.Black.copy(alpha = 1f * currentGradientAlpha),
-                Color.Black.copy(alpha = 1f * currentGradientAlpha),
             ).reversed(),
             center = center,
             radius = gradientRadius,
@@ -623,7 +605,7 @@ class MediaLayerManager(
             blendMode = BlendMode.DstOut
         )
     }
-    
+
     /**
      * Calculate hex cell states based on selected media and clicked hex cells.
      * Cells containing the selected media or clicked hex cells are marked as SELECTED for expressive rendering.
@@ -634,25 +616,25 @@ class MediaLayerManager(
         clickedHexCell: dev.serhiiyaremych.lumina.domain.model.HexCell? = null
     ): Map<dev.serhiiyaremych.lumina.domain.model.HexCell, HexCellState> {
         val cellStates = mutableMapOf<dev.serhiiyaremych.lumina.domain.model.HexCell, HexCellState>()
-        
+
         // Mark cells containing selected media as SELECTED
         if (selectedMedia != null) {
             hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
                 val containsSelectedMedia = hexCellWithMedia.mediaItems.any { mediaWithPosition ->
                     mediaWithPosition.media == selectedMedia
                 }
-                
+
                 if (containsSelectedMedia) {
                     cellStates[hexCellWithMedia.hexCell] = HexCellState.SELECTED
                 }
             }
         }
-        
+
         // Mark clicked hex cell as SELECTED (overrides media selection if both exist)
         if (clickedHexCell != null) {
             cellStates[clickedHexCell] = HexCellState.SELECTED
         }
-        
+
         return cellStates
     }
 }

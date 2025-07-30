@@ -108,22 +108,15 @@ fun MediaHexVisualization(
 
 
     // Input handling configuration
-    val inputConfig = MediaInputConfig(
+    val inputConfig = state.toInputConfig(
         hexGridLayout = hexGridLayout,
-        animationManager = state.animationManager,
-        geometryReader = state.geometryReader,
         provideZoom = provideZoom,
         provideOffset = provideOffset,
         selectedMedia = selectedMedia,
         onMediaClicked = onMediaClicked,
         onHexCellClicked = onHexCellClicked,
         onFocusRequested = onFocusRequested,
-        onRipplePosition = state.setRipplePosition,
-        onClickedMedia = state.setClickedMedia,
-        onClickedHexCell = state.setClickedHexCell,
-        onRevealAnimationTarget = state.setRevealAnimationTarget,
-        cellFocusManager = cellFocusManager,
-        bounceAnimationManager = state.bounceAnimationManager
+        cellFocusManager = cellFocusManager
     )
 
     BoxWithConstraints {

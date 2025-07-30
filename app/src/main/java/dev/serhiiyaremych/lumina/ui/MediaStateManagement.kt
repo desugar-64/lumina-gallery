@@ -10,6 +10,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaItem
@@ -182,3 +183,34 @@ private fun calculateVisibleCells(
     // TODO: Implement actual viewport intersection based on zoom/offset
     return hexGridLayout.hexCellsWithMedia
 }
+
+/**
+ * Extension function to create MediaInputConfig from MediaHexState.
+ * Eliminates duplication by reusing state properties.
+ */
+fun MediaHexState.toInputConfig(
+    hexGridLayout: dev.serhiiyaremych.lumina.domain.model.HexGridLayout,
+    provideZoom: () -> Float,
+    provideOffset: () -> Offset,
+    selectedMedia: Media? = null,
+    onMediaClicked: (Media) -> Unit = {},
+    onHexCellClicked: (HexCell) -> Unit = {},
+    onFocusRequested: (Rect) -> Unit = {},
+    cellFocusManager: CellFocusManager? = null
+) = MediaInputConfig(
+    hexGridLayout = hexGridLayout,
+    animationManager = animationManager,
+    geometryReader = geometryReader,
+    provideZoom = provideZoom,
+    provideOffset = provideOffset,
+    selectedMedia = selectedMedia,
+    onMediaClicked = onMediaClicked,
+    onHexCellClicked = onHexCellClicked,
+    onFocusRequested = onFocusRequested,
+    onRipplePosition = setRipplePosition,
+    onClickedMedia = setClickedMedia,
+    onClickedHexCell = setClickedHexCell,
+    onRevealAnimationTarget = setRevealAnimationTarget,
+    cellFocusManager = cellFocusManager,
+    bounceAnimationManager = bounceAnimationManager
+)

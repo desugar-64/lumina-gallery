@@ -1,12 +1,7 @@
 package dev.serhiiyaremych.lumina.ui
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -16,10 +11,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.HexGrid
-import kotlinx.coroutines.launch
-import kotlin.math.cos
 import kotlin.math.min
-import kotlin.math.sin
 
 enum class HexCellState {
     NORMAL,
@@ -83,7 +75,32 @@ class HexGridRenderer {
             HexCellState.FOCUSED -> config.focusedColor to config.baseStrokeWidth.toPx()
             HexCellState.SELECTED -> config.selectedColor to config.selectedStrokeWidth.toPx()
         }
-        
+
+        // Draw radial gradient behind selected cells
+        if (state == HexCellState.SELECTED) {
+            // Calculate cell radius from center to first vertex
+            val cellRadius = kotlin.math.sqrt(
+                (cell.vertices[0].x - cell.center.x).let { it * it } + 
+                (cell.vertices[0].y - cell.center.y).let { it * it }
+            )
+            val gradientRadius = cellRadius * 1.3f // 30% bigger than cell radius
+            val radialGradient = Brush.radialGradient(
+                colors = listOf(
+                    Color.Blue.copy(alpha = 0.4f), // Blue center
+                    Color.Blue.copy(alpha = 0.1f), // Fade to lighter blue
+                    Color.Transparent // Transparent at edges
+                ),
+                center = cell.center,
+                radius = gradientRadius
+            )
+            
+            drawCircle(
+                brush = radialGradient,
+                radius = gradientRadius,
+                center = cell.center
+            )
+        }
+
         // Apply bounce animation scaling if needed
         if (scale != 1.0f) {
             withTransform({
@@ -118,29 +135,29 @@ class HexGridRenderer {
     ): Path {
         // Convert Dp to pixels for cache key and calculations
         val cornerRadiusPx = config.cornerRadius.toPx()
-        
+
         // Create cache key for this configuration
         val cacheKey = "${cell.hashCode()}_${cornerRadiusPx}_${state.name}_original"
-        
+
         // Return cached path if available
         pathCache[cacheKey]?.let { return it }
-        
+
         // Create new path using original cell vertices (no padding modifications)
         reusablePath.reset()
-        
+
         // Always use original vertices to maintain proper cell size for photos
         val vertices = cell.vertices
-        
+
         if (cornerRadiusPx > 0f) {
             createRoundedHexPath(reusablePath, vertices, cornerRadiusPx)
         } else {
             createSharpHexPath(reusablePath, vertices)
         }
-        
+
         // Cache the path
         val cachedPath = Path().apply { addPath(reusablePath) }
         pathCache[cacheKey] = cachedPath
-        
+
         return cachedPath
     }
 
@@ -164,7 +181,7 @@ class HexGridRenderer {
      */
     private fun createSharpHexPath(path: Path, vertices: List<Offset>) {
         if (vertices.isEmpty()) return
-        
+
         path.moveTo(vertices[0].x, vertices[0].y)
         for (i in 1 until vertices.size) {
             path.lineTo(vertices[i].x, vertices[i].y)
@@ -177,56 +194,56 @@ class HexGridRenderer {
      */
     private fun createRoundedHexPath(path: Path, vertices: List<Offset>, cornerRadius: Float) {
         if (vertices.size < 3) return
-        
+
         val roundedVertices = mutableListOf<Offset>()
-        
+
         // Calculate rounded corner points
         for (i in vertices.indices) {
             val current = vertices[i]
             val prev = vertices[(i - 1 + vertices.size) % vertices.size]
             val next = vertices[(i + 1) % vertices.size]
-            
+
             // Calculate directions to previous and next vertices
-            val toPrev = (prev - current).let { 
+            val toPrev = (prev - current).let {
                 val length = kotlin.math.sqrt(it.x * it.x + it.y * it.y)
                 if (length > 0) it / length else Offset.Zero
             }
-            val toNext = (next - current).let { 
+            val toNext = (next - current).let {
                 val length = kotlin.math.sqrt(it.x * it.x + it.y * it.y)
                 if (length > 0) it / length else Offset.Zero
             }
-            
+
             // Calculate corner points
-            val effectiveRadius = min(cornerRadius, 
+            val effectiveRadius = min(cornerRadius,
                 min(
                     kotlin.math.sqrt((prev - current).getDistanceSquared()) / 2f,
                     kotlin.math.sqrt((next - current).getDistanceSquared()) / 2f
                 )
             )
-            
+
             val cornerStart = current + toPrev * effectiveRadius
             val cornerEnd = current + toNext * effectiveRadius
-            
+
             roundedVertices.add(cornerStart)
             roundedVertices.add(cornerEnd)
         }
-        
+
         // Draw path with rounded corners
         if (roundedVertices.size >= 4) {
             path.moveTo(roundedVertices[0].x, roundedVertices[0].y)
-            
+
             for (i in 0 until roundedVertices.size step 2) {
                 val cornerStart = roundedVertices[i]
                 val cornerEnd = roundedVertices[(i + 1) % roundedVertices.size]
                 val vertex = vertices[i / 2]
-                
+
                 path.lineTo(cornerStart.x, cornerStart.y)
                 path.quadraticBezierTo(vertex.x, vertex.y, cornerEnd.x, cornerEnd.y)
-                
+
                 val nextCornerStart = roundedVertices[(i + 2) % roundedVertices.size]
                 path.lineTo(nextCornerStart.x, nextCornerStart.y)
             }
-            
+
             path.close()
         }
     }
