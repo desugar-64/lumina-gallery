@@ -266,10 +266,6 @@ class MediaLayerManager(
             contentLayer.colorFilter = null
         }
 
-        // Grid layer always uses default settings (no effects applied)
-        gridLayer.compositingStrategy = CompositingStrategy.Auto
-        gridLayer.alpha = 1f
-
         // Selected layer always uses default settings (no alpha fade)
         selectedLayer.compositingStrategy = CompositingStrategy.Auto
         selectedLayer.alpha = 1f
@@ -289,6 +285,7 @@ class MediaLayerManager(
         clampedZoom: Float,
         offset: Offset
     ) {
+        gridLayer.compositingStrategy = CompositingStrategy.Offscreen
         gridLayer.record(
             density = density,
             layoutDirection = layoutDirection,
@@ -316,8 +313,8 @@ class MediaLayerManager(
                     config = HexRenderConfig(
                         baseStrokeWidth = 1.0.dp,
                         cornerRadius = 8.dp, // Add subtle rounded corners
-                        gridColor = Color.Gray.copy(alpha = 0.25f),
-                        selectedColor = Color(0xFF1976D2).copy(alpha = 0.9f), // Material 3 Primary Blue
+                        gridColor = Color.LightGray,
+                        selectedColor = Color.Blue, // Same as normal grid - let gradient do the coloring
                         mutedColorAlpha = 0.4f, // Reduced alpha for non-selected cells
                         selectedStrokeWidth = 2.5.dp // Thicker stroke for selected cells - this provides the "emphasis" effect
                     ),
@@ -427,127 +424,6 @@ class MediaLayerManager(
     }
 
     /**
-     * Records the content layer with hex grid background and all non-selected media items.
-     */
-    private fun recordContentLayer(
-        config: MediaLayerConfig,
-        canvasSize: IntSize,
-        clampedZoom: Float,
-        offset: Offset
-    ) {
-        contentLayer.record(
-            density = density,
-            layoutDirection = layoutDirection,
-            size = canvasSize
-        ) {
-            withTransform({
-                scale(clampedZoom, clampedZoom, pivot = Offset.Zero)
-                translate(offset.x / clampedZoom, offset.y / clampedZoom)
-            }) {
-                // Store hex cell bounds for hit testing (world coordinates)
-                config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
-                    config.geometryReader.storeHexCellBounds(hexCellWithMedia.hexCell)
-                }
-
-                // Calculate hex cell states based on selected media and clicked hex cells
-                val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
-                val cellStates = calculateHexCellStates(config.hexGridLayout, effectiveSelectedMedia, config.clickedHexCell)
-
-                // Calculate cell scales for bounce animations (legacy config doesn't support bounce animations)
-                val cellScales = emptyMap<dev.serhiiyaremych.lumina.domain.model.HexCell, Float>()
-
-                // Draw hex grid background with Material 3 Expressive enhancements
-                config.hexGridRenderer.drawHexGrid(
-                    drawScope = this,
-                    hexGrid = config.hexGridLayout.hexGrid,
-                    config = HexRenderConfig(
-                        baseStrokeWidth = 1.0.dp,
-                        cornerRadius = 8.dp, // Add subtle rounded corners
-                        gridColor = Color.Gray.copy(alpha = 0.25f),
-                        selectedColor = Color(0xFF1976D2).copy(alpha = 0.9f), // Material 3 Primary Blue
-                        mutedColorAlpha = 0.4f, // Reduced alpha for non-selected cells
-                        selectedStrokeWidth = 2.5.dp // Thicker stroke for selected cells - this provides the "emphasis" effect
-                    ),
-                    cellStates = cellStates,
-                    cellScales = cellScales
-                )
-
-                // Draw all non-selected media items
-                var selectedMediaItem: AnimatableMediaItem? = null
-                val effectiveSelectedMediaForRendering = getEffectiveSelectedMedia(config.selectedMedia)
-                config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
-                    hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
-                        val animatableItem = config.animationManager.getOrCreateAnimatable(mediaWithPosition)
-                        val isSelected = animatableItem.mediaWithPosition.media == effectiveSelectedMediaForRendering
-
-                        if (isSelected) selectedMediaItem = animatableItem
-
-                        config.geometryReader.storeMediaBounds(
-                            media = animatableItem.mediaWithPosition.media,
-                            bounds = animatableItem.mediaWithPosition.absoluteBounds,
-                            hexCell = hexCellWithMedia.hexCell
-                        )
-
-                        // Only draw non-selected items in content layer
-                        if (!isSelected) {
-                            drawAnimatableMediaFromAtlas(
-                                animatableItem = animatableItem,
-                                atlasState = config.atlasState,
-                                zoom = config.zoom
-                            )
-                        }
-                        config.geometryReader.debugDrawBounds(this, config.zoom)
-                    }
-                }
-
-                // Draw gradient for effective selected media
-                selectedMediaItem?.let { item -> drawSelectionGradient(item) }
-            }
-        }
-    }
-
-    /**
-     * Records the selected layer with only the selected media item.
-     */
-    private fun recordSelectedLayer(
-        config: MediaLayerConfig,
-        canvasSize: IntSize,
-        clampedZoom: Float,
-        offset: Offset
-    ) {
-        selectedLayer.record(
-            density = density,
-            layoutDirection = layoutDirection,
-            size = canvasSize
-        ) {
-            withTransform({
-                scale(clampedZoom, clampedZoom, pivot = Offset.Zero)
-                translate(offset.x / clampedZoom, offset.y / clampedZoom)
-            }) {
-                // Draw only the selected media item
-                val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
-                effectiveSelectedMedia?.let { media ->
-                    config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
-                        hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
-                            val animatableItem = config.animationManager.getOrCreateAnimatable(mediaWithPosition)
-                            val isSelected = animatableItem.mediaWithPosition.media == media
-
-                            if (isSelected) {
-                                // Draw the selected media item (gradient is now in content layer)
-                                drawAnimatableMediaFromAtlas(
-                                    animatableItem = animatableItem,
-                                    atlasState = config.atlasState,
-                                    zoom = config.zoom
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
      * Applies desaturation effect to the content layer using ColorMatrix.setSaturation().
      *
      * @param desaturationAmount 0f = fully saturated, 1f = fully desaturated
@@ -634,7 +510,6 @@ class MediaLayerManager(
         if (clickedHexCell != null) {
             cellStates[clickedHexCell] = HexCellState.SELECTED
         }
-
         return cellStates
     }
 }

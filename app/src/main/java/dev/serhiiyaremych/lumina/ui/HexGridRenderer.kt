@@ -1,6 +1,7 @@
 package dev.serhiiyaremych.lumina.ui
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -23,7 +24,7 @@ data class HexRenderConfig(
     val baseStrokeWidth: Dp = 1.5.dp,
     val cellPadding: Dp = 0.dp, // Cell spacing is now handled at grid generation level
     val cornerRadius: Dp = 0.dp,
-    val gridColor: Color = Color.Gray.copy(alpha = 0.3f),
+    val gridColor: Color = Color.LightGray,
     val focusedColor: Color = Color.Blue.copy(alpha = 0.6f),
     val selectedColor: Color = Color.Green.copy(alpha = 0.8f),
     // Material 3 Expressive selection enhancements
@@ -76,51 +77,72 @@ class HexGridRenderer {
             HexCellState.SELECTED -> config.selectedColor to config.selectedStrokeWidth.toPx()
         }
 
-        // Draw radial gradient behind selected cells
-        if (state == HexCellState.SELECTED) {
-            // Calculate cell radius from center to first vertex
-            val cellRadius = kotlin.math.sqrt(
-                (cell.vertices[0].x - cell.center.x).let { it * it } + 
-                (cell.vertices[0].y - cell.center.y).let { it * it }
-            )
-            val gradientRadius = cellRadius * 1.3f // 30% bigger than cell radius
-            val radialGradient = Brush.radialGradient(
-                colors = listOf(
-                    Color.Blue.copy(alpha = 0.4f), // Blue center
-                    Color.Blue.copy(alpha = 0.1f), // Fade to lighter blue
-                    Color.Transparent // Transparent at edges
-                ),
-                center = cell.center,
-                radius = gradientRadius
-            )
-            
-            drawCircle(
-                brush = radialGradient,
-                radius = gradientRadius,
-                center = cell.center
-            )
-        }
-
         // Apply bounce animation scaling if needed
         if (scale != 1.0f) {
             withTransform({
                 // Scale around the center of the hex cell
                 scale(scale, scale, pivot = cell.center)
             }) {
+                // Always draw the normal stroke first
                 drawPath(
                     path = path,
                     color = color,
                     style = Stroke(width = strokeWidth)
                 )
+
+                // Then blend gradient over selected cells
+                if (state == HexCellState.SELECTED) {
+                    drawGradientBlend(cell, color)
+                }
             }
         } else {
             // No scaling - draw normally for better performance
+            // Always draw the normal stroke first
             drawPath(
                 path = path,
                 color = color,
                 style = Stroke(width = strokeWidth)
             )
+
+            // Then blend gradient over selected cells
+            if (state == HexCellState.SELECTED) {
+                drawGradientBlend(cell, color)
+            }
         }
+    }
+
+    /**
+     * Draws radial gradient that uses the grid color and extends to nearby cells.
+     * Creates a gradient from the grid color at center to transparent at edges.
+     */
+    private fun DrawScope.drawGradientBlend(cell: HexCell, gridColor: Color) {
+        // Calculate cell radius from center to first vertex
+        val cellRadius = kotlin.math.sqrt(
+            (cell.vertices[0].x - cell.center.x).let { it * it } +
+            (cell.vertices[0].y - cell.center.y).let { it * it }
+        )
+        val gradientRadius = cellRadius * 1.5f // 50% bigger than cell radius
+
+        // Create radial gradient using the grid color with transparency fade
+        val radialGradient = Brush.radialGradient(
+            colors = listOf(
+                gridColor, // Full grid color at center
+                gridColor.copy(alpha = 0.8f), // Strong grid color
+                gridColor.copy(alpha = 0.6f), // Medium grid color extending to nearby cells
+                gridColor.copy(alpha = 0.2f), // Light grid color at edges
+                Color.Transparent // Fully transparent at outer edges
+            ),
+            center = cell.center,
+            radius = gradientRadius
+        )
+
+        // Draw gradient with SrcIn blend mode to only affect existing stroke pixels
+        drawCircle(
+            brush = radialGradient,
+            radius = gradientRadius,
+            center = cell.center,
+            blendMode = BlendMode.SrcIn
+        )
     }
 
     /**
