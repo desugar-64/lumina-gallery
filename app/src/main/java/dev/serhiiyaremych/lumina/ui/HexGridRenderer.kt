@@ -1,5 +1,8 @@
 package dev.serhiiyaremych.lumina.ui
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -8,10 +11,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.HexGrid
+import kotlinx.coroutines.launch
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
@@ -24,11 +29,14 @@ enum class HexCellState {
 
 data class HexRenderConfig(
     val baseStrokeWidth: Dp = 1.5.dp,
-    val cellPadding: Dp = 0.dp,
+    val cellPadding: Dp = 0.dp, // Cell spacing is now handled at grid generation level
     val cornerRadius: Dp = 0.dp,
     val gridColor: Color = Color.Gray.copy(alpha = 0.3f),
     val focusedColor: Color = Color.Blue.copy(alpha = 0.6f),
-    val selectedColor: Color = Color.Green.copy(alpha = 0.8f)
+    val selectedColor: Color = Color.Green.copy(alpha = 0.8f),
+    // Material 3 Expressive selection enhancements
+    val mutedColorAlpha: Float = 0.4f, // Reduced alpha for non-selected cells
+    val selectedStrokeWidth: Dp = 2.5.dp // Thicker stroke for selected cells
 )
 
 class HexGridRenderer {
@@ -42,68 +50,86 @@ class HexGridRenderer {
         drawScope: DrawScope,
         hexGrid: HexGrid,
         config: HexRenderConfig = HexRenderConfig(),
-        cellStates: Map<HexCell, HexCellState> = emptyMap()
+        cellStates: Map<HexCell, HexCellState> = emptyMap(),
+        cellScales: Map<HexCell, Float> = emptyMap()
     ) {
         with(drawScope) {
             hexGrid.cells.forEach { cell ->
                 val cellState = cellStates[cell] ?: HexCellState.NORMAL
+                val cellScale = cellScales[cell] ?: 1.0f
                 drawHexCell(
                     cell = cell,
                     config = config,
-                    state = cellState
+                    state = cellState,
+                    scale = cellScale
                 )
             }
         }
     }
 
     /**
-     * Draw individual hex cell with state-based styling and smooth corners
+     * Draw individual hex cell with state-based styling, smooth corners, and Material 3 bounce animation.
+     * Enhanced with Material 3 Expressive selection features including springy bounce scaling.
      */
     private fun DrawScope.drawHexCell(
         cell: HexCell,
         config: HexRenderConfig,
-        state: HexCellState
+        state: HexCellState,
+        scale: Float = 1.0f
     ) {
-        val path = createHexPath(cell, config)
-        val color = when (state) {
-            HexCellState.NORMAL -> config.gridColor
-            HexCellState.FOCUSED -> config.focusedColor
-            HexCellState.SELECTED -> config.selectedColor
+        val path = createHexPath(cell, config, state)
+        val (color, strokeWidth) = when (state) {
+            HexCellState.NORMAL -> config.gridColor.copy(alpha = config.gridColor.alpha * config.mutedColorAlpha) to config.baseStrokeWidth.toPx()
+            HexCellState.FOCUSED -> config.focusedColor to config.baseStrokeWidth.toPx()
+            HexCellState.SELECTED -> config.selectedColor to config.selectedStrokeWidth.toPx()
         }
         
-        drawPath(
-            path = path,
-            color = color,
-            style = Stroke(width = config.baseStrokeWidth.toPx())
-        )
+        // Apply bounce animation scaling if needed
+        if (scale != 1.0f) {
+            withTransform({
+                // Scale around the center of the hex cell
+                scale(scale, scale, pivot = cell.center)
+            }) {
+                drawPath(
+                    path = path,
+                    color = color,
+                    style = Stroke(width = strokeWidth)
+                )
+            }
+        } else {
+            // No scaling - draw normally for better performance
+            drawPath(
+                path = path,
+                color = color,
+                style = Stroke(width = strokeWidth)
+            )
+        }
     }
 
     /**
-     * Create or reuse hex path with padding and smooth corners.
+     * Create or reuse hex path with smooth corners.
      * Assumes we're in a transform context that handles zoom/offset.
+     * No padding applied - cells maintain their original size for proper photo positioning.
      */
     private fun DrawScope.createHexPath(
         cell: HexCell,
-        config: HexRenderConfig
+        config: HexRenderConfig,
+        state: HexCellState
     ): Path {
         // Convert Dp to pixels for cache key and calculations
         val cornerRadiusPx = config.cornerRadius.toPx()
-        val cellPaddingPx = config.cellPadding.toPx()
         
         // Create cache key for this configuration
-        val cacheKey = "${cell.hashCode()}_${cellPaddingPx}_${cornerRadiusPx}"
+        val cacheKey = "${cell.hashCode()}_${cornerRadiusPx}_${state.name}_original"
         
         // Return cached path if available
         pathCache[cacheKey]?.let { return it }
         
-        // Create new path with padding
+        // Create new path using original cell vertices (no padding modifications)
         reusablePath.reset()
         
-        val vertices = if (cellPaddingPx > 0f) {
-            createPaddedVertices(cell, cellPaddingPx)
-        } else {
-            cell.vertices
-        }
+        // Always use original vertices to maintain proper cell size for photos
+        val vertices = cell.vertices
         
         if (cornerRadiusPx > 0f) {
             createRoundedHexPath(reusablePath, vertices, cornerRadiusPx)
@@ -119,7 +145,9 @@ class HexGridRenderer {
     }
 
     /**
-     * Create vertices with dynamic padding around the cell
+     * Create vertices with dynamic padding around the cell.
+     * Positive padding moves vertices inward, creating gaps between cells by shrinking each cell.
+     * This is the correct approach - shrinking cells creates natural gaps without overlaps.
      */
     private fun createPaddedVertices(cell: HexCell, padding: Float): List<Offset> {
         val center = cell.center
@@ -127,7 +155,7 @@ class HexGridRenderer {
             val direction = (vertex - center)
             val length = kotlin.math.sqrt(direction.x * direction.x + direction.y * direction.y)
             val normalizedDirection = if (length > 0) direction / length else Offset.Zero
-            vertex - (normalizedDirection * padding)
+            vertex - (normalizedDirection * padding) // Inward shrinking creates gaps between cells
         }
     }
 

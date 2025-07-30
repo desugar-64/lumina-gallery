@@ -14,6 +14,8 @@ import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaItem
 import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaManager
+import dev.serhiiyaremych.lumina.ui.animation.HexCellBounceAnimationManager
+import dev.serhiiyaremych.lumina.ui.animation.rememberHexCellBounceAnimationManager
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
@@ -28,6 +30,7 @@ data class MediaHexState(
     val clickedHexCell: HexCell?,
     val ripplePosition: Offset?,
     val revealAnimationTarget: AnimatableMediaItem?,
+    val bounceAnimationManager: HexCellBounceAnimationManager,
     val setClickedMedia: (Media?) -> Unit,
     val setClickedHexCell: (HexCell?) -> Unit,
     val setRipplePosition: (Offset?) -> Unit,
@@ -54,6 +57,9 @@ fun rememberMediaHexState(
 
     // Animation manager for media items
     val animationManager = remember { AnimatableMediaManager() }
+    
+    // Bounce animation manager for hex cell Material 3 bounce animations
+    val bounceAnimationManager = rememberHexCellBounceAnimationManager()
 
     // Remember coroutine scope for immediate animation triggering
     val animationScope = rememberCoroutineScope()
@@ -70,6 +76,7 @@ fun rememberMediaHexState(
             clickedHexCell = null,
             ripplePosition = null,
             revealAnimationTarget = null,
+            bounceAnimationManager = bounceAnimationManager,
             setClickedMedia = { clickedMedia = it },
             setClickedHexCell = { clickedHexCell = it },
             setRipplePosition = { ripplePosition = it },
@@ -154,6 +161,7 @@ fun rememberMediaHexState(
         clickedHexCell = clickedHexCell,
         ripplePosition = ripplePosition,
         revealAnimationTarget = revealAnimationTarget,
+        bounceAnimationManager = bounceAnimationManager,
         setClickedMedia = { clickedMedia = it },
         setClickedHexCell = { clickedHexCell = it },
         setRipplePosition = { ripplePosition = it },

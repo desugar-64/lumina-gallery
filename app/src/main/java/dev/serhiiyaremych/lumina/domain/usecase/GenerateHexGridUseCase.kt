@@ -4,6 +4,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.HexGrid
 import javax.inject.Inject
@@ -21,16 +22,20 @@ class GenerateHexGridUseCase @Inject constructor() {
         cellCount: Int,
         cellSizeDp: Dp,
         density: Density,
-        canvasSize: Size
+        canvasSize: Size,
+        cellSpacingDp: Dp = 0.dp // Add spacing between cells in dp units
     ): HexGrid {
         val cellSizePx = with(density) { cellSizeDp.toPx() }
+        val cellSpacingPx = with(density) { cellSpacingDp.toPx() }
         val radius = cellSizePx / 2f
 
         // Hex dimensions
         val hexWidth = radius * 2f
         val hexHeight = radius * sqrt(3f)
-        val horizontalSpacing = hexWidth * 3f / 4f
-        val verticalSpacing = hexHeight
+        
+        // Add spacing to create gaps between cells while keeping cell size unchanged
+        val horizontalSpacing = (hexWidth * 3f / 4f) + cellSpacingPx
+        val verticalSpacing = hexHeight + cellSpacingPx
 
         // Calculate approximate grid bounds for centering
         val estimatedRings = kotlin.math.ceil(kotlin.math.sqrt(cellCount.toDouble() / 3.5)).toInt()

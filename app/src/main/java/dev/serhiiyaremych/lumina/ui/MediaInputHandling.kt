@@ -13,6 +13,7 @@ import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaItem
 import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaManager
 import dev.serhiiyaremych.lumina.ui.animation.AnimationConstants
+import dev.serhiiyaremych.lumina.ui.animation.HexCellBounceAnimationManager
 import dev.serhiiyaremych.lumina.ui.animation.PileShuffleRevealStrategy
 import dev.serhiiyaremych.lumina.ui.animation.calculateVisibilityRatio
 import kotlinx.coroutines.launch
@@ -34,7 +35,8 @@ data class MediaInputConfig(
     val onClickedMedia: (Media?) -> Unit = {},
     val onClickedHexCell: (HexCell?) -> Unit = {},
     val onRevealAnimationTarget: (AnimatableMediaItem?) -> Unit = {},
-    val cellFocusManager: CellFocusManager? = null
+    val cellFocusManager: CellFocusManager? = null,
+    val bounceAnimationManager: HexCellBounceAnimationManager? = null
 )
 
 /**
@@ -209,6 +211,20 @@ private fun handleHexCellTap(
         }
 
         config.onRevealAnimationTarget(null)
+
+        // Trigger Material 3 bounce animation for the clicked hex cell
+        // We need to determine the cell state to pass to the bounce animation
+        val cellState = when {
+            config.selectedMedia != null -> {
+                // Check if this cell contains the selected media
+                val containsSelectedMedia = config.hexGridLayout.hexCellsWithMedia
+                    .find { it.hexCell == cell }
+                    ?.mediaItems?.any { it.media == config.selectedMedia } == true
+                if (containsSelectedMedia) HexCellState.SELECTED else HexCellState.NORMAL
+            }
+            else -> HexCellState.NORMAL
+        }
+        config.bounceAnimationManager?.triggerBounce(cell, cellState)
 
         // Trigger focus request
         config.geometryReader.getHexCellBounds(cell)?.let { bounds ->

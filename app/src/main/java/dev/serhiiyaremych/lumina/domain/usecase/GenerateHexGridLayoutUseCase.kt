@@ -5,6 +5,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.domain.model.HexGrid
 import dev.serhiiyaremych.lumina.domain.model.HexGridLayout
@@ -57,7 +58,8 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         density: Density,
         canvasSize: Size,
         groupingPeriod: GroupingPeriod = GroupingPeriod.DAILY,
-        thumbnailSizeFactor: Float = 0.45f
+        thumbnailSizeFactor: Float = 0.45f,
+        cellSpacingDp: Dp = 8.dp // Cell spacing between hex cells
     ): HexGridLayout {
         // Step 1: Fetch all media items
         val allMedia = getMediaUseCase()
@@ -68,12 +70,13 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         // Step 3: Get hex grid configuration based on group count
         val (_, cellSizeDp) = getHexGridParametersUseCase(groupedMedia.size)
 
-        // Step 4: Generate hex grid geometry with exact cell count
+        // Step 4: Generate hex grid geometry with exact cell count and spacing
         val hexGrid = generateHexGridUseCase(
             cellCount = groupedMedia.size,
             cellSizeDp = cellSizeDp,
             density = density,
-            canvasSize = canvasSize
+            canvasSize = canvasSize,
+            cellSpacingDp = cellSpacingDp
         )
 
         // Step 5: Position media items within hex cells

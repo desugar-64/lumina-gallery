@@ -122,7 +122,8 @@ fun MediaHexVisualization(
         onClickedMedia = state.setClickedMedia,
         onClickedHexCell = state.setClickedHexCell,
         onRevealAnimationTarget = state.setRevealAnimationTarget,
-        cellFocusManager = cellFocusManager
+        cellFocusManager = cellFocusManager,
+        bounceAnimationManager = state.bounceAnimationManager
     )
 
     BoxWithConstraints {
@@ -169,7 +170,9 @@ fun MediaHexVisualization(
                 geometryReader = state.geometryReader,
                 selectedMedia = selectedMedia,
                 streamingAtlases = streamingAtlases,
-                zoom = zoom
+                zoom = zoom,
+                clickedHexCell = state.clickedHexCell,
+                bounceAnimationManager = state.bounceAnimationManager
             )
 
             // Record and draw both content and selected layers

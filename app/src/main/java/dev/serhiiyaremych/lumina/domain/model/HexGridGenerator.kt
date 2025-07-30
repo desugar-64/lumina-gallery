@@ -3,6 +3,7 @@ package dev.serhiiyaremych.lumina.domain.model
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -12,16 +13,20 @@ class HexGridGenerator {
     fun generateGrid(
         gridSize: Int,
         cellSizeDp: Dp,
-        density: Density
+        density: Density,
+        cellSpacingDp: Dp = 0.dp // Add spacing in dp units
     ): HexGrid {
         val cellSizePx = with(density) { cellSizeDp.toPx() }
+        val cellSpacingPx = with(density) { cellSpacingDp.toPx() }
         val radius = cellSizePx / 2f
 
         // Hex dimensions
         val hexWidth = radius * 2f
         val hexHeight = radius * sqrt(3f)
-        val horizontalSpacing = hexWidth * 3f / 4f
-        val verticalSpacing = hexHeight
+        
+        // Add spacing to create gaps between cells while keeping cell size unchanged
+        val horizontalSpacing = (hexWidth * 3f / 4f) + cellSpacingPx
+        val verticalSpacing = hexHeight + cellSpacingPx
 
         val cells = mutableListOf<HexCell>()
 

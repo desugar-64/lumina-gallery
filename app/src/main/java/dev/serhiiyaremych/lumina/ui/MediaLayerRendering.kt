@@ -39,7 +39,8 @@ data class MediaLayerConfig(
     val geometryReader: GeometryReader,
     val selectedMedia: Media?,
     val atlasState: MultiAtlasUpdateResult?,
-    val zoom: Float
+    val zoom: Float,
+    val clickedHexCell: dev.serhiiyaremych.lumina.domain.model.HexCell? = null
 )
 
 /**
@@ -52,7 +53,9 @@ data class StreamingMediaLayerConfig(
     val geometryReader: GeometryReader,
     val selectedMedia: Media?,
     val streamingAtlases: Map<dev.serhiiyaremych.lumina.domain.model.LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>?,
-    val zoom: Float
+    val zoom: Float,
+    val clickedHexCell: dev.serhiiyaremych.lumina.domain.model.HexCell? = null,
+    val bounceAnimationManager: dev.serhiiyaremych.lumina.ui.animation.HexCellBounceAnimationManager? = null
 )
 
 /**
@@ -337,27 +340,42 @@ class MediaLayerManager(
                     config.geometryReader.storeHexCellBounds(hexCellWithMedia.hexCell)
                 }
 
-                // Draw hex grid background
+                // Calculate hex cell states based on selected media and clicked hex cells
+                val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
+                val cellStates = calculateHexCellStates(config.hexGridLayout, effectiveSelectedMedia, config.clickedHexCell)
+                
+                // Calculate cell scales for bounce animations using the bounce animation manager
+                val cellScales = config.bounceAnimationManager?.let { bounceManager ->
+                    config.hexGridLayout.hexGrid.cells.associateWith { cell ->
+                        bounceManager.getCellScale(cell)
+                    }
+                } ?: emptyMap()
+                
+                // Draw hex grid background with Material 3 Expressive enhancements
                 config.hexGridRenderer.drawHexGrid(
                     drawScope = this,
                     hexGrid = config.hexGridLayout.hexGrid,
                     config = HexRenderConfig(
                         baseStrokeWidth = 1.0.dp,
-                        cellPadding = 8.dp,
                         cornerRadius = 8.dp, // Add subtle rounded corners
-                        gridColor = Color.Gray.copy(alpha = 0.25f)
-                    )
+                        gridColor = Color.Gray.copy(alpha = 0.25f),
+                        selectedColor = Color(0xFF1976D2).copy(alpha = 0.9f), // Material 3 Primary Blue
+                        mutedColorAlpha = 0.4f, // Reduced alpha for non-selected cells
+                        selectedStrokeWidth = 2.5.dp // Thicker stroke for selected cells - this provides the "emphasis" effect
+                    ),
+                    cellStates = cellStates,
+                    cellScales = cellScales
                 )
 
                 // Draw all non-selected media items
-                var selectedMedia: AnimatableMediaItem? = null
-                val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
+                var selectedMediaItem: AnimatableMediaItem? = null
+                val effectiveSelectedMediaForRendering = getEffectiveSelectedMedia(config.selectedMedia)
                 config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
                     hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
                         val animatableItem = config.animationManager.getOrCreateAnimatable(mediaWithPosition)
-                        val isSelected = animatableItem.mediaWithPosition.media == effectiveSelectedMedia
+                        val isSelected = animatableItem.mediaWithPosition.media == effectiveSelectedMediaForRendering
 
-                        if (isSelected) selectedMedia = animatableItem
+                        if (isSelected) selectedMediaItem = animatableItem
 
                         config.geometryReader.storeMediaBounds(
                             media = animatableItem.mediaWithPosition.media,
@@ -378,7 +396,7 @@ class MediaLayerManager(
                 }
 
                 // Draw gradient for effective selected media
-                selectedMedia?.let { item -> drawSelectionGradient(item) }
+                selectedMediaItem?.let { item -> drawSelectionGradient(item) }
             }
         }
     }
@@ -447,27 +465,38 @@ class MediaLayerManager(
                     config.geometryReader.storeHexCellBounds(hexCellWithMedia.hexCell)
                 }
 
-                // Draw hex grid background
+                // Calculate hex cell states based on selected media and clicked hex cells
+                val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
+                val cellStates = calculateHexCellStates(config.hexGridLayout, effectiveSelectedMedia, config.clickedHexCell)
+                
+                // Calculate cell scales for bounce animations (legacy config doesn't support bounce animations)
+                val cellScales = emptyMap<dev.serhiiyaremych.lumina.domain.model.HexCell, Float>()
+                
+                // Draw hex grid background with Material 3 Expressive enhancements
                 config.hexGridRenderer.drawHexGrid(
                     drawScope = this,
                     hexGrid = config.hexGridLayout.hexGrid,
                     config = HexRenderConfig(
                         baseStrokeWidth = 1.0.dp,
-                        cellPadding = 8.dp,
                         cornerRadius = 8.dp, // Add subtle rounded corners
-                        gridColor = Color.Gray.copy(alpha = 0.25f)
-                    )
+                        gridColor = Color.Gray.copy(alpha = 0.25f),
+                        selectedColor = Color(0xFF1976D2).copy(alpha = 0.9f), // Material 3 Primary Blue
+                        mutedColorAlpha = 0.4f, // Reduced alpha for non-selected cells
+                        selectedStrokeWidth = 2.5.dp // Thicker stroke for selected cells - this provides the "emphasis" effect
+                    ),
+                    cellStates = cellStates,
+                    cellScales = cellScales
                 )
 
                 // Draw all non-selected media items
-                var selectedMedia: AnimatableMediaItem? = null
-                val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
+                var selectedMediaItem: AnimatableMediaItem? = null
+                val effectiveSelectedMediaForRendering = getEffectiveSelectedMedia(config.selectedMedia)
                 config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
                     hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
                         val animatableItem = config.animationManager.getOrCreateAnimatable(mediaWithPosition)
-                        val isSelected = animatableItem.mediaWithPosition.media == effectiveSelectedMedia
+                        val isSelected = animatableItem.mediaWithPosition.media == effectiveSelectedMediaForRendering
 
-                        if (isSelected) selectedMedia = animatableItem
+                        if (isSelected) selectedMediaItem = animatableItem
 
                         config.geometryReader.storeMediaBounds(
                             media = animatableItem.mediaWithPosition.media,
@@ -488,7 +517,7 @@ class MediaLayerManager(
                 }
 
                 // Draw gradient for effective selected media
-                selectedMedia?.let { item -> drawSelectionGradient(item) }
+                selectedMediaItem?.let { item -> drawSelectionGradient(item) }
             }
         }
     }
@@ -593,5 +622,37 @@ class MediaLayerManager(
             center = center,
             blendMode = BlendMode.DstOut
         )
+    }
+    
+    /**
+     * Calculate hex cell states based on selected media and clicked hex cells.
+     * Cells containing the selected media or clicked hex cells are marked as SELECTED for expressive rendering.
+     */
+    private fun calculateHexCellStates(
+        hexGridLayout: dev.serhiiyaremych.lumina.domain.model.HexGridLayout,
+        selectedMedia: Media?,
+        clickedHexCell: dev.serhiiyaremych.lumina.domain.model.HexCell? = null
+    ): Map<dev.serhiiyaremych.lumina.domain.model.HexCell, HexCellState> {
+        val cellStates = mutableMapOf<dev.serhiiyaremych.lumina.domain.model.HexCell, HexCellState>()
+        
+        // Mark cells containing selected media as SELECTED
+        if (selectedMedia != null) {
+            hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
+                val containsSelectedMedia = hexCellWithMedia.mediaItems.any { mediaWithPosition ->
+                    mediaWithPosition.media == selectedMedia
+                }
+                
+                if (containsSelectedMedia) {
+                    cellStates[hexCellWithMedia.hexCell] = HexCellState.SELECTED
+                }
+            }
+        }
+        
+        // Mark clicked hex cell as SELECTED (overrides media selection if both exist)
+        if (clickedHexCell != null) {
+            cellStates[clickedHexCell] = HexCellState.SELECTED
+        }
+        
+        return cellStates
     }
 }
