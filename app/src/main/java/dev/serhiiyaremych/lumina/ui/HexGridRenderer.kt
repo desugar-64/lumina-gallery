@@ -38,7 +38,7 @@ class HexGridRenderer {
     /**
      * Main hex grid rendering function with performance optimizations.
      * Should be called within a transform context that handles zoom/offset.
-     * 
+     *
      * Rendering order:
      * 1. Draw all hex cell strokes first
      * 2. Draw all gradient blends on top for better layering
@@ -54,38 +54,32 @@ class HexGridRenderer {
             // Collect selected cells during stroke drawing to avoid double loop
             val selectedCells = mutableListOf<HexCell>()
             val selectedScales = mutableListOf<Float>()
-            
+
             // Phase 1: Draw all hex cell strokes and collect selected cells
             hexGrid.cells.forEach { cell ->
                 val cellState = cellStates[cell] ?: HexCellState.NORMAL
                 val cellScale = cellScales[cell] ?: 1.0f
-                
+
                 drawHexCellStroke(
                     cell = cell,
                     config = config,
                     state = cellState,
                     scale = cellScale
                 )
-                
+
                 // Collect selected cells for gradient phase
                 if (cellState == HexCellState.SELECTED) {
                     selectedCells.add(cell)
                     selectedScales.add(cellScale)
                 }
             }
-            
+
             // Phase 2: Draw gradient blends for selected cells only
             selectedCells.forEachIndexed { index, cell ->
                 val cellScale = selectedScales[index]
-                if (cellScale != 1.0f) {
-                    withTransform({
-                        scale(cellScale, cellScale, pivot = cell.center)
-                    }) {
-                        drawGradientBlend(cell, config.selectedColor)
-                    }
-                } else {
-                    drawGradientBlend(cell, config.selectedColor)
-                }
+                // Use the same bounce animation scale for both stroke and gradient radius
+                // This ensures synchronized animation between cell border and gradient effect
+                drawGradientBlend(cell, config.selectedColor, config.gridColor, radiusScale = cellScale)
             }
         }
     }
@@ -130,78 +124,27 @@ class HexGridRenderer {
     }
 
     /**
-     * Draw individual hex cell with state-based styling, smooth corners, and Material 3 bounce animation.
-     * Enhanced with Material 3 Expressive selection features including springy bounce scaling.
-     * 
-     * @deprecated Use drawHexCellStroke() instead. This function is kept for compatibility.
-     */
-    private fun DrawScope.drawHexCell(
-        cell: HexCell,
-        config: HexRenderConfig,
-        state: HexCellState,
-        scale: Float = 1.0f
-    ) {
-        val path = createHexPath(cell, config, state)
-        val (color, strokeWidth) = when (state) {
-            HexCellState.NORMAL -> config.gridColor.copy(alpha = config.gridColor.alpha * config.mutedColorAlpha) to config.baseStrokeWidth.toPx()
-            HexCellState.FOCUSED -> config.focusedColor to config.baseStrokeWidth.toPx()
-            HexCellState.SELECTED -> config.selectedColor to config.selectedStrokeWidth.toPx()
-        }
-
-        // Apply bounce animation scaling if needed
-        if (scale != 1.0f) {
-            withTransform({
-                // Scale around the center of the hex cell
-                scale(scale, scale, pivot = cell.center)
-            }) {
-                // Always draw the normal stroke first
-                drawPath(
-                    path = path,
-                    color = color,
-                    style = Stroke(width = strokeWidth)
-                )
-
-                // Then blend gradient over selected cells
-                if (state == HexCellState.SELECTED) {
-                    drawGradientBlend(cell, color)
-                }
-            }
-        } else {
-            // No scaling - draw normally for better performance
-            // Always draw the normal stroke first
-            drawPath(
-                path = path,
-                color = color,
-                style = Stroke(width = strokeWidth)
-            )
-
-            // Then blend gradient over selected cells
-            if (state == HexCellState.SELECTED) {
-                drawGradientBlend(cell, color)
-            }
-        }
-    }
-
-    /**
      * Draws radial gradient that uses the grid color and extends to nearby cells.
      * Creates a gradient from the grid color at center to transparent at edges.
+     * Supports radius scaling for smooth animation effects.
      */
-    private fun DrawScope.drawGradientBlend(cell: HexCell, gridColor: Color) {
+    private fun DrawScope.drawGradientBlend(cell: HexCell, selectionColor: Color, normalColor: Color, radiusScale: Float = 1.0f) {
         // Calculate cell radius from center to first vertex
         val cellRadius = kotlin.math.sqrt(
             (cell.vertices[0].x - cell.center.x).let { it * it } +
             (cell.vertices[0].y - cell.center.y).let { it * it }
         )
-        val gradientRadius = cellRadius * 1.5f // 50% bigger than cell radius
+        val baseGradientRadius = cellRadius * 1.7f // 70% bigger than cell radius
+        val gradientRadius = baseGradientRadius * radiusScale // Apply animation scaling
 
         // Create radial gradient using the grid color with transparency fade
         val radialGradient = Brush.radialGradient(
             colors = listOf(
-                gridColor, // Full grid color at center
-                gridColor.copy(alpha = 0.8f), // Strong grid color
-                gridColor.copy(alpha = 0.6f), // Medium grid color extending to nearby cells
-                gridColor.copy(alpha = 0.2f), // Light grid color at edges
-                Color.Transparent // Fully transparent at outer edges
+                selectionColor, // Full grid color at center
+                selectionColor.copy(alpha = 0.8f), // Strong grid color
+                selectionColor.copy(alpha = 0.6f), // Medium grid color extending to nearby cells
+                selectionColor.copy(alpha = 0.2f), // Light grid color at edges
+                normalColor // Fully transparent at outer edges
             ),
             center = cell.center,
             radius = gradientRadius
@@ -252,21 +195,6 @@ class HexGridRenderer {
         pathCache[cacheKey] = cachedPath
 
         return cachedPath
-    }
-
-    /**
-     * Create vertices with dynamic padding around the cell.
-     * Positive padding moves vertices inward, creating gaps between cells by shrinking each cell.
-     * This is the correct approach - shrinking cells creates natural gaps without overlaps.
-     */
-    private fun createPaddedVertices(cell: HexCell, padding: Float): List<Offset> {
-        val center = cell.center
-        return cell.vertices.map { vertex ->
-            val direction = (vertex - center)
-            val length = kotlin.math.sqrt(direction.x * direction.x + direction.y * direction.y)
-            val normalizedDirection = if (length > 0) direction / length else Offset.Zero
-            vertex - (normalizedDirection * padding) // Inward shrinking creates gaps between cells
-        }
     }
 
     /**
