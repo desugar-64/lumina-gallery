@@ -38,6 +38,10 @@ class HexGridRenderer {
     /**
      * Main hex grid rendering function with performance optimizations.
      * Should be called within a transform context that handles zoom/offset.
+     * 
+     * Rendering order:
+     * 1. Draw all hex cell strokes first
+     * 2. Draw all gradient blends on top for better layering
      */
     fun drawHexGrid(
         drawScope: DrawScope,
@@ -47,22 +51,89 @@ class HexGridRenderer {
         cellScales: Map<HexCell, Float> = emptyMap()
     ) {
         with(drawScope) {
+            // Collect selected cells during stroke drawing to avoid double loop
+            val selectedCells = mutableListOf<HexCell>()
+            val selectedScales = mutableListOf<Float>()
+            
+            // Phase 1: Draw all hex cell strokes and collect selected cells
             hexGrid.cells.forEach { cell ->
                 val cellState = cellStates[cell] ?: HexCellState.NORMAL
                 val cellScale = cellScales[cell] ?: 1.0f
-                drawHexCell(
+                
+                drawHexCellStroke(
                     cell = cell,
                     config = config,
                     state = cellState,
                     scale = cellScale
                 )
+                
+                // Collect selected cells for gradient phase
+                if (cellState == HexCellState.SELECTED) {
+                    selectedCells.add(cell)
+                    selectedScales.add(cellScale)
+                }
             }
+            
+            // Phase 2: Draw gradient blends for selected cells only
+            selectedCells.forEachIndexed { index, cell ->
+                val cellScale = selectedScales[index]
+                if (cellScale != 1.0f) {
+                    withTransform({
+                        scale(cellScale, cellScale, pivot = cell.center)
+                    }) {
+                        drawGradientBlend(cell, config.selectedColor)
+                    }
+                } else {
+                    drawGradientBlend(cell, config.selectedColor)
+                }
+            }
+        }
+    }
+
+    /**
+     * Draw individual hex cell stroke only (without gradient blending).
+     * Enhanced with Material 3 Expressive selection features including springy bounce scaling.
+     */
+    private fun DrawScope.drawHexCellStroke(
+        cell: HexCell,
+        config: HexRenderConfig,
+        state: HexCellState,
+        scale: Float = 1.0f
+    ) {
+        val path = createHexPath(cell, config, state)
+        val (color, strokeWidth) = when (state) {
+            HexCellState.NORMAL -> config.gridColor.copy(alpha = config.gridColor.alpha * config.mutedColorAlpha) to config.baseStrokeWidth.toPx()
+            HexCellState.FOCUSED -> config.focusedColor to config.baseStrokeWidth.toPx()
+            HexCellState.SELECTED -> config.selectedColor to config.selectedStrokeWidth.toPx()
+        }
+
+        // Apply bounce animation scaling if needed
+        if (scale != 1.0f) {
+            withTransform({
+                // Scale around the center of the hex cell
+                scale(scale, scale, pivot = cell.center)
+            }) {
+                drawPath(
+                    path = path,
+                    color = color,
+                    style = Stroke(width = strokeWidth)
+                )
+            }
+        } else {
+            // No scaling - draw normally for better performance
+            drawPath(
+                path = path,
+                color = color,
+                style = Stroke(width = strokeWidth)
+            )
         }
     }
 
     /**
      * Draw individual hex cell with state-based styling, smooth corners, and Material 3 bounce animation.
      * Enhanced with Material 3 Expressive selection features including springy bounce scaling.
+     * 
+     * @deprecated Use drawHexCellStroke() instead. This function is kept for compatibility.
      */
     private fun DrawScope.drawHexCell(
         cell: HexCell,
