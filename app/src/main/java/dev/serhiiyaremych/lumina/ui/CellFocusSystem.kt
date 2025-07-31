@@ -40,14 +40,24 @@ interface CellFocusListener {
 
 /**
  * Manages cell focus detection based on gesture updates and viewport calculations.
+ * Uses enhanced centered viewport detection for more intuitive focus behavior.
  */
 class CellFocusManager(
     private val config: CellFocusConfig = CellFocusConfig(),
     private val scope: CoroutineScope,
     private val listener: CellFocusListener
 ) {
-    private val significantCells = mutableSetOf<HexCell>()
+    private var currentSignificantCell: HexCell? = null
     private var gestureJob: Job? = null
+    
+    // Enhanced config with centered detection
+    private val enhancedConfig = EnhancedCellFocusConfig(
+        significanceThreshold = config.significanceThreshold,
+        gestureDelayMs = config.gestureDelayMs,  
+        debugLogging = config.debugLogging,
+        useCenteredDetection = true,
+        centeredSquareFactor = 0.6f
+    )
     
     /**
      * Called on every gesture update (pan/zoom). Calculates focus with debouncing.
@@ -87,57 +97,65 @@ class CellFocusManager(
         offset: Offset,
         hexCellsWithMedia: List<HexCellWithMedia>
     ) {
-        // Calculate current viewport in content coordinates
-        val viewportRect = calculateViewportRect(contentSize, zoom, offset)
+        // Use enhanced centered cell focus detection
+        val newSignificantCell = calculateCenteredCellFocus(
+            geometryReader = geometryReader,
+            contentSize = contentSize,
+            zoom = zoom,
+            offset = offset,
+            hexCellsWithMedia = hexCellsWithMedia,
+            config = enhancedConfig
+        )
         
-        // Update visible area in geometry reader
+        // Update visible area in geometry reader for other uses
+        val viewportRect = calculateViewportRect(contentSize, zoom, offset)
         geometryReader.updateVisibleArea(viewportRect)
         
-        val newSignificantCells = mutableSetOf<HexCell>()
+        // Handle cell focus transitions
+        val previousCell = currentSignificantCell
+        val newCell = newSignificantCell?.hexCell
         
-        // Check each cell's coverage
-        hexCellsWithMedia.forEach { cellWithMedia ->
-            val cellBounds = geometryReader.getHexCellBounds(cellWithMedia.hexCell)
-            if (cellBounds != null) {
-                val coverage = calculateViewportCoverage(cellBounds, viewportRect)
-                val isSignificant = coverage >= config.significanceThreshold
-                
-                if (isSignificant) {
-                    newSignificantCells.add(cellWithMedia.hexCell)
-                    
-                    // Trigger callback if this cell wasn't previously significant
-                    if (!significantCells.contains(cellWithMedia.hexCell)) {
-                        if (config.debugLogging) {
-                            android.util.Log.d("CellFocus", "NEW Cell SIGNIFICANT: (${cellWithMedia.hexCell.q}, ${cellWithMedia.hexCell.r}) coverage=${String.format("%.3f", coverage)}")
-                        }
-                        listener.onCellSignificant(cellWithMedia, coverage)
-                    }
-                }
+        // Cell became insignificant
+        if (previousCell != null && newCell != previousCell) {
+            if (enhancedConfig.debugLogging) {
+                android.util.Log.d("CellFocus", "Cell INSIGNIFICANT: (${previousCell.q}, ${previousCell.r})")
+            }
+            // Find the HexCellWithMedia for the previous cell
+            hexCellsWithMedia.find { it.hexCell == previousCell }?.let { cellWithMedia ->
+                listener.onCellInsignificant(cellWithMedia)
             }
         }
         
-        // Find cells that became insignificant (BEFORE updating the set)
-        val cellsToRemove = significantCells - newSignificantCells
-        if (config.debugLogging) {
-            android.util.Log.d("CellFocus", "Significant before: ${significantCells.size}, new: ${newSignificantCells.size}, removing: ${cellsToRemove.size}")
-        }
-        
-        // Trigger callbacks for cells that became insignificant
-        cellsToRemove.forEach { hexCell ->
-            if (config.debugLogging) {
-                android.util.Log.d("CellFocus", "Cell INSIGNIFICANT: (${hexCell.q}, ${hexCell.r})")
+        // Cell became significant  
+        if (newCell != null && newCell != previousCell) {
+            val coverage = calculateDetailedCoverage(geometryReader, newSignificantCell!!, contentSize, zoom, offset)
+            if (enhancedConfig.debugLogging) {
+                android.util.Log.d("CellFocus", "NEW Cell SIGNIFICANT: (${newCell.q}, ${newCell.r}) coverage=${String.format("%.3f", coverage)} (centered detection)")
             }
-            // Find the HexCellWithMedia for this hexCell
-            val cellWithMedia = hexCellsWithMedia.first { it.hexCell == hexCell }
-            listener.onCellInsignificant(cellWithMedia)
+            listener.onCellSignificant(newSignificantCell, coverage)
         }
         
-        // Update significant cells set (do this AFTER calculating removals)
-        significantCells.clear()
-        significantCells.addAll(newSignificantCells)
-        if (config.debugLogging) {
-            android.util.Log.d("CellFocus", "Final significant cells: ${significantCells.size}")
+        // Update current state
+        currentSignificantCell = newCell
+        
+        if (enhancedConfig.debugLogging) {
+            android.util.Log.d("CellFocus", "Current significant cell: ${currentSignificantCell?.let { "(${it.q}, ${it.r})" } ?: "none"}")
         }
+    }
+    
+    /**
+     * Calculate detailed coverage for logging/debugging
+     */
+    private fun calculateDetailedCoverage(
+        geometryReader: GeometryReader,
+        cellWithMedia: HexCellWithMedia,
+        contentSize: Size,
+        zoom: Float,
+        offset: Offset
+    ): Float {
+        val cellBounds = geometryReader.getHexCellBounds(cellWithMedia.hexCell) ?: return 0f
+        val viewportRect = calculateViewportRect(contentSize, zoom, offset)
+        return calculateViewportCoverage(cellBounds, viewportRect)
     }
     
     /**

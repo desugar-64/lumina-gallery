@@ -66,7 +66,11 @@ fun MediaHexVisualization(
      * When provided, MediaHexVisualization will use this state instead of creating its own.
      * This allows sharing the GeometryReader with external components like FocusedCellPanel.
      */
-    externalState: MediaHexState? = null
+    externalState: MediaHexState? = null,
+    /**
+     * Set of significant cells from automatic detection for highlighting.
+     */
+    significantCells: Set<HexCell> = emptySet()
 ) {
     if (hexGridLayout.hexCellsWithMedia.isEmpty()) return
 
@@ -171,7 +175,8 @@ fun MediaHexVisualization(
                 streamingAtlases = streamingAtlases,
                 zoom = zoom,
                 clickedHexCell = state.clickedHexCell,
-                bounceAnimationManager = state.bounceAnimationManager
+                bounceAnimationManager = state.bounceAnimationManager,
+                significantCells = significantCells
             )
 
             // Record and draw both content and selected layers

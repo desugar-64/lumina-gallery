@@ -27,6 +27,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlin.math.min
 
@@ -76,7 +79,7 @@ object MatrixVectorConverter : TwoWayConverter<Matrix, AnimationVector4D> {
  * Features:
  * - Unified matrix-based transformation pipeline
  * - Smooth animations via [MatrixAnimator]
- * - Content-aware focus calculations
+ * - Content-aware focus calculations with configurable padding
  * - Gesture integration
  *
  * @property zoom Current scale factor (1f = normal size)
@@ -87,6 +90,7 @@ object MatrixVectorConverter : TwoWayConverter<Matrix, AnimationVector4D> {
  * @param initialZoom Starting zoom level (default: 1f)
  * @param initialOffset Starting offset (default: Offset.Zero)
  * @param animationSpec Animation configuration for transformations
+ * @param focusPadding Padding around focused content in dp (prevents edge-to-edge fitting)
  *
  * Note: All transformations respect MIN_ZOOM/MAX_ZOOM constraints
  */
@@ -94,7 +98,8 @@ object MatrixVectorConverter : TwoWayConverter<Matrix, AnimationVector4D> {
 class TransformableState(
     initialZoom: Float = 1f,
     initialOffset: Offset = Offset.Zero,
-    private val animationSpec: AnimationSpec<Matrix> = spring()
+    private val animationSpec: AnimationSpec<Matrix> = spring(),
+    private val focusPadding: androidx.compose.ui.unit.Dp = 48.dp
 ) {
     // Reused array for matrix value extraction to avoid allocations
     private val matrixValuesCache = FloatArray(9)
@@ -114,6 +119,7 @@ class TransformableState(
 
     var isAnimating by mutableStateOf(false)
     var contentSize by mutableStateOf(Size.Zero)
+    var density: Density? by mutableStateOf(null)
 
     // Combined matrix extraction to avoid redundant getValues() calls
     private val transformValues by derivedStateOf {
@@ -173,10 +179,20 @@ class TransformableState(
         return false
     }
 
-    private fun calculateZoomToFit(bounds: Rect): Float = min(
-        contentSize.width / bounds.width,
-        contentSize.height / bounds.height
-    )
+    private fun calculateZoomToFit(bounds: Rect): Float {
+        // Convert padding from Dp to pixels
+        val paddingPx = density?.run { focusPadding.toPx() } ?: 0f
+        val doublePadding = paddingPx * 2f // Padding on both sides
+        
+        // Calculate available space after padding
+        val availableWidth = (contentSize.width - doublePadding).coerceAtLeast(contentSize.width * 0.1f)
+        val availableHeight = (contentSize.height - doublePadding).coerceAtLeast(contentSize.height * 0.1f)
+        
+        return min(
+            availableWidth / bounds.width,
+            availableHeight / bounds.height
+        )
+    }
 
     private fun calculateCenteringOffset(bounds: Rect, zoom: Float): Offset = Offset(
         (contentSize.width / 2) - (bounds.center.x * zoom),
@@ -192,12 +208,14 @@ fun rememberTransformableState(
         // Material 3 Expressive spring physics for smooth, natural motion
         stiffness = 700f, // Higher stiffness for quicker acceleration, avoiding abrupt start
         dampingRatio = 0.75f // Moderate damping for smooth deceleration without bounce
-    )
+    ),
+    focusPadding: androidx.compose.ui.unit.Dp = 48.dp
 ): TransformableState = rememberSaveable(saver = TransformerStateSaver) {
     TransformableState(
         initialZoom = initialZoom,
         initialOffset = initialOffset,
-        animationSpec = animationSpec
+        animationSpec = animationSpec,
+        focusPadding = focusPadding
     )
 }
 
@@ -224,6 +242,8 @@ fun TransformableContent(
     state: TransformableState = rememberTransformableState(),
     content: @Composable () -> Unit
 ) {
+    val density = LocalDensity.current
+    
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         LaunchedEffect(this.constraints) {
             state.updateContentSize(
@@ -232,6 +252,7 @@ fun TransformableContent(
                     constraints.maxHeight.toFloat()
                 )
             )
+            state.density = density
         }
 
         val coroutineScope = rememberCoroutineScope()

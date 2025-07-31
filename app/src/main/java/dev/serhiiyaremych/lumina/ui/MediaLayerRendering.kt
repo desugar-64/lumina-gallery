@@ -53,7 +53,8 @@ data class StreamingMediaLayerConfig(
     val streamingAtlases: Map<dev.serhiiyaremych.lumina.domain.model.LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>?,
     val zoom: Float,
     val clickedHexCell: dev.serhiiyaremych.lumina.domain.model.HexCell? = null,
-    val bounceAnimationManager: dev.serhiiyaremych.lumina.ui.animation.HexCellBounceAnimationManager? = null
+    val bounceAnimationManager: dev.serhiiyaremych.lumina.ui.animation.HexCellBounceAnimationManager? = null,
+    val significantCells: Set<dev.serhiiyaremych.lumina.domain.model.HexCell> = emptySet()
 )
 
 /**
@@ -303,7 +304,7 @@ class MediaLayerManager(
             }) {
                 // Calculate hex cell states based on selected media and clicked hex cells
                 val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
-                val cellStates = calculateHexCellStates(config.hexGridLayout, effectiveSelectedMedia, config.clickedHexCell)
+                val cellStates = calculateHexCellStates(config.hexGridLayout, effectiveSelectedMedia, config.clickedHexCell, config.significantCells)
 
                 // Calculate cell scales for bounce animations using the bounce animation manager
                 val cellScales = config.bounceAnimationManager?.let { bounceManager ->
@@ -496,11 +497,17 @@ class MediaLayerManager(
     private fun calculateHexCellStates(
         hexGridLayout: dev.serhiiyaremych.lumina.domain.model.HexGridLayout,
         selectedMedia: Media?,
-        clickedHexCell: dev.serhiiyaremych.lumina.domain.model.HexCell? = null
+        clickedHexCell: dev.serhiiyaremych.lumina.domain.model.HexCell? = null,
+        significantCells: Set<dev.serhiiyaremych.lumina.domain.model.HexCell> = emptySet()
     ): Map<dev.serhiiyaremych.lumina.domain.model.HexCell, HexCellState> {
         val cellStates = mutableMapOf<dev.serhiiyaremych.lumina.domain.model.HexCell, HexCellState>()
 
-        // Mark cells containing selected media as SELECTED
+        // Mark significant cells from automatic detection as FOCUSED
+        significantCells.forEach { hexCell ->
+            cellStates[hexCell] = HexCellState.FOCUSED
+        }
+
+        // Mark cells containing selected media as SELECTED (higher priority than FOCUSED)
         if (selectedMedia != null) {
             hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
                 val containsSelectedMedia = hexCellWithMedia.mediaItems.any { mediaWithPosition ->
@@ -513,7 +520,7 @@ class MediaLayerManager(
             }
         }
 
-        // Mark clicked hex cell as SELECTED (overrides media selection if both exist)
+        // Mark clicked hex cell as SELECTED (highest priority, overrides everything)
         if (clickedHexCell != null) {
             cellStates[clickedHexCell] = HexCellState.SELECTED
         }
