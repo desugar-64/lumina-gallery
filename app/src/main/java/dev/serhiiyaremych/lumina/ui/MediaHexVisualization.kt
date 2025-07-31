@@ -3,6 +3,7 @@ package dev.serhiiyaremych.lumina.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -144,6 +145,11 @@ fun MediaHexVisualization(
             }
         }
 
+        // Material 3 dynamic colors that adapt to wallpaper
+        val gridColor = MaterialTheme.colorScheme.outlineVariant      // Lighter, subtle normal grid lines
+        val focusedColor = MaterialTheme.colorScheme.secondary  
+        val selectedColor = MaterialTheme.colorScheme.primary         // Stronger selected grid lines
+
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
@@ -170,7 +176,7 @@ fun MediaHexVisualization(
 
             // Record and draw both content and selected layers
             with(layerManager) {
-                recordAndDrawLayers(layerConfig, canvasSize, zoom, offset)
+                recordAndDrawLayers(layerConfig, canvasSize, zoom, offset, gridColor, focusedColor, selectedColor)
             }
 
             // Draw debug overlays and UI elements on top

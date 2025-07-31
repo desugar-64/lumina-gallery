@@ -24,9 +24,10 @@ data class HexRenderConfig(
     val baseStrokeWidth: Dp = 1.5.dp,
     val cellPadding: Dp = 0.dp, // Cell spacing is now handled at grid generation level
     val cornerRadius: Dp = 0.dp,
-    val gridColor: Color = Color.LightGray,
-    val focusedColor: Color = Color.Blue.copy(alpha = 0.6f),
-    val selectedColor: Color = Color.Green.copy(alpha = 0.8f),
+    // Material 3 dynamic colors - will adapt to wallpaper changes
+    val gridColor: Color,
+    val focusedColor: Color,
+    val selectedColor: Color,
     // Material 3 Expressive selection enhancements
     val mutedColorAlpha: Float = 0.4f, // Reduced alpha for non-selected cells
     val selectedStrokeWidth: Dp = 2.5.dp // Thicker stroke for selected cells
@@ -46,7 +47,7 @@ class HexGridRenderer {
     fun drawHexGrid(
         drawScope: DrawScope,
         hexGrid: HexGrid,
-        config: HexRenderConfig = HexRenderConfig(),
+        config: HexRenderConfig,
         cellStates: Map<HexCell, HexCellState> = emptyMap(),
         cellScales: Map<HexCell, Float> = emptyMap()
     ) {
@@ -96,7 +97,7 @@ class HexGridRenderer {
     ) {
         val path = createHexPath(cell, config, state)
         val (color, strokeWidth) = when (state) {
-            HexCellState.NORMAL -> config.gridColor.copy(alpha = config.gridColor.alpha * config.mutedColorAlpha) to config.baseStrokeWidth.toPx()
+            HexCellState.NORMAL -> config.gridColor to config.baseStrokeWidth.toPx()
             HexCellState.FOCUSED -> config.focusedColor to config.baseStrokeWidth.toPx()
             HexCellState.SELECTED -> config.selectedColor to config.selectedStrokeWidth.toPx()
         }

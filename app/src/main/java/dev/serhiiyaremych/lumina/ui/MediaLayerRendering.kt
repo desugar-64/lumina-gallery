@@ -233,12 +233,15 @@ class MediaLayerManager(
         config: StreamingMediaLayerConfig,
         canvasSize: IntSize,
         zoom: Float,
-        offset: Offset
+        offset: Offset,
+        gridColor: Color,
+        focusedColor: Color,
+        selectedColor: Color
     ) {
         val clampedZoom = zoom.coerceIn(0.01f, 100f)
 
         // Record grid layer with hex grid and effects (unaffected by content layer desaturation)
-        recordStreamingGridLayer(config, canvasSize, clampedZoom, offset)
+        recordStreamingGridLayer(config, canvasSize, clampedZoom, offset, gridColor, focusedColor, selectedColor)
 
         // Record content layer with all non-selected media (no grid)
         recordStreamingContentLayer(config, canvasSize, clampedZoom, offset)
@@ -283,7 +286,10 @@ class MediaLayerManager(
         config: StreamingMediaLayerConfig,
         canvasSize: IntSize,
         clampedZoom: Float,
-        offset: Offset
+        offset: Offset,
+        gridColor: Color,
+        focusedColor: Color,
+        selectedColor: Color
     ) {
         gridLayer.compositingStrategy = CompositingStrategy.Offscreen
         gridLayer.record(
@@ -306,17 +312,18 @@ class MediaLayerManager(
                     }
                 } ?: emptyMap()
 
-                // Draw hex grid with Material 3 Expressive enhancements and radial gradient effects
+                // Draw hex grid with Material 3 dynamic colors and expressive enhancements
                 config.hexGridRenderer.drawHexGrid(
                     drawScope = this,
                     hexGrid = config.hexGridLayout.hexGrid,
                     config = HexRenderConfig(
                         baseStrokeWidth = 1.0.dp,
                         cornerRadius = 8.dp, // Add subtle rounded corners
-                        gridColor = Color.LightGray,
-                        selectedColor = Color.Blue, // Same as normal grid - let gradient do the coloring
-                        mutedColorAlpha = 0.4f, // Reduced alpha for non-selected cells
-                        selectedStrokeWidth = 2.5.dp // Thicker stroke for selected cells - this provides the "emphasis" effect
+                        gridColor = gridColor,
+                        focusedColor = focusedColor,
+                        selectedColor = selectedColor,
+                        mutedColorAlpha = 0.4f, // Reduced alpha for non-selected cells (unused now)
+                        selectedStrokeWidth = 2.5.dp // Thicker stroke for selected cells
                     ),
                     cellStates = cellStates,
                     cellScales = cellScales
