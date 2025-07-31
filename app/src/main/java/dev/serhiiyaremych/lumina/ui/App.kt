@@ -99,7 +99,7 @@ fun App(
             object : CellFocusHandler {
                 override fun onCellFocused(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia, coverage: Float) {
                     Log.d("CellFocus", "Cell FOCUSED: (${hexCellWithMedia.hexCell.q}, ${hexCellWithMedia.hexCell.r}) coverage=${String.format("%.2f", coverage)}")
-                    
+
                     // Update significant cells
                     streamingGalleryViewModel.updateSignificantCells(uiState.significantCells + hexCellWithMedia.hexCell)
 
@@ -110,7 +110,7 @@ fun App(
 
                     // Show focused cell panel
                     streamingGalleryViewModel.updateFocusedCell(hexCellWithMedia)
-                    
+
                     // Trigger focus animation to center on the cell
                     val cellBounds = calculateCellFocusBounds(hexCellWithMedia.hexCell)
                     Log.d("CellFocus", "Triggering focus animation to bounds: $cellBounds")
@@ -132,7 +132,7 @@ fun App(
                 }
             }
         }
-        
+
         // Cell focus listener adapter for the existing CellFocusManager interface
         val cellFocusListener = remember(cellFocusHandler) {
             object : CellFocusListener {
@@ -416,7 +416,7 @@ fun App(
             object : CellFocusHandler {
                 override fun onCellFocused(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia, coverage: Float) {
                     Log.d("CellFocus", "Cell FOCUSED: (${hexCellWithMedia.hexCell.q}, ${hexCellWithMedia.hexCell.r}) coverage=${String.format("%.2f", coverage)}")
-                    
+
                     // Update significant cells
                     significantCells = significantCells + hexCellWithMedia.hexCell
 
@@ -427,7 +427,7 @@ fun App(
 
                     // Show focused cell panel
                     focusedCellWithMedia = hexCellWithMedia
-                    
+
                     // Trigger focus animation to center on the cell
                     val cellBounds = calculateCellFocusBounds(hexCellWithMedia.hexCell)
                     Log.d("CellFocus", "Triggering focus animation to bounds: $cellBounds")
@@ -449,7 +449,7 @@ fun App(
                 }
             }
         }
-        
+
         // Cell focus listener adapter for the existing CellFocusManager interface
         val cellFocusListener = remember(legacyCellFocusHandler) {
             object : CellFocusListener {
@@ -772,7 +772,7 @@ private fun calculateCellPanelPosition(
 
     // Calculate initial panel position
     val initialX = screenX - panelSize.width / 2 // Center panel horizontally relative to cell
-    val initialY = screenY - panelSize.height / 2 // Center panel vertically relative to cell bottom
+    val initialY = screenY // Position panel top edge at cell bottom edge
 
     // Clamp panel horizontally (left and right)
     val panelLeft = initialX

@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
@@ -98,7 +99,7 @@ fun FocusedCellPanel(
     modifier: Modifier = Modifier
 ) {
     val panelAnimations = rememberPanelAnimations()
-    
+
     AnimatedVisibility(
         visible = panelAnimations.isVisible,
         enter = panelAnimations.enterTransition,
@@ -125,12 +126,12 @@ fun FocusedCellPanel(
 @Composable
 private fun rememberPanelAnimations(): PanelAnimations {
     var isVisible by remember { mutableStateOf(false) }
-    
+
     // Trigger entrance animation on first composition
     LaunchedEffect(Unit) {
         isVisible = true
     }
-    
+
     return remember(isVisible) {
         PanelAnimations(
             isVisible = isVisible,
@@ -204,10 +205,19 @@ private fun FocusedCellPanelContent(
     getMediaBounds: (Media) -> Rect?,
     modifier: Modifier = Modifier
 ) {
+    // Use same focused cell color as hex grid renderer for visual consistency
+    val cellColor = MaterialTheme.colorScheme.secondary // Same as hex grid FOCUSED cells
+
+    // Create panel background with cell color tint using compositeOver for proper blending
+    val panelColor = cellColor.copy(alpha = 0.12f)
+        .compositeOver(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
+
+    val cornerShape = RoundedCornerShape(24.dp)
+
     Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+        modifier = modifier.border(0.5.dp, cellColor, cornerShape),
+        shape = cornerShape,
+        color = panelColor,
         shadowElevation = 0.dp
     ) {
         PhotoPreviewGrid(
@@ -237,7 +247,7 @@ private fun createMediaClickHandler(
 ): (Media) -> Unit = { media ->
     // Always update selection state first
     onMediaSelected(media)
-    
+
     // Only trigger focus animation if we're in PHOTO_MODE
     if (selectionMode == SelectionMode.PHOTO_MODE) {
         getMediaBounds(media)?.let { bounds ->
@@ -271,7 +281,7 @@ private fun PhotoPreviewGrid(
                 val fadeWidth = 16.dp.toPx()
                 onDrawWithContent {
                     drawContent()
-                    
+
                     // Left fade-out
                     drawRect(
                         brush = Brush.horizontalGradient(
@@ -282,7 +292,7 @@ private fun PhotoPreviewGrid(
                         size = Size(fadeWidth, size.height),
                         blendMode = BlendMode.DstOut
                     )
-                    
+
                     // Right fade-out
                     drawRect(
                         brush = Brush.horizontalGradient(
@@ -307,7 +317,7 @@ private fun PhotoPreviewGrid(
             ) { mediaWithPosition ->
                 val isSelected = selectedMedia == mediaWithPosition.media
                 val itemIndex = mediaItems.indexOf(mediaWithPosition)
-                
+
                 StaggeredPhotoPreviewItem(
                     itemIndex = itemIndex,
                     media = mediaWithPosition.media,
@@ -338,10 +348,10 @@ private fun StaggeredPhotoPreviewItem(
 ) {
     // Use media URI as stable key to prevent animation state reset during scroll
     var hasStartedAnimation by remember(media.uri) { mutableStateOf(false) }
-    
+
     // Calculate staggered delay based on item position
     val delayMs = (itemIndex * 60L).coerceAtMost(300L)
-    
+
     // Trigger animation once when panel becomes visible
     LaunchedEffect(panelVisible, media.uri) {
         if (panelVisible && !hasStartedAnimation) {
@@ -349,11 +359,11 @@ private fun StaggeredPhotoPreviewItem(
             hasStartedAnimation = true
         }
     }
-    
+
     // Animate alpha and scale for entrance
     val targetAlpha = if (hasStartedAnimation || !panelVisible) 1f else 0f
     val targetScale = if (hasStartedAnimation || !panelVisible) 1f else 0.8f
-    
+
     val animatedAlpha by animateFloatAsState(
         targetValue = targetAlpha,
         animationSpec = spring(
@@ -362,7 +372,7 @@ private fun StaggeredPhotoPreviewItem(
         ),
         label = "staggeredAlpha"
     )
-    
+
     val animatedScale by animateFloatAsState(
         targetValue = targetScale,
         animationSpec = spring(
@@ -371,7 +381,7 @@ private fun StaggeredPhotoPreviewItem(
         ),
         label = "staggeredScale"
     )
-    
+
     PhotoPreviewItem(
         media = media,
         level0Atlases = level0Atlases,
@@ -394,7 +404,7 @@ class MorphPolygonShape(
     private val progress: Float
 ) : Shape {
     private val matrix = Matrix()
-    
+
     override fun createOutline(
         size: Size,
         layoutDirection: LayoutDirection,
@@ -404,7 +414,7 @@ class MorphPolygonShape(
         // Scale to fit the size, centered
         matrix.scale(size.width / 2f, size.height / 2f)
         matrix.translate(1f, 1f)
-        
+
         val path = morph.toPath(progress = progress).asComposePath()
         path.transform(matrix)
         return Outline.Generic(path)
@@ -453,7 +463,7 @@ private fun PhotoPreviewItem(
             rounding = CornerRounding(0.3f) // Rounded corners
         )
     }
-    
+
     val endShape = remember {
         RoundedPolygon(
             numVertices = 6, // Hexagon (6 vertices) - matches app's design language
@@ -461,11 +471,11 @@ private fun PhotoPreviewItem(
             rounding = CornerRounding(0.2f) // ~1dp equivalent corner rounding for softer hexagon
         )
     }
-    
+
     val morph = remember(startShape, endShape) {
         Morph(start = startShape, end = endShape)
     }
-    
+
     val morphShape = remember(morph, animatedMorphProgress) {
         MorphPolygonShape(morph, animatedMorphProgress)
     }
