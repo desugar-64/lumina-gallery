@@ -15,18 +15,13 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.ui.App
-import dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel
 import dev.serhiiyaremych.lumina.ui.gallery.StreamingGalleryViewModel
 import dev.serhiiyaremych.lumina.ui.theme.LuminaGalleryTheme
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    // Use streaming atlas system for better performance
     private val streamingGalleryViewModel: StreamingGalleryViewModel by viewModels()
-
-    // Keep legacy for benchmarking comparison if needed
-    private val galleryViewModel: GalleryViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,8 +32,8 @@ class MainActivity : ComponentActivity() {
         // Configure window for proper edge-to-edge behavior
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        // Setup atlas idleness tracking for benchmarking (using streaming system)
-        launchStreamingAtlasIdlenessTracking(streamingGalleryViewModel)
+        // Setup atlas idleness tracking for benchmarking
+        launchAtlasIdlenessTracking(streamingGalleryViewModel)
 
         // Setup compose idleness tracking for benchmarking
         launchIdlenessTracking()
@@ -61,35 +56,16 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Launch streaming atlas idleness tracking for benchmarking.
-     * Updates content description to track streaming atlas generation state.
-     */
-    private fun launchStreamingAtlasIdlenessTracking(viewModel: StreamingGalleryViewModel) {
-        val contentView: View = findViewById(android.R.id.content)
-
-        // Track streaming atlas generation state
-        lifecycleScope.launch {
-            viewModel.uiState.collect { uiState ->
-                contentView.contentDescription = if (uiState.isAtlasGenerating) {
-                    BenchmarkLabels.ATLAS_STATE_GENERATING
-                } else {
-                    BenchmarkLabels.ATLAS_STATE_IDLE
-                }
-            }
-        }
-    }
-
-    /**
-     * Launch atlas idleness tracking for benchmarking (legacy).
+     * Launch atlas idleness tracking for benchmarking.
      * Updates content description to track atlas generation state.
      */
-    private fun launchAtlasIdlenessTracking(viewModel: GalleryViewModel) {
+    private fun launchAtlasIdlenessTracking(viewModel: StreamingGalleryViewModel) {
         val contentView: View = findViewById(android.R.id.content)
 
         // Track atlas generation state
         lifecycleScope.launch {
-            viewModel.isAtlasGenerating.collect { isGenerating ->
-                contentView.contentDescription = if (isGenerating) {
+            viewModel.uiState.collect { uiState ->
+                contentView.contentDescription = if (uiState.isAtlasGenerating) {
                     BenchmarkLabels.ATLAS_STATE_GENERATING
                 } else {
                     BenchmarkLabels.ATLAS_STATE_IDLE

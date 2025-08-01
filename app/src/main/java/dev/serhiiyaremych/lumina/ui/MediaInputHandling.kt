@@ -47,7 +47,7 @@ data class MediaInputConfig(
 fun Modifier.mediaHexInput(config: MediaInputConfig): Modifier {
     val animationScope = rememberCoroutineScope()
     val revealStrategy = remember { PileShuffleRevealStrategy() }
-    
+
     return this.pointerInput(config.selectedMedia, config.provideZoom, config.provideOffset) {
         detectTapGestures { tapOffset ->
             val zoom = config.provideZoom()
@@ -62,11 +62,11 @@ fun Modifier.mediaHexInput(config: MediaInputConfig): Modifier {
 
             // Check for media hits with rotation-aware hit testing
             val hitAnimatableMedia = findAnimatableMediaAtPosition(
-                transformedPos, 
-                config.hexGridLayout, 
+                transformedPos,
+                config.hexGridLayout,
                 config.animationManager
             )
-            
+
             if (hitAnimatableMedia != null) {
                 handleMediaTap(
                     hitAnimatableMedia = hitAnimatableMedia,
@@ -97,12 +97,12 @@ private fun handleMediaTap(
     val media = hitAnimatableMedia.mediaWithPosition.media
     // Check selection state BEFORE calling callbacks
     val isCurrentlySelected = config.selectedMedia == media
-    
+
     // Call the callbacks to update selection state
     config.onMediaClicked(media)
     config.onClickedMedia(media)
     config.onClickedHexCell(null)
-    
+
     // Notify cell focus manager of media click
     config.cellFocusManager?.let { focusManager ->
         // Find the HexCellWithMedia containing this media
@@ -110,9 +110,7 @@ private fun handleMediaTap(
             cellWithMedia.mediaItems.any { it.media == media }
         }?.let { hexCellWithMedia ->
             focusManager.onCellClicked(
-                hexCell = hexCellWithMedia.hexCell,
-                hexCellWithMedia = hexCellWithMedia,
-                clickedMedia = media
+                hexCellWithMedia = hexCellWithMedia
             )
         }
     }
@@ -131,14 +129,14 @@ private fun handleMediaTap(
                 launch { item.resetRevealState() }
             }
         }
-        
+
         config.onRevealAnimationTarget(null)
     } else {
         // Media was not selected, so this is a new selection - trigger reveal animation
-        
+
         // Clean up previous animation IMMEDIATELY if needed
         config.onRevealAnimationTarget(null) // Clear previous target first
-        
+
         // Start new animation immediately
         animationScope.launch {
             val visibilityRatio = calculateVisibilityRatio(hitAnimatableMedia, allAnimatableItems)
@@ -162,7 +160,7 @@ private fun handleMediaTap(
                 launch { item.animateToRevealState(state) }
             }
         }
-        
+
         config.onRevealAnimationTarget(hitAnimatableMedia)
 
         // Trigger focus request with unrotated bounds for selected media
@@ -184,13 +182,12 @@ private fun handleHexCellTap(
         config.onHexCellClicked(cell)
         config.onClickedHexCell(cell)
         config.onClickedMedia(null)
-        
+
         // Notify cell focus manager of hex cell click
         config.cellFocusManager?.let { focusManager ->
             // Find the HexCellWithMedia for this cell
             config.hexGridLayout.hexCellsWithMedia.find { it.hexCell == cell }?.let { hexCellWithMedia ->
                 focusManager.onCellClicked(
-                    hexCell = cell,
                     hexCellWithMedia = hexCellWithMedia
                 )
             }

@@ -16,7 +16,6 @@ import kotlin.math.min
 
 enum class HexCellState {
     NORMAL,
-    FOCUSED,
     SELECTED
 }
 
@@ -26,7 +25,6 @@ data class HexRenderConfig(
     val cornerRadius: Dp = 0.dp,
     // Material 3 dynamic colors - will adapt to wallpaper changes
     val gridColor: Color,
-    val focusedColor: Color,
     val selectedColor: Color,
     // Material 3 Expressive selection enhancements
     val mutedColorAlpha: Float = 0.4f, // Reduced alpha for non-selected cells
@@ -98,7 +96,6 @@ class HexGridRenderer {
         val path = createHexPath(cell, config, state)
         val (color, strokeWidth) = when (state) {
             HexCellState.NORMAL -> config.gridColor to config.baseStrokeWidth.toPx()
-            HexCellState.FOCUSED -> config.focusedColor to config.baseStrokeWidth.toPx()
             HexCellState.SELECTED -> config.selectedColor to config.selectedStrokeWidth.toPx()
         }
 

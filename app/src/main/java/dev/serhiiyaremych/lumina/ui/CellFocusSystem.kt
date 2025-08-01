@@ -5,7 +5,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
-import dev.serhiiyaremych.lumina.domain.model.Media
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -31,7 +30,7 @@ interface CellFocusListener {
      * Called when a cell becomes significant in the viewport.
      */
     fun onCellSignificant(hexCellWithMedia: HexCellWithMedia, coverage: Float)
-    
+
     /**
      * Called when a cell becomes insignificant or leaves viewport.
      */
@@ -49,16 +48,16 @@ class CellFocusManager(
 ) {
     private var currentSignificantCell: HexCell? = null
     private var gestureJob: Job? = null
-    
+
     // Enhanced config with centered detection
     private val enhancedConfig = EnhancedCellFocusConfig(
         significanceThreshold = config.significanceThreshold,
-        gestureDelayMs = config.gestureDelayMs,  
+        gestureDelayMs = config.gestureDelayMs,
         debugLogging = config.debugLogging,
         useCenteredDetection = true,
         centeredSquareFactor = 0.6f
     )
-    
+
     /**
      * Called on every gesture update (pan/zoom). Calculates focus with debouncing.
      */
@@ -71,25 +70,22 @@ class CellFocusManager(
     ) {
         // Cancel previous calculation
         gestureJob?.cancel()
-        
+
         // Start new delayed calculation on background dispatcher for heavy geometry math
         gestureJob = scope.launch(kotlinx.coroutines.Dispatchers.Default) {
             delay(config.gestureDelayMs)
             calculateCellFocus(geometryReader, contentSize, zoom, offset, hexCellsWithMedia)
         }
     }
-    
+
     /**
      * Immediate callback for user clicks - no delay.
      * Clicked cells will be evaluated by subsequent viewport calculations.
      */
-    fun onCellClicked(hexCell: HexCell, hexCellWithMedia: HexCellWithMedia, clickedMedia: Media? = null) {
-        // Don't cancel gesture calculations - let viewport determine final state
-        
-        // Immediate callback for clicks (may cause duplicate if cell is already significant)
+    fun onCellClicked(hexCellWithMedia: HexCellWithMedia) {
         listener.onCellSignificant(hexCellWithMedia, 1.0f) // Max coverage for clicks
     }
-    
+
     private fun calculateCellFocus(
         geometryReader: GeometryReader,
         contentSize: Size,
@@ -106,15 +102,15 @@ class CellFocusManager(
             hexCellsWithMedia = hexCellsWithMedia,
             config = enhancedConfig
         )
-        
+
         // Update visible area in geometry reader for other uses
         val viewportRect = calculateViewportRect(contentSize, zoom, offset)
         geometryReader.updateVisibleArea(viewportRect)
-        
+
         // Handle cell focus transitions
         val previousCell = currentSignificantCell
         val newCell = newSignificantCell?.hexCell
-        
+
         // Cell became insignificant
         if (previousCell != null && newCell != previousCell) {
             if (enhancedConfig.debugLogging) {
@@ -125,8 +121,8 @@ class CellFocusManager(
                 listener.onCellInsignificant(cellWithMedia)
             }
         }
-        
-        // Cell became significant  
+
+        // Cell became significant
         if (newCell != null && newCell != previousCell) {
             val coverage = calculateDetailedCoverage(geometryReader, newSignificantCell!!, contentSize, zoom, offset)
             if (enhancedConfig.debugLogging) {
@@ -134,15 +130,15 @@ class CellFocusManager(
             }
             listener.onCellSignificant(newSignificantCell, coverage)
         }
-        
+
         // Update current state
         currentSignificantCell = newCell
-        
+
         if (enhancedConfig.debugLogging) {
             android.util.Log.d("CellFocus", "Current significant cell: ${currentSignificantCell?.let { "(${it.q}, ${it.r})" } ?: "none"}")
         }
     }
-    
+
     /**
      * Calculate detailed coverage for logging/debugging
      */
@@ -157,19 +153,19 @@ class CellFocusManager(
         val viewportRect = calculateViewportRect(contentSize, zoom, offset)
         return calculateViewportCoverage(cellBounds, viewportRect)
     }
-    
+
     /**
      * Calculates viewport rectangle in content coordinates based on current transform.
      */
     private fun calculateViewportRect(contentSize: Size, zoom: Float, offset: Offset): Rect {
         // Guard against zero zoom to prevent division by zero
         val safeZoom = zoom.coerceAtLeast(0.001f)
-        
+
         val contentWidth = contentSize.width / safeZoom
         val contentHeight = contentSize.height / safeZoom
         val contentLeft = -offset.x / safeZoom
         val contentTop = -offset.y / safeZoom
-        
+
         return Rect(
             left = contentLeft,
             top = contentTop,
@@ -177,17 +173,17 @@ class CellFocusManager(
             bottom = contentTop + contentHeight
         )
     }
-    
+
     /**
      * Calculates what percentage of the viewport this cell occupies.
      */
     private fun calculateViewportCoverage(cellBounds: Rect, viewportRect: Rect): Float {
         val intersection = cellBounds.intersect(viewportRect)
         if (intersection.isEmpty) return 0.0f
-        
+
         val intersectionArea = intersection.width * intersection.height
         val viewportArea = viewportRect.width * viewportRect.height
-        
+
         return intersectionArea / viewportArea
     }
 }

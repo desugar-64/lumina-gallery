@@ -92,22 +92,23 @@ fun App(
         val cellFocusHandler = remember(coroutineScope, transformableState) {
             object : CellFocusHandler {
                 override fun onCellFocused(hexCellWithMedia: HexCellWithMedia, coverage: Float) {
-                    Log.d("CellFocus", "Cell FOCUSED: (${hexCellWithMedia.hexCell.q}, ${hexCellWithMedia.hexCell.r}) coverage=${String.format("%.2f", coverage)}")
+                    val isManualClick = coverage >= 1.0f // Manual clicks have max coverage (1.0f)
+                    Log.d("CellFocus", "Cell FOCUSED: (${hexCellWithMedia.hexCell.q}, ${hexCellWithMedia.hexCell.r}) coverage=${String.format("%.2f", coverage)} manual=$isManualClick")
 
-                    // Update selected cell
+                    // Update selected cell - this should replace any previous selection
                     streamingGalleryViewModel.updateSelectedCell(hexCellWithMedia.hexCell)
 
                     // Clear selected media and set cell mode
                     streamingGalleryViewModel.updateSelectedMedia(null)
                     streamingGalleryViewModel.updateSelectionMode(SelectionMode.CELL_MODE)
-                    Log.d("CellFocus", "Selection mode: CELL_MODE (focused cell)")
+                    Log.d("CellFocus", "Selection mode: CELL_MODE (focused cell, manual=$isManualClick)")
 
                     // Show focused cell panel
                     streamingGalleryViewModel.updateFocusedCell(hexCellWithMedia)
 
-                    // Trigger focus animation to center on the cell
+                    // Trigger focus animation for both manual clicks AND auto-detection
                     val cellBounds = calculateCellFocusBounds(hexCellWithMedia.hexCell)
-                    Log.d("CellFocus", "Triggering focus animation to bounds: $cellBounds")
+                    Log.d("CellFocus", "Triggering focus animation to bounds: $cellBounds (${if (isManualClick) "manual click" else "auto-detection"})")
                     coroutineScope.launch {
                         transformableState.focusOn(cellBounds)
                     }

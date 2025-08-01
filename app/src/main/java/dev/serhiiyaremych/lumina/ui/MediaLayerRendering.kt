@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asComposeColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.drawscope.clipPath
 import kotlin.math.max
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
@@ -51,6 +52,7 @@ data class StreamingMediaLayerConfig(
     val animationManager: AnimatableMediaManager,
     val geometryReader: GeometryReader,
     val selectedMedia: Media?,
+    val selectedAnimatableItem: AnimatableMediaItem?, // Pre-resolved for performance
     val streamingAtlases: Map<dev.serhiiyaremych.lumina.domain.model.LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>?,
     val zoom: Float,
     val clickedHexCell: dev.serhiiyaremych.lumina.domain.model.HexCell? = null,
@@ -114,7 +116,7 @@ class MediaLayerManager(
 
     companion object {
         private const val DESATURATION_ANIMATION_DURATION = 2000
-        private const val DESATURATION_STRENGTH = 0.9f // 50% desaturation
+        private const val DESATURATION_STRENGTH = 0.5f // 50% desaturation
     }
 
     /**
@@ -237,6 +239,9 @@ class MediaLayerManager(
         return actualSelectedMedia ?: delayedSelectedMedia
     }
 
+    // Data class to hold gradient circle information for sharing between layers
+    private data class GradientCircle(val center: Offset, val radius: Float)
+
     /**
      * Records and draws all four layers (grid, placeholder, content, selected) with streaming atlases.
      */
@@ -246,16 +251,28 @@ class MediaLayerManager(
         zoom: Float,
         offset: Offset,
         gridColor: Color,
-        focusedColor: Color,
         selectedColor: Color
     ) {
         val clampedZoom = zoom.coerceIn(0.01f, 100f)
 
-        // Record grid layer with hex grid and effects (unaffected by content layer desaturation)
-        recordStreamingGridLayer(config, canvasSize, clampedZoom, offset, gridColor, focusedColor, selectedColor)
+        // Calculate gradient circle once from pre-resolved AnimatableItem
+        var gradientCircle: GradientCircle? = null
+        val currentGradientAlpha = gradientAlphaAnimatable.value
 
-        // Record placeholder layer with all photo placeholders (visible through gradient holes)
-        recordStreamingPlaceholderLayer(config, canvasSize, clampedZoom, offset)
+        if (config.selectedAnimatableItem != null && currentGradientAlpha > 0f) {
+            // Use pre-resolved bounds directly - no searching needed!
+            val bounds = config.selectedAnimatableItem.mediaWithPosition.absoluteBounds
+            val center = bounds.center
+            val maxSide = max(bounds.width, bounds.height)
+            val radius = maxSide * 1.7f / 2f
+            gradientCircle = GradientCircle(center, radius)
+        }
+
+        // Record grid layer with hex grid and effects (unaffected by content layer desaturation)
+        recordStreamingGridLayer(config, canvasSize, clampedZoom, offset, gridColor, selectedColor)
+
+        // Record placeholder layer with gradient circle clipping optimization
+        recordStreamingPlaceholderLayer(config, canvasSize, clampedZoom, offset, gradientCircle)
 
         // Record content layer with all non-selected media (no grid)
         recordStreamingContentLayer(config, canvasSize, clampedZoom, offset)
@@ -265,9 +282,7 @@ class MediaLayerManager(
 
         // Configure content layer composition strategy and effects when there's a selection
         val currentDesaturation = desaturationAnimatable.value
-        gradientAlphaAnimatable.value
-        val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
-        val hasSelection = effectiveSelectedMedia != null
+        val hasSelection = config.selectedAnimatableItem != null
 
         if (hasSelection) {
             // Set content layer to offscreen compositing for blend mode effects
@@ -303,7 +318,6 @@ class MediaLayerManager(
         clampedZoom: Float,
         offset: Offset,
         gridColor: Color,
-        focusedColor: Color,
         selectedColor: Color
     ) {
         gridLayer.compositingStrategy = CompositingStrategy.Offscreen
@@ -335,7 +349,6 @@ class MediaLayerManager(
                         baseStrokeWidth = 1.0.dp,
                         cornerRadius = 8.dp, // Add subtle rounded corners
                         gridColor = gridColor,
-                        focusedColor = focusedColor,
                         selectedColor = selectedColor,
                         mutedColorAlpha = 0.4f, // Reduced alpha for non-selected cells (unused now)
                         selectedStrokeWidth = 2.5.dp // Thicker stroke for selected cells
@@ -348,15 +361,18 @@ class MediaLayerManager(
     }
 
     /**
-     * Records the streaming placeholder layer with all photo placeholders.
+     * Records the streaming placeholder layer with photo placeholders clipped to gradient circle.
      * This layer will be visible through gradient holes in the content layer,
      * creating a "photo detail erasure" effect.
+     *
+     * Optimization: Only draws placeholders within the circular gradient area to reduce overdraw.
      */
     private fun recordStreamingPlaceholderLayer(
         config: StreamingMediaLayerConfig,
         canvasSize: IntSize,
         clampedZoom: Float,
-        offset: Offset
+        offset: Offset,
+        gradientCircle: GradientCircle?
     ) {
         placeholderLayer.compositingStrategy = CompositingStrategy.Auto
         placeholderLayer.record(
@@ -368,18 +384,30 @@ class MediaLayerManager(
                 scale(clampedZoom, clampedZoom, pivot = Offset.Zero)
                 translate(offset.x / clampedZoom, offset.y / clampedZoom)
             }) {
-                // Draw placeholders for all media items (including selected ones)
-                config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
-                    hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
-                        val animatableItem = config.animationManager.getOrCreateAnimatable(mediaWithPosition)
-
-                        // Draw placeholder with same transformations as real photos
-                        // Pass null atlases to force placeholder rendering with proper transformations
-                        drawAnimatableMediaFromStreamingAtlas(
-                            animatableItem = animatableItem,
-                            streamingAtlases = null, // Force placeholder rendering
-                            zoom = config.zoom
+                if (gradientCircle != null) {
+                    // Create circular clipping path for the gradient area
+                    val clipPath = androidx.compose.ui.graphics.Path().apply {
+                        addOval(
+                            androidx.compose.ui.geometry.Rect(
+                                center = gradientCircle.center,
+                                radius = gradientCircle.radius
+                            )
                         )
+                    }
+
+                    // Clip drawing to gradient circle area only - canvas handles culling automatically
+                    clipPath(clipPath) {
+                        config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
+                            hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
+                                val animatableItem = config.animationManager.getOrCreateAnimatable(mediaWithPosition)
+
+                                drawAnimatableMediaFromStreamingAtlas(
+                                    animatableItem = animatableItem,
+                                    streamingAtlases = null, // Force placeholder rendering
+                                    zoom = config.zoom
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -409,15 +437,11 @@ class MediaLayerManager(
                     config.geometryReader.storeHexCellBounds(hexCellWithMedia.hexCell)
                 }
 
-                // Draw all non-selected media items
-                var selectedMediaItem: AnimatableMediaItem? = null
-                val effectiveSelectedMediaForRendering = getEffectiveSelectedMedia(config.selectedMedia)
+                // Draw all non-selected media items using pre-resolved selection
                 config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
                     hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
                         val animatableItem = config.animationManager.getOrCreateAnimatable(mediaWithPosition)
-                        val isSelected = animatableItem.mediaWithPosition.media == effectiveSelectedMediaForRendering
-
-                        if (isSelected) selectedMediaItem = animatableItem
+                        val isSelected = config.selectedAnimatableItem?.mediaWithPosition?.media == animatableItem.mediaWithPosition.media
 
                         config.geometryReader.storeMediaBounds(
                             media = animatableItem.mediaWithPosition.media,
@@ -437,8 +461,8 @@ class MediaLayerManager(
                     }
                 }
 
-                // Draw gradient for effective selected media
-                selectedMediaItem?.let { item -> drawSelectionGradient(item) }
+                // Draw gradient for pre-resolved selected media
+                config.selectedAnimatableItem?.let { item -> drawSelectionGradient(item) }
             }
         }
     }
@@ -461,24 +485,13 @@ class MediaLayerManager(
                 scale(clampedZoom, clampedZoom, pivot = Offset.Zero)
                 translate(offset.x / clampedZoom, offset.y / clampedZoom)
             }) {
-                // Draw only the selected media item
-                val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
-                effectiveSelectedMedia?.let { media ->
-                    config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
-                        hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
-                            val animatableItem = config.animationManager.getOrCreateAnimatable(mediaWithPosition)
-                            val isSelected = animatableItem.mediaWithPosition.media == media
-
-                            if (isSelected) {
-                                // Draw the selected media item (gradient is now in content layer)
-                                drawAnimatableMediaFromStreamingAtlas(
-                                    animatableItem = animatableItem,
-                                    streamingAtlases = config.streamingAtlases,
-                                    zoom = config.zoom
-                                )
-                            }
-                        }
-                    }
+                // Draw only the pre-resolved selected media item - no searching needed!
+                config.selectedAnimatableItem?.let { selectedItem ->
+                    drawAnimatableMediaFromStreamingAtlas(
+                        animatableItem = selectedItem,
+                        streamingAtlases = config.streamingAtlases,
+                        zoom = config.zoom
+                    )
                 }
             }
         }
@@ -555,28 +568,35 @@ class MediaLayerManager(
     ): Map<dev.serhiiyaremych.lumina.domain.model.HexCell, HexCellState> {
         val cellStates = mutableMapOf<dev.serhiiyaremych.lumina.domain.model.HexCell, HexCellState>()
 
-        // Mark significant cells from automatic detection as FOCUSED
-        significantCells.forEach { hexCell ->
-            cellStates[hexCell] = HexCellState.FOCUSED
+        // Initialize all cells that actually get rendered to NORMAL state first to ensure clean state
+        hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
+            cellStates[hexCellWithMedia.hexCell] = HexCellState.NORMAL
         }
 
-        // Mark cells containing selected media as SELECTED (higher priority than FOCUSED)
-        if (selectedMedia != null) {
-            hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
-                val containsSelectedMedia = hexCellWithMedia.mediaItems.any { mediaWithPosition ->
-                    mediaWithPosition.media == selectedMedia
-                }
+        // UNIFIED APPROACH: Use significantCells for SELECTED state (both manual clicks and auto-detection)
+        // This replaces the separate clickedHexCell logic for unified state management
+        significantCells.forEach { hexCell ->
+            cellStates[hexCell] = HexCellState.SELECTED
+        }
 
-                if (containsSelectedMedia) {
-                    cellStates[hexCellWithMedia.hexCell] = HexCellState.SELECTED
+        // Legacy support: If no significantCells but we have clickedHexCell, use it
+        if (significantCells.isEmpty() && clickedHexCell != null) {
+            cellStates[clickedHexCell] = HexCellState.SELECTED
+        } else if (significantCells.isEmpty()) {
+            // Only use selectedMedia for cell states when no hex cell is explicitly clicked
+            if (selectedMedia != null) {
+                hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
+                    val containsSelectedMedia = hexCellWithMedia.mediaItems.any { mediaWithPosition ->
+                        mediaWithPosition.media == selectedMedia
+                    }
+
+                    if (containsSelectedMedia) {
+                        cellStates[hexCellWithMedia.hexCell] = HexCellState.SELECTED
+                    }
                 }
             }
         }
 
-        // Mark clicked hex cell as SELECTED (highest priority, overrides everything)
-        if (clickedHexCell != null) {
-            cellStates[clickedHexCell] = HexCellState.SELECTED
-        }
         return cellStates
     }
 }

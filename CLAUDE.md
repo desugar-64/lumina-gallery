@@ -503,6 +503,16 @@ Think hard to understand the true nature of a problem, not just to find a soluti
 - Troubleshooting problems following docs/five.md
 - When documenting code read docs/create-docs.md
 
+### Legacy Code Policy
+
+**IMPORTANT**: This codebase is in active development and should not maintain deprecated/legacy code paths.
+
+- **Remove legacy code immediately** when identified - do not keep deprecated functions, classes, or code paths
+- **No @Deprecated annotations** - delete the code entirely rather than marking as deprecated
+- **Clean up unused imports** after removing legacy code
+- **Single implementation principle** - maintain only one implementation of each feature (the current/modern one)
+- **Active development mindset** - assume users want the latest, most optimized implementation
+
 ### Development Workflow
 
 **IMPORTANT**: After implementing any feature or making code changes, always:

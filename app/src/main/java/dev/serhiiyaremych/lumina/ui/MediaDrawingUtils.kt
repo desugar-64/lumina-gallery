@@ -7,7 +7,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.IntOffset
@@ -32,19 +31,9 @@ fun DrawScope.drawPlaceholderRect(
     }
 
     val borderWidth = 2.dp.toPx()
-    val innerCornerRadius = 4.dp.toPx()  // Increased for smoother corners
+    val innerCornerRadius = 0.1.dp.toPx()  // Increased for smoother corners
     val outerCornerRadius = innerCornerRadius + borderWidth
-    val shadowOffset = 1.dp.toPx()
 
-    // 1. Draw subtle contact shadow
-    drawRoundRect(
-        color = Color.Black.copy(alpha = 0.15f * alpha),
-        topLeft = bounds.topLeft + Offset(shadowOffset, shadowOffset),
-        size = bounds.size,
-        cornerRadius = CornerRadius(outerCornerRadius)
-    )
-
-    // 2. Draw white border (photo background)
     drawRoundRect(
         color = Color.White.copy(alpha = alpha),
         topLeft = bounds.topLeft,
@@ -52,7 +41,6 @@ fun DrawScope.drawPlaceholderRect(
         cornerRadius = CornerRadius(outerCornerRadius)
     )
 
-    // 3. Draw the colored placeholder within the border
     val imageArea = Rect(
         left = bounds.left + borderWidth,
         top = bounds.top + borderWidth,
@@ -67,7 +55,6 @@ fun DrawScope.drawPlaceholderRect(
         cornerRadius = CornerRadius(innerCornerRadius)
     )
 
-    // 4. Draw hairline dark gray border around the entire photo
     drawRoundRect(
         color = Color(0xFF666666).copy(alpha = alpha),
         topLeft = bounds.topLeft,
@@ -90,8 +77,7 @@ fun DrawScope.drawStyledPhoto(
     bounds: Rect,
     zoom: Float,
     alpha: Float = 1f,
-    drawBorder: Boolean = true,
-    contentScale: ContentScale = ContentScale.Fit
+    drawBorder: Boolean = true
 ) {
     val borderWidth = if (drawBorder) 2.dp.toPx() else 0f
     val innerCornerRadius = if (drawBorder) 0.1.dp.toPx() else 0f  // Increased for smoother corners
@@ -213,6 +199,7 @@ fun DrawScope.drawMediaFromStreamingAtlas(
     withTransform({
         rotate(rotationAngle, center)
     }) {
+        val placeHolderColor = Color.LightGray
         when {
             streamingAtlases != null && streamingAtlases.isNotEmpty() -> {
                 // Search across all LOD levels for this photo (highest LOD first)
@@ -259,17 +246,17 @@ fun DrawScope.drawMediaFromStreamingAtlas(
                         )
                     } else {
                         // Bitmap was recycled, fall back to placeholder
-                        drawPlaceholderRect(media, bounds, Color.Gray, zoom, alpha)
+                        drawPlaceholderRect(media, bounds, placeHolderColor, zoom, alpha)
                     }
                 } else {
                     // Fallback: No atlas contains this photo
-                    drawPlaceholderRect(media, bounds, Color.Gray, zoom, alpha)
+                    drawPlaceholderRect(media, bounds, placeHolderColor, zoom, alpha)
                 }
             }
 
             else -> {
                 // Fallback: No atlas available, draw colored rectangle
-                drawPlaceholderRect(media, bounds, Color.Gray, zoom, alpha)
+                drawPlaceholderRect(media, bounds, placeHolderColor, zoom, alpha)
             }
         }
     }

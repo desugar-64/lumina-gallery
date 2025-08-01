@@ -6,12 +6,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -19,7 +16,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.IntSize
@@ -38,38 +34,12 @@ fun MediaHexVisualization(
     selectedMedia: Media? = null,
     onMediaClicked: (Media) -> Unit = {},
     onHexCellClicked: (HexCell) -> Unit = {},
-    /**
-     * Callback when content requests programmatic focus.
-     * @param bounds The [Rect] bounds of the content to focus on, in content coordinates.
-     *               The transformation system will smoothly center and zoom to these bounds.
-     */
     onFocusRequested: (Rect) -> Unit = {},
-    /**
-     * Callback when visible cells change due to zoom/pan operations.
-     * Reports cells that are actually being rendered on screen.
-     */
     onVisibleCellsChanged: (List<dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia>) -> Unit = {},
-    /**
-     * Optional cell focus listener for significant/insignificant cell focus events.
-     */
     cellFocusListener: CellFocusListener? = null,
-    /**
-     * Configuration for cell focus detection.
-     */
     cellFocusConfig: CellFocusConfig = CellFocusConfig(debugLogging = true),
-    /**
-     * Callback to clear clicked media state (for debug outline).
-     */
     onClearClickedMedia: () -> Unit = {},
-    /**
-     * Optional external state to use instead of creating internal state.
-     * When provided, MediaHexVisualization will use this state instead of creating its own.
-     * This allows sharing the GeometryReader with external components like FocusedCellPanel.
-     */
     externalState: MediaHexState? = null,
-    /**
-     * Set of significant cells from automatic detection for highlighting.
-     */
     significantCells: Set<HexCell> = emptySet()
 ) {
     if (hexGridLayout.hexCellsWithMedia.isEmpty()) return
@@ -149,9 +119,7 @@ fun MediaHexVisualization(
             }
         }
 
-        // Material 3 dynamic colors that adapt to wallpaper
         val gridColor = MaterialTheme.colorScheme.outlineVariant      // Lighter, subtle normal grid lines
-        val focusedColor = MaterialTheme.colorScheme.secondary  
         val selectedColor = MaterialTheme.colorScheme.primary         // Stronger selected grid lines
 
         Canvas(
@@ -165,6 +133,17 @@ fun MediaHexVisualization(
             val clampedZoom = zoom.coerceIn(0.01f, 100f)
             val canvasSize = IntSize(size.width.toInt(), size.height.toInt())
 
+            // Resolve selectedMedia to AnimatableMediaItem for performance optimization
+            val selectedAnimatableItem = selectedMedia?.let { media ->
+                // Find the MediaWithPosition for the selected media
+                val mediaWithPosition = hexGridLayout.hexCellsWithMedia
+                    .flatMap { it.mediaItems }
+                    .find { it.media == media }
+
+                // Get or create the AnimatableMediaItem
+                mediaWithPosition?.let { state.animationManager.getOrCreateAnimatable(it) }
+            }
+
             // Layer rendering configuration with streaming atlases
             val layerConfig = StreamingMediaLayerConfig(
                 hexGridLayout = hexGridLayout,
@@ -172,6 +151,7 @@ fun MediaHexVisualization(
                 animationManager = state.animationManager,
                 geometryReader = state.geometryReader,
                 selectedMedia = selectedMedia,
+                selectedAnimatableItem = selectedAnimatableItem,
                 streamingAtlases = streamingAtlases,
                 zoom = zoom,
                 clickedHexCell = state.clickedHexCell,
@@ -181,7 +161,7 @@ fun MediaHexVisualization(
 
             // Record and draw both content and selected layers
             with(layerManager) {
-                recordAndDrawLayers(layerConfig, canvasSize, zoom, offset, gridColor, focusedColor, selectedColor)
+                recordAndDrawLayers(layerConfig, canvasSize, zoom, offset, gridColor, selectedColor)
             }
 
             // Draw debug overlays and UI elements on top
