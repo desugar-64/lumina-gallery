@@ -8,131 +8,13 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.layout.ContentScale
-import kotlin.math.max
-import kotlin.math.min
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import dev.serhiiyaremych.lumina.domain.model.Media
-import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
 import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaItem
-
-/**
- * Drawing utilities for media hex visualization.
- * Contains pure functions for rendering media items, placeholders, and styled photos.
- */
-
-/**
- * Draws animatable media from atlas texture or falls back to colored rectangle.
- */
-fun DrawScope.drawAnimatableMediaFromAtlas(
-    animatableItem: AnimatableMediaItem,
-    atlasState: MultiAtlasUpdateResult?,
-    zoom: Float
-) {
-    val media = animatableItem.mediaWithPosition.media
-    val originalBounds = animatableItem.mediaWithPosition.absoluteBounds
-    val rotationAngle = animatableItem.currentRotation
-
-    // Apply reveal animation transforms
-    val slideOffset = animatableItem.currentSlideOffset
-    val breathingScale = animatableItem.currentBreathingScale
-    val alpha = animatableItem.currentAlpha
-
-    // Calculate transformed bounds with slide offset
-    val transformedBounds = Rect(
-        left = originalBounds.left + slideOffset.x,
-        top = originalBounds.top + slideOffset.y,
-        right = originalBounds.right + slideOffset.x,
-        bottom = originalBounds.bottom + slideOffset.y
-    )
-
-    // Apply breathing scale around the center
-    val scaledBounds = if (breathingScale != 1f) {
-        val center = transformedBounds.center
-        val scaledWidth = transformedBounds.width * breathingScale
-        val scaledHeight = transformedBounds.height * breathingScale
-        Rect(
-            left = center.x - scaledWidth / 2,
-            top = center.y - scaledHeight / 2,
-            right = center.x + scaledWidth / 2,
-            bottom = center.y + scaledHeight / 2
-        )
-    } else {
-        transformedBounds
-    }
-
-    // Apply alpha and draw
-    drawMediaFromAtlas(media, scaledBounds, rotationAngle, atlasState, zoom, alpha)
-}
-
-/**
- * Draws media from atlas texture or falls back to colored rectangle.
- */
-fun DrawScope.drawMediaFromAtlas(
-    media: Media,
-    bounds: Rect,
-    rotationAngle: Float,
-    atlasState: MultiAtlasUpdateResult?,
-    zoom: Float,
-    alpha: Float = 1f
-) {
-    // Calculate rotation center (center of the media bounds)
-    val center = bounds.center
-
-    // Apply rotation transformation around the center
-    withTransform({
-        rotate(rotationAngle, center)
-    }) {
-        when (atlasState) {
-            is MultiAtlasUpdateResult.Success -> {
-                // Search across all atlases for this photo
-                val photoId = media.uri
-                val atlasAndRegion = atlasState.atlases.firstNotNullOfOrNull { atlas ->
-                    atlas.regions[photoId]?.let { region ->
-                        atlas to region
-                    }
-                }
-
-                if (atlasAndRegion != null) {
-                    val (foundAtlas, foundRegion) = atlasAndRegion
-                    if (!foundAtlas.bitmap.isRecycled) {
-                        // Draw from atlas texture with photo styling
-                        val atlasBitmap = foundAtlas.bitmap.asImageBitmap()
-
-                        drawStyledPhoto(
-                            image = atlasBitmap,
-                            srcOffset = IntOffset(
-                                foundRegion.atlasRect.left.toInt(),
-                                foundRegion.atlasRect.top.toInt()
-                            ),
-                            srcSize = IntSize(
-                                foundRegion.atlasRect.width.toInt(),
-                                foundRegion.atlasRect.height.toInt()
-                            ),
-                            bounds = bounds,
-                            zoom = zoom,
-                            alpha = alpha
-                        )
-                    } else {
-                        // Bitmap was recycled, fall back to placeholder
-                        drawPlaceholderRect(media, bounds, Color.Gray, zoom, alpha)
-                    }
-                } else {
-                    // Fallback: No atlas contains this photo
-                    drawPlaceholderRect(media, bounds, Color.Gray, zoom, alpha)
-                }
-            }
-
-            else -> {
-                // Fallback: No atlas available, draw colored rectangle
-                drawPlaceholderRect(media, bounds, zoom = zoom, alpha = alpha)
-            }
-        }
-    }
-}
 
 /**
  * Draws a styled placeholder for media with same physical photo appearance.
@@ -336,16 +218,16 @@ fun DrawScope.drawMediaFromStreamingAtlas(
                 // Search across all LOD levels for this photo (highest LOD first)
                 val photoId = media.uri
                 var atlasAndRegion: Pair<dev.serhiiyaremych.lumina.domain.model.TextureAtlas, dev.serhiiyaremych.lumina.domain.model.AtlasRegion>? = null
-                
+
                 // Debug: Log available LOD levels
                 android.util.Log.d("MediaDrawing", "Available LOD levels for ${media.displayName}: ${streamingAtlases.keys.map { "${it.name}(${streamingAtlases[it]?.size ?: 0} atlases)" }}")
-                
+
                 // Search from highest to lowest LOD for best quality
                 val sortedLODs = streamingAtlases.keys.sortedByDescending { it.level }
                 for (lodLevel in sortedLODs) {
                     val atlases = streamingAtlases[lodLevel] ?: continue
                     android.util.Log.d("MediaDrawing", "Searching ${lodLevel.name}: ${atlases.size} atlases, ${atlases.sumOf { it.regions.size }} total regions")
-                    
+
                     atlasAndRegion = atlases.firstNotNullOfOrNull { atlas ->
                         atlas.regions[photoId]?.let { region ->
                             android.util.Log.d("MediaDrawing", "Found photo ${media.displayName} in ${lodLevel.name} atlas")
@@ -387,7 +269,7 @@ fun DrawScope.drawMediaFromStreamingAtlas(
 
             else -> {
                 // Fallback: No atlas available, draw colored rectangle
-                drawPlaceholderRect(media, bounds, zoom = zoom, alpha = alpha)
+                drawPlaceholderRect(media, bounds, Color.Gray, zoom, alpha)
             }
         }
     }

@@ -2,6 +2,7 @@ package dev.serhiiyaremych.lumina.ui
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.coroutineScope
@@ -66,6 +67,7 @@ fun rememberMediaLayers(): MediaLayerManager {
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
     val gridLayer = rememberGraphicsLayer()
+    val placeholderLayer = rememberGraphicsLayer()
     val contentLayer = rememberGraphicsLayer()
     val selectedLayer = rememberGraphicsLayer()
 
@@ -78,6 +80,7 @@ fun rememberMediaLayers(): MediaLayerManager {
     return remember {
         MediaLayerManager(
             gridLayer = gridLayer,
+            placeholderLayer = placeholderLayer,
             contentLayer = contentLayer,
             selectedLayer = selectedLayer,
             density = density,
@@ -89,10 +92,11 @@ fun rememberMediaLayers(): MediaLayerManager {
 }
 
 /**
- * Manages the three GraphicsLayers for grid, content and selected media rendering.
+ * Manages the four GraphicsLayers for grid, placeholder, content and selected media rendering.
  */
 class MediaLayerManager(
     private val gridLayer: GraphicsLayer,
+    private val placeholderLayer: GraphicsLayer,
     private val contentLayer: GraphicsLayer,
     private val selectedLayer: GraphicsLayer,
     private val density: androidx.compose.ui.unit.Density,
@@ -109,7 +113,7 @@ class MediaLayerManager(
     private var delayedSelectedMedia: Media? = null
 
     companion object {
-        private const val DESATURATION_ANIMATION_DURATION = 300 // milliseconds
+        private const val DESATURATION_ANIMATION_DURATION = 2000
         private const val DESATURATION_STRENGTH = 0.9f // 50% desaturation
     }
 
@@ -180,13 +184,19 @@ class MediaLayerManager(
             launch {
                 desaturationAnimatable.animateTo(
                     targetValue = desaturationTarget,
-                    animationSpec = tween(durationMillis = DESATURATION_ANIMATION_DURATION)
+                    animationSpec = tween(
+                        durationMillis = DESATURATION_ANIMATION_DURATION,
+                        easing = EaseOutCubic
+                    )
                 )
             }
             launch {
                 gradientAlphaAnimatable.animateTo(
                     targetValue = gradientAlphaTarget,
-                    animationSpec = tween(durationMillis = DESATURATION_ANIMATION_DURATION)
+                    animationSpec = tween(
+                        durationMillis = DESATURATION_ANIMATION_DURATION,
+                        easing = EaseOutCubic
+                    )
                 )
 
                 // Clear delayed selection after fade-out animation completes
@@ -228,7 +238,7 @@ class MediaLayerManager(
     }
 
     /**
-     * Records and draws all three layers (grid, content, selected) with streaming atlases.
+     * Records and draws all four layers (grid, placeholder, content, selected) with streaming atlases.
      */
     fun DrawScope.recordAndDrawLayers(
         config: StreamingMediaLayerConfig,
@@ -243,6 +253,9 @@ class MediaLayerManager(
 
         // Record grid layer with hex grid and effects (unaffected by content layer desaturation)
         recordStreamingGridLayer(config, canvasSize, clampedZoom, offset, gridColor, focusedColor, selectedColor)
+
+        // Record placeholder layer with all photo placeholders (visible through gradient holes)
+        recordStreamingPlaceholderLayer(config, canvasSize, clampedZoom, offset)
 
         // Record content layer with all non-selected media (no grid)
         recordStreamingContentLayer(config, canvasSize, clampedZoom, offset)
@@ -274,8 +287,9 @@ class MediaLayerManager(
         selectedLayer.compositingStrategy = CompositingStrategy.Auto
         selectedLayer.alpha = 1f
 
-        // Draw all layers in order: grid -> content -> selected
+        // Draw all layers in order: grid -> placeholder -> content -> selected
         drawLayer(gridLayer)
+        drawLayer(placeholderLayer)
         drawLayer(contentLayer)
         drawLayer(selectedLayer)
     }
@@ -329,6 +343,45 @@ class MediaLayerManager(
                     cellStates = cellStates,
                     cellScales = cellScales
                 )
+            }
+        }
+    }
+
+    /**
+     * Records the streaming placeholder layer with all photo placeholders.
+     * This layer will be visible through gradient holes in the content layer,
+     * creating a "photo detail erasure" effect.
+     */
+    private fun recordStreamingPlaceholderLayer(
+        config: StreamingMediaLayerConfig,
+        canvasSize: IntSize,
+        clampedZoom: Float,
+        offset: Offset
+    ) {
+        placeholderLayer.compositingStrategy = CompositingStrategy.Auto
+        placeholderLayer.record(
+            density = density,
+            layoutDirection = layoutDirection,
+            size = canvasSize
+        ) {
+            withTransform({
+                scale(clampedZoom, clampedZoom, pivot = Offset.Zero)
+                translate(offset.x / clampedZoom, offset.y / clampedZoom)
+            }) {
+                // Draw placeholders for all media items (including selected ones)
+                config.hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
+                    hexCellWithMedia.mediaItems.forEach { mediaWithPosition ->
+                        val animatableItem = config.animationManager.getOrCreateAnimatable(mediaWithPosition)
+
+                        // Draw placeholder with same transformations as real photos
+                        // Pass null atlases to force placeholder rendering with proper transformations
+                        drawAnimatableMediaFromStreamingAtlas(
+                            animatableItem = animatableItem,
+                            streamingAtlases = null, // Force placeholder rendering
+                            zoom = config.zoom
+                        )
+                    }
+                }
             }
         }
     }
