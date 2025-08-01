@@ -383,10 +383,10 @@ class StreamingGalleryViewModel @Inject constructor(
     }
 
     /**
-     * Update significant cells from UI
+     * Update selected cell from UI
      */
-    fun updateSignificantCells(cells: Set<dev.serhiiyaremych.lumina.domain.model.HexCell>) {
-        updateUiState { it.copy(significantCells = cells) }
+    fun updateSelectedCell(cell: dev.serhiiyaremych.lumina.domain.model.HexCell?) {
+        updateUiState { it.copy(selectedCell = cell) }
     }
 
     /**

@@ -9,11 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -25,18 +23,14 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
-import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
+import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.ui.animation.AnimationConstants
 import dev.serhiiyaremych.lumina.ui.components.FocusedCellPanel
 import dev.serhiiyaremych.lumina.ui.components.MediaPermissionFlow
 import dev.serhiiyaremych.lumina.ui.debug.EnhancedDebugOverlay
-import dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel
 import dev.serhiiyaremych.lumina.ui.gallery.StreamingGalleryViewModel
 import dev.serhiiyaremych.lumina.ui.theme.LuminaGalleryTheme
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -97,11 +91,11 @@ fun App(
         // Unified cell focus handler for both clicks and automatic detection
         val cellFocusHandler = remember(coroutineScope, transformableState) {
             object : CellFocusHandler {
-                override fun onCellFocused(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia, coverage: Float) {
+                override fun onCellFocused(hexCellWithMedia: HexCellWithMedia, coverage: Float) {
                     Log.d("CellFocus", "Cell FOCUSED: (${hexCellWithMedia.hexCell.q}, ${hexCellWithMedia.hexCell.r}) coverage=${String.format("%.2f", coverage)}")
 
-                    // Update significant cells
-                    streamingGalleryViewModel.updateSignificantCells(uiState.significantCells + hexCellWithMedia.hexCell)
+                    // Update selected cell
+                    streamingGalleryViewModel.updateSelectedCell(hexCellWithMedia.hexCell)
 
                     // Clear selected media and set cell mode
                     streamingGalleryViewModel.updateSelectedMedia(null)
@@ -119,11 +113,14 @@ fun App(
                     }
                 }
 
-                override fun onCellUnfocused(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia) {
+                override fun onCellUnfocused(hexCellWithMedia: HexCellWithMedia) {
                     val hexCell = hexCellWithMedia.hexCell
                     Log.d("CellFocus", "Cell UNFOCUSED: (${hexCell.q}, ${hexCell.r})")
 
-                    streamingGalleryViewModel.updateSignificantCells(uiState.significantCells - hexCell)
+                    // Clear selected cell if this was the selected cell
+                    if (uiState.selectedCell == hexCell) {
+                        streamingGalleryViewModel.updateSelectedCell(null)
+                    }
 
                     // Hide focused cell panel if this was the focused cell
                     if (uiState.focusedCellWithMedia?.hexCell == hexCell) {
@@ -136,11 +133,11 @@ fun App(
         // Cell focus listener adapter for the existing CellFocusManager interface
         val cellFocusListener = remember(cellFocusHandler) {
             object : CellFocusListener {
-                override fun onCellSignificant(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia, coverage: Float) {
+                override fun onCellSignificant(hexCellWithMedia: HexCellWithMedia, coverage: Float) {
                     cellFocusHandler.onCellFocused(hexCellWithMedia, coverage)
                 }
 
-                override fun onCellInsignificant(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia) {
+                override fun onCellInsignificant(hexCellWithMedia: HexCellWithMedia) {
                     cellFocusHandler.onCellUnfocused(hexCellWithMedia)
                 }
             }
@@ -281,6 +278,12 @@ fun App(
                                         },
                                         onHexCellClicked = { hexCell ->
                                             Log.d("StreamingApp", "Hex cell clicked: (${hexCell.q}, ${hexCell.r})")
+
+                                            // Clear selected media immediately when any hex cell is clicked
+                                            streamingGalleryViewModel.updateSelectedMedia(null)
+                                            streamingGalleryViewModel.updateSelectionMode(SelectionMode.CELL_MODE)
+                                            Log.d("StreamingApp", "Cleared selected media on hex cell click")
+
                                             // Find the HexCellWithMedia for this clicked cell
                                             layout.hexCellsWithMedia.find { it.hexCell == hexCell }?.let { hexCellWithMedia ->
                                                 cellFocusHandler.onCellFocused(hexCellWithMedia, 1.0f) // Max coverage for manual clicks
@@ -298,7 +301,7 @@ fun App(
                                             Log.d("CellFocus", "Clearing clicked media state for red outline")
                                         },
                                         externalState = state,
-                                        significantCells = uiState.significantCells
+                                        significantCells = uiState.selectedCell?.let { setOf(it) } ?: emptySet()
                                     )
                                 }
                             }
@@ -313,7 +316,7 @@ fun App(
                         memoryStatus = null, // TODO: Get memory status from streaming manager
                         smartMemoryManager = streamingGalleryViewModel.getStreamingAtlasManager().getSmartMemoryManager(),
                         deviceCapabilities = null, // TODO: Add device capabilities to streaming system
-                        significantCells = uiState.significantCells,
+                        significantCells = uiState.selectedCell?.let { setOf(it) } ?: emptySet(),
                         streamingAtlases = uiState.availableAtlases,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -369,374 +372,6 @@ fun App(
     }
 }
 
-/**
- * Legacy root composable for the Lumina gallery view.
- *
- * @deprecated Use the StreamingGalleryViewModel version for better performance
- */
-@Composable
-fun App(
-    modifier: Modifier = Modifier,
-    galleryViewModel: GalleryViewModel,
-    isBenchmarkMode: Boolean = false,
-    autoZoom: Boolean = false,
-) {
-    LuminaGalleryTheme {
-        val media by galleryViewModel.mediaState.collectAsState()
-        val groupedMedia by galleryViewModel.groupedMediaState.collectAsState()
-        val hexGridLayout by galleryViewModel.hexGridLayoutState.collectAsState()
-        val atlasState by galleryViewModel.atlasState.collectAsState()
-        val isAtlasGenerating by galleryViewModel.isAtlasGenerating.collectAsState()
-        val memoryStatus by galleryViewModel.memoryStatus.collectAsState()
-        val density = LocalDensity.current
-
-        // Permission state management
-        var permissionGranted by remember { mutableStateOf(false) }
-
-        var selectedMedia by remember { mutableStateOf<dev.serhiiyaremych.lumina.domain.model.Media?>(null) }
-        var selectionMode by remember { mutableStateOf(SelectionMode.CELL_MODE) }
-        var significantCells by remember { mutableStateOf(setOf<dev.serhiiyaremych.lumina.domain.model.HexCell>()) }
-        var focusedCellWithMedia by remember { mutableStateOf<dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia?>(null) }
-
-        Log.d(
-            "App",
-            "Media loaded: ${media.size} items, grouped into ${groupedMedia.size} groups, layout: ${hexGridLayout?.totalMediaCount ?: 0} positioned"
-        )
-
-        val gridState = rememberGridCanvasState()
-        val transformableState = rememberTransformableState(
-            animationSpec = tween(durationMillis = AnimationConstants.ANIMATION_DURATION_MS),
-            focusPadding = 48.dp // Standard padding for legacy gallery - good balance for most screens
-        )
-        val hexGridRenderer = remember { HexGridRenderer() }
-        val coroutineScope = rememberCoroutineScope()
-
-        // Unified cell focus handler for both clicks and automatic detection
-        val legacyCellFocusHandler = remember(coroutineScope, transformableState) {
-            object : CellFocusHandler {
-                override fun onCellFocused(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia, coverage: Float) {
-                    Log.d("CellFocus", "Cell FOCUSED: (${hexCellWithMedia.hexCell.q}, ${hexCellWithMedia.hexCell.r}) coverage=${String.format("%.2f", coverage)}")
-
-                    // Update significant cells
-                    significantCells = significantCells + hexCellWithMedia.hexCell
-
-                    // Clear selected media and set cell mode
-                    selectedMedia = null
-                    selectionMode = SelectionMode.CELL_MODE
-                    Log.d("CellFocus", "Selection mode: CELL_MODE (focused cell)")
-
-                    // Show focused cell panel
-                    focusedCellWithMedia = hexCellWithMedia
-
-                    // Trigger focus animation to center on the cell
-                    val cellBounds = calculateCellFocusBounds(hexCellWithMedia.hexCell)
-                    Log.d("CellFocus", "Triggering focus animation to bounds: $cellBounds")
-                    coroutineScope.launch {
-                        transformableState.focusOn(cellBounds)
-                    }
-                }
-
-                override fun onCellUnfocused(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia) {
-                    val hexCell = hexCellWithMedia.hexCell
-                    Log.d("CellFocus", "Cell UNFOCUSED: (${hexCell.q}, ${hexCell.r})")
-
-                    significantCells = significantCells - hexCell
-
-                    // Hide focused cell panel if this was the focused cell
-                    if (focusedCellWithMedia?.hexCell == hexCell) {
-                        focusedCellWithMedia = null
-                    }
-                }
-            }
-        }
-
-        // Cell focus listener adapter for the existing CellFocusManager interface
-        val cellFocusListener = remember(legacyCellFocusHandler) {
-            object : CellFocusListener {
-                override fun onCellSignificant(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia, coverage: Float) {
-                    legacyCellFocusHandler.onCellFocused(hexCellWithMedia, coverage)
-                }
-
-                override fun onCellInsignificant(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia) {
-                    legacyCellFocusHandler.onCellUnfocused(hexCellWithMedia)
-                }
-            }
-        }
-
-        // Unified viewport state manager - single source of truth for all viewport decisions
-        val viewportStateManager = remember { ViewportStateManager() }
-
-        // Create media hex state at App level to access GeometryReader for FocusedCellPanel
-        val mediaHexState = hexGridLayout?.let { layout ->
-            rememberMediaHexState(
-                hexGridLayout = layout,
-                selectedMedia = selectedMedia,
-                onVisibleCellsChanged = { visibleCells ->
-                    Log.d("App", "Visible cells changed: ${visibleCells.size} cells")
-                    galleryViewModel.onVisibleCellsChanged(visibleCells, transformableState.zoom, selectedMedia, selectionMode)
-                },
-                provideZoom = { transformableState.zoom },
-                provideOffset = { transformableState.offset }
-            )
-        }
-
-        Box(modifier = modifier.fillMaxSize()) {
-            if (permissionGranted) {
-                // Main gallery interface - only shown when permissions are granted
-                BoxWithConstraints {
-                    val canvasSize = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat())
-
-                    // Unified viewport state monitoring - handles all viewport decisions
-                    val zoomProvider = rememberUpdatedState { transformableState.zoom }
-                    val offsetProvider = rememberUpdatedState { transformableState.offset }
-
-                    LaunchedEffect(canvasSize) {
-                        snapshotFlow {
-                            Triple(zoomProvider.value(), offsetProvider.value(), focusedCellWithMedia to selectedMedia)
-                        }
-                        .distinctUntilChanged()
-                        .collect { (currentZoom, currentOffset, selectionPair) ->
-                            val (currentFocusedCell, currentSelectedMedia) = selectionPair
-
-                            // Calculate unified viewport state
-                            val viewportState = viewportStateManager.calculateViewportState(
-                                canvasSize = canvasSize,
-                                zoom = currentZoom,
-                                offset = currentOffset,
-                                focusedCell = currentFocusedCell,
-                                selectedMedia = currentSelectedMedia,
-                                currentSelectionMode = selectionMode
-                            )
-
-                            // Apply selection mode changes
-                            if (viewportState.suggestedSelectionMode != selectionMode) {
-                                selectionMode = viewportState.suggestedSelectionMode
-                                Log.d("App", "Selection mode changed: $selectionMode (viewport-based)")
-                            }
-
-                            // Apply media deselection when out of viewport
-                            if (viewportState.shouldDeselectMedia && selectedMedia != null) {
-                                selectedMedia = null
-                                selectionMode = SelectionMode.CELL_MODE
-                                Log.d("App", "Media deselected: out of viewport")
-                            }
-                        }
-                    }
-
-                    // Generate hex grid layout when canvas size is available
-                    LaunchedEffect(canvasSize, groupedMedia) {
-                        if (groupedMedia.isNotEmpty()) {
-                            galleryViewModel.generateHexGridLayout(density, canvasSize)
-                        }
-                    }
-
-                    // Center the view on the grid when layout is first generated
-                    LaunchedEffect(hexGridLayout) {
-                        hexGridLayout?.let { layout ->
-                            if (layout.hexCellsWithMedia.isNotEmpty()) {
-                                // Center on the grid bounds
-                                val gridCenter = layout.bounds.center
-                                val canvasCenter = Offset(canvasSize.width / 2f, canvasSize.height / 2f)
-                                val centerOffset = canvasCenter - gridCenter
-
-                                Log.d("App", "Centering grid: gridCenter=$gridCenter, canvasCenter=$canvasCenter, offset=$centerOffset")
-                                transformableState.updateMatrix {
-                                    reset()
-                                    postScale(1f, 1f)
-                                    postTranslate(centerOffset.x, centerOffset.y)
-                                }
-                            }
-                        }
-                    }
-
-                    // Automatic benchmark interactions
-                    LaunchedEffect(isBenchmarkMode, autoZoom, hexGridLayout) {
-                        if (isBenchmarkMode && hexGridLayout != null) {
-                            // Wait for initial atlas generation
-
-                            if (autoZoom) {
-                                galleryViewModel.isAtlasGenerating.filter { !it }.first()
-                                Log.d("App", "Starting auto zoom benchmark sequence")
-
-                                val centerX = canvasSize.width / 2f
-                                val centerY = canvasSize.height / 2f
-
-                                // 1. Zoom out to trigger LOD_0 (32px)
-                                Log.d("App", "Auto zoom: zooming out to 0.3x")
-                                transformableState.updateMatrix {
-                                    val currentZoom = transformableState.zoom
-                                    val scaleFactor = 0.3f / currentZoom
-                                    postScale(scaleFactor, scaleFactor, centerX, centerY)
-                                }
-                                delay(500) // Wait for atlas generation
-                                galleryViewModel.isAtlasGenerating.filter { !it }.first()
-                                // 2. Zoom in to trigger LOD_2 (128px)
-                                Log.d("App", "Auto zoom: zooming in to 1.5x")
-                                transformableState.updateMatrix {
-                                    val currentZoom = transformableState.zoom
-                                    val scaleFactor = 1.5f / currentZoom
-                                    postScale(scaleFactor, scaleFactor, centerX, centerY)
-                                }
-                                delay(500) // Wait for atlas generation
-                                galleryViewModel.isAtlasGenerating.filter { !it }.first()
-                                // 3. Zoom in more to trigger LOD_6 (512px)
-                                Log.d("App", "Auto zoom: zooming in to 3.0x")
-                                transformableState.updateMatrix {
-                                    val currentZoom = transformableState.zoom
-                                    val scaleFactor = 3.0f / currentZoom
-                                    postScale(scaleFactor, scaleFactor, centerX, centerY)
-                                }
-                                delay(500) // Wait for atlas generation
-                                galleryViewModel.isAtlasGenerating.filter { !it }.first()
-                                // 4. Zoom back to medium level
-                                Log.d("App", "Auto zoom: zooming back to 1.0x")
-                                transformableState.updateMatrix {
-                                    val currentZoom = transformableState.zoom
-                                    val scaleFactor = 1.0f / currentZoom
-                                    postScale(scaleFactor, scaleFactor, centerX, centerY)
-                                }
-                                delay(500)
-                                galleryViewModel.isAtlasGenerating.filter { !it }.first()                            }
-
-                            Log.d("App", "Benchmark sequence completed")
-                        }
-                    }
-
-                    TransformableContent(
-                        modifier = Modifier.fillMaxSize(),
-                        state = transformableState
-                    ) {
-                        GridCanvas(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .semantics {
-                                    testTagsAsResourceId = true
-                                    contentDescription = "Gallery canvas"
-                                }
-                                .testTag(BenchmarkLabels.GALLERY_CANVAS_TEST_TAG),
-                            zoom = transformableState.zoom,
-                            offset = transformableState.offset,
-                            state = gridState
-                        ) {
-                            // Draw media visualization on hex grid
-                            hexGridLayout?.let { layout ->
-                                mediaHexState?.let { state ->
-                                    MediaHexVisualization(
-                                        hexGridLayout = layout,
-                                        hexGridRenderer = hexGridRenderer,
-                                        provideZoom = { transformableState.zoom },
-                                        provideOffset = { transformableState.offset },
-                                        streamingAtlases = emptyMap(), // Legacy app uses old atlas system, convert atlasState to streaming format
-                                        selectedMedia = selectedMedia,
-                                        onMediaClicked = { media ->
-                                            Log.d("App", "Media clicked: ${media.displayName}")
-                                            // If the same media is clicked twice, deselect it
-                                            selectedMedia = if (selectedMedia == media) {
-                                                Log.d("App", "Deselecting media: ${media.displayName}")
-                                                selectionMode = SelectionMode.CELL_MODE
-                                                null
-                                            } else {
-                                                selectionMode = SelectionMode.PHOTO_MODE // Direct canvas photo click
-                                                Log.d("App", "Selection mode: PHOTO_MODE (canvas click)")
-                                                media
-                                            }
-                                        },
-                                        onHexCellClicked = { hexCell ->
-                                            Log.d("App", "Hex cell clicked: (${hexCell.q}, ${hexCell.r})")
-                                            // Find the HexCellWithMedia for this clicked cell
-                                            layout.hexCellsWithMedia.find { it.hexCell == hexCell }?.let { hexCellWithMedia ->
-                                                legacyCellFocusHandler.onCellFocused(hexCellWithMedia, 1.0f) // Max coverage for manual clicks
-                                            }
-                                        },
-                                        onFocusRequested = { bounds ->
-                                            Log.d("App", "Focus requested: $bounds")
-                                            coroutineScope.launch {
-                                                transformableState.focusOn(bounds)
-                                            }
-                                        },
-                                        onVisibleCellsChanged = {}, // Handled by mediaHexState
-                                        cellFocusListener = cellFocusListener,
-                                        onClearClickedMedia = {
-                                            Log.d("CellFocus", "Clearing clicked media state for red outline")
-                                        },
-                                        externalState = state, // Share state with FocusedCellPanel
-                                        significantCells = significantCells
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Enhanced debug overlay with toggle button and comprehensive information
-                    EnhancedDebugOverlay(
-                        atlasState = atlasState,
-                        isAtlasGenerating = isAtlasGenerating,
-                        currentZoom = transformableState.zoom,
-                        memoryStatus = memoryStatus,
-                        smartMemoryManager = galleryViewModel.getSmartMemoryManager(),
-                        deviceCapabilities = galleryViewModel.getDeviceCapabilities(),
-                        significantCells = significantCells,
-                        modifier = Modifier.fillMaxSize()
-                    )
-
-                    // Focused cell panel with conditional focus animations
-                    focusedCellWithMedia?.let { cellWithMedia ->
-                        mediaHexState?.let { state ->
-                            FocusedCellPanel(
-                                hexCellWithMedia = cellWithMedia,
-                                level0Atlases = atlasState?.let { atlasResult ->
-                                    when (atlasResult) {
-                                        is MultiAtlasUpdateResult.Success -> {
-                                            // Convert legacy atlas to L0 format for simplified panel
-                                            atlasResult.atlases
-                                        }
-                                        else -> null
-                                    }
-                                },
-                                selectionMode = selectionMode,
-                                selectedMedia = selectedMedia,
-                                onDismiss = { focusedCellWithMedia = null },
-                                onMediaSelected = { media ->
-                                    selectedMedia = media
-                                    // Panel selections preserve current mode - don't change it
-                                    Log.d("App", "Panel selection: ${media.displayName}, mode: $selectionMode")
-                                },
-                                onFocusRequested = { bounds ->
-                                    Log.d("App", "Panel focus requested: $bounds")
-                                    coroutineScope.launch {
-                                        transformableState.focusOn(bounds)
-                                    }
-                                },
-                                getMediaBounds = { media ->
-                                    state.geometryReader.getMediaBounds(media)
-                                },
-                                provideTranslationOffset = { panelSize ->
-                                    calculateCellPanelPosition(
-                                        hexCell = cellWithMedia.hexCell,
-                                        zoom = transformableState.zoom,
-                                        offset = transformableState.offset,
-                                        canvasSize = canvasSize,
-                                        panelSize = panelSize
-                                    )
-                                },
-                                modifier = Modifier
-                            )
-                        }
-                    }
-                }
-            } else {
-                // Permission flow - shown when permissions are not granted
-                MediaPermissionFlow(
-                    onPermissionGranted = { permissionGranted = true },
-                    onPermissionDenied = {
-                        // Handle permission denial - maybe show limited UI or exit
-                        Log.w("App", "Media permissions denied")
-                    }
-                )
-            }
-        }
-    }
-}
 
 
 /**

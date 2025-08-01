@@ -39,7 +39,7 @@ data class GalleryUiState(
     val selectedMedia: Media? = null,
     val selectionMode: SelectionMode = SelectionMode.CELL_MODE,
     val focusedCellWithMedia: HexCellWithMedia? = null,
-    val significantCells: Set<dev.serhiiyaremych.lumina.domain.model.HexCell> = emptySet(),
+    val selectedCell: dev.serhiiyaremych.lumina.domain.model.HexCell? = null,
     
     // Permission State
     val permissionGranted: Boolean = false,
