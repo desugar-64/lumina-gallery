@@ -205,8 +205,8 @@ private fun FocusedCellPanelContent(
     getMediaBounds: (Media) -> Rect?,
     modifier: Modifier = Modifier
 ) {
-    // Use same focused cell color as hex grid renderer for visual consistency
-    val cellColor = MaterialTheme.colorScheme.secondary // Same as hex grid FOCUSED cells
+    // Use same focused cell color as hex grid renderer for visual consistency - vibrant and energetic
+    val cellColor = MaterialTheme.colorScheme.tertiary // Same as hex grid SELECTED cells
 
     // Create panel background with cell color tint using compositeOver for proper blending
     val panelColor = cellColor.copy(alpha = 0.12f)
@@ -433,6 +433,8 @@ private fun PhotoPreviewItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Get placeholder color from Material theme
+    val placeholderColor = MaterialTheme.colorScheme.surfaceVariant
     // Material 3 Expressive shape morphing animation - Pentagon for selected state
     val targetScale = if (isSelected) 1.15f else 1.0f
     val morphProgress = if (isSelected) 1.0f else 0.0f
@@ -561,12 +563,12 @@ private fun PhotoPreviewItem(
 
                             } else {
                                 // Fallback: placeholder when photo not in L0 atlases
-                                drawPlaceholderRect(media, bounds, zoom = 1f, alpha = 1f)
+                                drawPlaceholderRect(bounds, placeholderColor, zoom = 1f, alpha = 1f)
                             }
                         }
                         else -> {
                             // Fallback: placeholder when no L0 atlases available
-                            drawPlaceholderRect(media, bounds, zoom = 1f, alpha = 1f)
+                            drawPlaceholderRect(bounds, placeholderColor, zoom = 1f, alpha = 1f)
                         }
                     }
                 }

@@ -2,6 +2,7 @@ package dev.serhiiyaremych.lumina.ui
 
 import android.util.Log
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.drawWithContent
@@ -13,21 +14,15 @@ import androidx.compose.ui.unit.dp
 
 @Stable
 data class GridCanvasState(
-    val majorGridSpacing: Dp = 56.dp,
-    val majorGridColor: Color = Color.LightGray,
-    val minorGridColor: Color = Color(0xFF808080)
+    val majorGridSpacing: Dp = 56.dp
 )
 
 @Composable
 fun rememberGridCanvasState(
-    majorGridSpacing: Dp = 56.dp,
-    majorGridColor: Color = Color.LightGray,
-    minorGridColor: Color = Color(0xFF808080)
+    majorGridSpacing: Dp = 56.dp
 ): GridCanvasState = remember {
     GridCanvasState(
-        majorGridSpacing = majorGridSpacing,
-        majorGridColor = majorGridColor,
-        minorGridColor = minorGridColor
+        majorGridSpacing = majorGridSpacing
     )
 }
 
@@ -42,6 +37,10 @@ fun GridCanvas(
     SideEffect { Log.d("GridCanvas", "GridCanvas: zoom=$zoom") }
     val density = LocalDensity.current
     val gridRenderer = remember { GridRenderer() }
+    
+    // Material 3 dynamic colors for grid dots - muted and understated to avoid visual noise
+    val majorGridColor = MaterialTheme.colorScheme.onSurface      // Clear but not overpowering major grid dots
+    val minorGridColor = MaterialTheme.colorScheme.surfaceVariant // Very subtle minor grid dots
 
     Box(
         modifier = modifier
@@ -52,8 +51,8 @@ fun GridCanvas(
                     offset = offset,
                     density = density,
                     majorGridSpacing = state.majorGridSpacing,
-                    majorGridColor = state.majorGridColor,
-                    minorGridColor = state.minorGridColor
+                    majorGridColor = majorGridColor,
+                    minorGridColor = minorGridColor
                 )
 
                 drawContent()

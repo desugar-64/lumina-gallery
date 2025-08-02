@@ -119,8 +119,9 @@ fun MediaHexVisualization(
             }
         }
 
-        val gridColor = MaterialTheme.colorScheme.outlineVariant      // Lighter, subtle normal grid lines
-        val selectedColor = MaterialTheme.colorScheme.primary         // Stronger selected grid lines
+        val gridColor = MaterialTheme.colorScheme.outline             // Subtle and clean normal grid lines
+        val selectedColor = MaterialTheme.colorScheme.tertiary       // Vibrant and energetic selected grid lines
+        val placeholderColor = MaterialTheme.colorScheme.surfaceVariant // Light and muted placeholder color
 
         Canvas(
             modifier = Modifier
@@ -161,7 +162,7 @@ fun MediaHexVisualization(
 
             // Record and draw both content and selected layers
             with(layerManager) {
-                recordAndDrawLayers(layerConfig, canvasSize, zoom, offset, gridColor, selectedColor)
+                recordAndDrawLayers(layerConfig, canvasSize, zoom, offset, gridColor, selectedColor, placeholderColor)
             }
 
             // Draw debug overlays and UI elements on top

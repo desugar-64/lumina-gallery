@@ -17,18 +17,15 @@ import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaItem
 
 /**
  * Draws a styled placeholder for media with same physical photo appearance.
+ * Uses Material 3 theme colors for light and muted appearance.
  */
 fun DrawScope.drawPlaceholderRect(
-    media: Media,
     bounds: Rect,
-    overrideColor: Color? = null,
+    placeholderColor: Color,
     zoom: Float = 1f,
     alpha: Float = 1f
 ) {
-    val color = overrideColor ?: when (media) {
-        is Media.Image -> Color(0xFF2196F3)
-        is Media.Video -> Color(0xFF4CAF50)
-    }
+    val color = placeholderColor
 
     val borderWidth = 2.dp.toPx()
     val innerCornerRadius = 0.1.dp.toPx()  // Increased for smoother corners
@@ -143,6 +140,7 @@ fun DrawScope.drawStyledPhoto(
 fun DrawScope.drawAnimatableMediaFromStreamingAtlas(
     animatableItem: AnimatableMediaItem,
     streamingAtlases: Map<dev.serhiiyaremych.lumina.domain.model.LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>?,
+    placeholderColor: Color,
     zoom: Float
 ) {
     val media = animatableItem.mediaWithPosition.media
@@ -178,7 +176,7 @@ fun DrawScope.drawAnimatableMediaFromStreamingAtlas(
     }
 
     // Apply alpha and draw
-    drawMediaFromStreamingAtlas(media, scaledBounds, rotationAngle, streamingAtlases, zoom, alpha)
+    drawMediaFromStreamingAtlas(media, scaledBounds, rotationAngle, streamingAtlases, placeholderColor, zoom, alpha)
 }
 
 /**
@@ -189,6 +187,7 @@ fun DrawScope.drawMediaFromStreamingAtlas(
     bounds: Rect,
     rotationAngle: Float,
     streamingAtlases: Map<dev.serhiiyaremych.lumina.domain.model.LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>?,
+    placeholderColor: Color,
     zoom: Float,
     alpha: Float = 1f
 ) {
@@ -199,7 +198,7 @@ fun DrawScope.drawMediaFromStreamingAtlas(
     withTransform({
         rotate(rotationAngle, center)
     }) {
-        val placeHolderColor = Color.LightGray
+        // Use the provided Material 3 placeholder color
         when {
             streamingAtlases != null && streamingAtlases.isNotEmpty() -> {
                 // Search across all LOD levels for this photo (highest LOD first)
@@ -246,17 +245,17 @@ fun DrawScope.drawMediaFromStreamingAtlas(
                         )
                     } else {
                         // Bitmap was recycled, fall back to placeholder
-                        drawPlaceholderRect(media, bounds, placeHolderColor, zoom, alpha)
+                        drawPlaceholderRect(bounds, placeholderColor, zoom, alpha)
                     }
                 } else {
                     // Fallback: No atlas contains this photo
-                    drawPlaceholderRect(media, bounds, placeHolderColor, zoom, alpha)
+                    drawPlaceholderRect(bounds, placeholderColor, zoom, alpha)
                 }
             }
 
             else -> {
                 // Fallback: No atlas available, draw colored rectangle
-                drawPlaceholderRect(media, bounds, placeHolderColor, zoom, alpha)
+                drawPlaceholderRect(bounds, placeholderColor, zoom, alpha)
             }
         }
     }

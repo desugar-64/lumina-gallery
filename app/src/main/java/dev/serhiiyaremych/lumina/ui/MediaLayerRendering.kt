@@ -251,7 +251,8 @@ class MediaLayerManager(
         zoom: Float,
         offset: Offset,
         gridColor: Color,
-        selectedColor: Color
+        selectedColor: Color,
+        placeholderColor: Color
     ) {
         val clampedZoom = zoom.coerceIn(0.01f, 100f)
 
@@ -272,13 +273,13 @@ class MediaLayerManager(
         recordStreamingGridLayer(config, canvasSize, clampedZoom, offset, gridColor, selectedColor)
 
         // Record placeholder layer with gradient circle clipping optimization
-        recordStreamingPlaceholderLayer(config, canvasSize, clampedZoom, offset, gradientCircle)
+        recordStreamingPlaceholderLayer(config, canvasSize, clampedZoom, offset, gradientCircle, placeholderColor)
 
         // Record content layer with all non-selected media (no grid)
-        recordStreamingContentLayer(config, canvasSize, clampedZoom, offset)
+        recordStreamingContentLayer(config, canvasSize, clampedZoom, offset, placeholderColor)
 
         // Record selected layer with only the selected media item
-        recordStreamingSelectedLayer(config, canvasSize, clampedZoom, offset)
+        recordStreamingSelectedLayer(config, canvasSize, clampedZoom, offset, placeholderColor)
 
         // Configure content layer composition strategy and effects when there's a selection
         val currentDesaturation = desaturationAnimatable.value
@@ -372,7 +373,8 @@ class MediaLayerManager(
         canvasSize: IntSize,
         clampedZoom: Float,
         offset: Offset,
-        gradientCircle: GradientCircle?
+        gradientCircle: GradientCircle?,
+        placeholderColor: Color
     ) {
         placeholderLayer.compositingStrategy = CompositingStrategy.Auto
         placeholderLayer.record(
@@ -404,6 +406,7 @@ class MediaLayerManager(
                                 drawAnimatableMediaFromStreamingAtlas(
                                     animatableItem = animatableItem,
                                     streamingAtlases = null, // Force placeholder rendering
+                                    placeholderColor = placeholderColor,
                                     zoom = config.zoom
                                 )
                             }
@@ -421,7 +424,8 @@ class MediaLayerManager(
         config: StreamingMediaLayerConfig,
         canvasSize: IntSize,
         clampedZoom: Float,
-        offset: Offset
+        offset: Offset,
+        placeholderColor: Color
     ) {
         contentLayer.record(
             density = density,
@@ -454,6 +458,7 @@ class MediaLayerManager(
                             drawAnimatableMediaFromStreamingAtlas(
                                 animatableItem = animatableItem,
                                 streamingAtlases = config.streamingAtlases,
+                                placeholderColor = placeholderColor,
                                 zoom = config.zoom
                             )
                         }
@@ -474,7 +479,8 @@ class MediaLayerManager(
         config: StreamingMediaLayerConfig,
         canvasSize: IntSize,
         clampedZoom: Float,
-        offset: Offset
+        offset: Offset,
+        placeholderColor: Color
     ) {
         selectedLayer.record(
             density = density,
@@ -490,6 +496,7 @@ class MediaLayerManager(
                     drawAnimatableMediaFromStreamingAtlas(
                         animatableItem = selectedItem,
                         streamingAtlases = config.streamingAtlases,
+                        placeholderColor = placeholderColor,
                         zoom = config.zoom
                     )
                 }

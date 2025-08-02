@@ -58,8 +58,8 @@ class GridRenderer {
         offset: Offset,
         density: Density,
         majorGridSpacing: androidx.compose.ui.unit.Dp = 56f.dp,
-        majorGridColor: Color = Color(0xFF808080),
-        minorGridColor: Color = Color(0xFF808080)
+        majorGridColor: Color,
+        minorGridColor: Color
     ) {
         val width = drawScope.size.width
         val height = drawScope.size.height
