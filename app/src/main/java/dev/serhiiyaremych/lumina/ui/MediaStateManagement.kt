@@ -102,8 +102,16 @@ fun rememberMediaHexState(
 
         // Update current selection using the animation manager
         currentSelectedItem = selectedMedia?.let { media ->
-            animationManager.getAnimatable(media)?.apply {
-                updateSelection(true)
+            // Find the MediaWithPosition for this media
+            val mediaWithPosition = hexGridLayout.hexCellsWithMedia
+                .flatMap { it.mediaItems }
+                .find { it.media == media }
+            
+            // Get or create AnimatableMediaItem for proper animation setup
+            mediaWithPosition?.let { 
+                animationManager.getOrCreateAnimatable(it).apply {
+                    updateSelection(true)
+                }
             }
         }
 

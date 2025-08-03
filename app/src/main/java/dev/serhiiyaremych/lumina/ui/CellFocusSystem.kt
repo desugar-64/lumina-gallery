@@ -80,10 +80,30 @@ class CellFocusManager(
 
     /**
      * Immediate callback for user clicks - no delay.
-     * Clicked cells will be evaluated by subsequent viewport calculations.
+     * Properly manages focus state transitions to ensure unrotate animations work.
      */
-    fun onCellClicked(hexCellWithMedia: HexCellWithMedia) {
-        listener.onCellSignificant(hexCellWithMedia, 1.0f) // Max coverage for clicks
+    fun onCellClicked(
+        hexCellWithMedia: HexCellWithMedia,
+        allHexCellsWithMedia: List<HexCellWithMedia>
+    ) {
+        val newCell = hexCellWithMedia.hexCell
+        val previousCell = currentSignificantCell
+        
+        // Only proceed if this is a different cell
+        if (newCell != previousCell) {
+            // Call onCellInsignificant for the previous cell (triggers unrotate animation)
+            if (previousCell != null) {
+                allHexCellsWithMedia.find { it.hexCell == previousCell }?.let { previousCellWithMedia ->
+                    listener.onCellInsignificant(previousCellWithMedia)
+                }
+            }
+            
+            // Update internal state BEFORE calling onCellSignificant
+            currentSignificantCell = newCell
+            
+            // Call onCellSignificant for the new cell
+            listener.onCellSignificant(hexCellWithMedia, 1.0f) // Max coverage for clicks
+        }
     }
 
     private fun calculateCellFocus(

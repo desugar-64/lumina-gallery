@@ -110,7 +110,8 @@ private fun handleMediaTap(
             cellWithMedia.mediaItems.any { it.media == media }
         }?.let { hexCellWithMedia ->
             focusManager.onCellClicked(
-                hexCellWithMedia = hexCellWithMedia
+                hexCellWithMedia = hexCellWithMedia,
+                allHexCellsWithMedia = config.hexGridLayout.hexCellsWithMedia
             )
         }
     }
@@ -188,7 +189,8 @@ private fun handleHexCellTap(
             // Find the HexCellWithMedia for this cell
             config.hexGridLayout.hexCellsWithMedia.find { it.hexCell == cell }?.let { hexCellWithMedia ->
                 focusManager.onCellClicked(
-                    hexCellWithMedia = hexCellWithMedia
+                    hexCellWithMedia = hexCellWithMedia,
+                    allHexCellsWithMedia = config.hexGridLayout.hexCellsWithMedia
                 )
             }
         }
