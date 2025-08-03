@@ -138,12 +138,12 @@ class TransformableState(
 
     fun updateContentSize(size: Size) = run { contentSize = size }
 
-    suspend fun focusOn(bounds: Rect) {
+    suspend fun focusOn(bounds: Rect, padding: androidx.compose.ui.unit.Dp = focusPadding) {
         if (bounds.isEmpty || contentSize.isEmpty()) return
 
         isAnimating = true
         try {
-            val targetZoom = calculateZoomToFit(bounds).coerceIn(MIN_ZOOM, MAX_ZOOM)
+            val targetZoom = calculateZoomToFit(bounds, padding).coerceIn(MIN_ZOOM, MAX_ZOOM)
             val targetOffset = calculateCenteringOffset(bounds, targetZoom)
 
             focusMatrix.reset()
@@ -179,18 +179,24 @@ class TransformableState(
         return false
     }
 
-    private fun calculateZoomToFit(bounds: Rect): Float {
+    private fun calculateZoomToFit(bounds: Rect, padding: androidx.compose.ui.unit.Dp): Float {
         // Convert padding from Dp to pixels
-        val paddingPx = density?.run { focusPadding.toPx() } ?: 0f
+        val paddingPx = density?.run { padding.toPx() } ?: 0f
         val doublePadding = paddingPx * 2f // Padding on both sides
         
-        // Calculate available space after padding
-        val availableWidth = (contentSize.width - doublePadding).coerceAtLeast(contentSize.width * 0.1f)
-        val availableHeight = (contentSize.height - doublePadding).coerceAtLeast(contentSize.height * 0.1f)
+        // Calculate available screen space after reserving padding
+        val availableWidth = contentSize.width - doublePadding
+        val availableHeight = contentSize.height - doublePadding
         
+        // Ensure we have minimum space (prevent division by zero or negative values)
+        // Use very minimal constraint to allow tight padding - just 1px more than content
+        val safeAvailableWidth = availableWidth.coerceAtLeast(bounds.width + 1f)
+        val safeAvailableHeight = availableHeight.coerceAtLeast(bounds.height + 1f)
+        
+        // Calculate zoom to fit content within available space
         return min(
-            availableWidth / bounds.width,
-            availableHeight / bounds.height
+            safeAvailableWidth / bounds.width,
+            safeAvailableHeight / bounds.height
         )
     }
 

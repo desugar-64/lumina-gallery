@@ -110,7 +110,8 @@ fun App(
                     val cellBounds = calculateCellFocusBounds(hexCellWithMedia.hexCell)
                     Log.d("CellFocus", "Triggering focus animation to bounds: $cellBounds (${if (isManualClick) "manual click" else "auto-detection"})")
                     coroutineScope.launch {
-                        transformableState.focusOn(cellBounds)
+                        // Cell focus uses larger padding for comfortable cell viewing
+                        transformableState.focusOn(cellBounds, padding = 64.dp)
                     }
                 }
 
@@ -293,7 +294,9 @@ fun App(
                                         onFocusRequested = { bounds ->
                                             Log.d("StreamingApp", "Focus requested: $bounds")
                                             coroutineScope.launch {
-                                                transformableState.focusOn(bounds)
+                                                // Canvas focus uses small padding in PHOTO_MODE, larger padding in CELL_MODE
+                                                val padding = if (uiState.selectionMode == SelectionMode.PHOTO_MODE) 4.dp else 64.dp
+                                                transformableState.focusOn(bounds, padding = padding)
                                             }
                                         },
                                         onVisibleCellsChanged = {}, // Handled by mediaHexState
@@ -339,7 +342,8 @@ fun App(
                                 onFocusRequested = { bounds ->
                                     Log.d("App", "Panel focus requested: $bounds")
                                     coroutineScope.launch {
-                                        transformableState.focusOn(bounds)
+                                        // Panel focus uses minimal padding for close photo viewing
+                                        transformableState.focusOn(bounds, padding = 4.dp)
                                     }
                                 },
                                 getMediaBounds = { media ->
