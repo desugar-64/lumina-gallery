@@ -211,9 +211,9 @@ fun rememberTransformableState(
     initialZoom: Float = 1f,
     initialOffset: Offset = Offset.Zero,
     animationSpec: AnimationSpec<Matrix> = spring(
-        // Material 3 Expressive spring physics for smooth, natural motion
-        stiffness = 700f, // Higher stiffness for quicker acceleration, avoiding abrupt start
-        dampingRatio = 0.75f // Moderate damping for smooth deceleration without bounce
+        // Gentle, bouncy spring physics for natural, fluid motion
+        stiffness = 400f, // Lower stiffness for gentler, more gradual acceleration
+        dampingRatio = 0.6f // Reduced damping for subtle bounce and natural settling
     ),
     focusPadding: androidx.compose.ui.unit.Dp = 48.dp
 ): TransformableState = rememberSaveable(saver = TransformerStateSaver) {

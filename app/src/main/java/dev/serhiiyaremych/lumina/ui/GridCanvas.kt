@@ -39,8 +39,8 @@ fun GridCanvas(
     val gridRenderer = remember { GridRenderer() }
     
     // Material 3 dynamic colors for grid dots - muted and understated to avoid visual noise
-    val majorGridColor = MaterialTheme.colorScheme.onSurface      // Clear but not overpowering major grid dots
-    val minorGridColor = MaterialTheme.colorScheme.surfaceVariant // Very subtle minor grid dots
+    val majorGridColor = MaterialTheme.colorScheme.onSurfaceVariant // Muted major grid dots, less distracting
+    val minorGridColor = MaterialTheme.colorScheme.outline // Very subtle minor grid dots
 
     Box(
         modifier = modifier
