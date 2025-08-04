@@ -35,11 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.drag
-import androidx.compose.ui.input.pointer.AwaitPointerEventScope
-import androidx.compose.ui.input.pointer.PointerInputChange
-import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.platform.LocalDensity
@@ -368,58 +363,108 @@ fun TransformableContent(
         val decay = remember { splineBasedDecay<Offset>(density) }
         
         Box(
-            modifier = Modifier
-                .pointerInput(Unit) {
-                    detectTransformGesturesWithFling(
-                        onGestureStart = {
-                            // Stop any ongoing fling animation when user starts new gesture
-                            coroutineScope.launch {
-                                panFlingAnimatable.stop()
-                            }
-                        },
-                        onGesture = { centroid, pan, zoom ->
-                            if (!state.isAnimating) {
-                                coroutineScope.launch {
-                                    // Apply zoom first and check if it was clamped
-                                    val wasZoomClamped = state.updateMatrix {
-                                        postScale(zoom, zoom, centroid.x, centroid.y)
-                                    }
-
-                                    // Only apply pan if zoom wasn't clamped
-                                    if (!wasZoomClamped) {
-                                        state.updateMatrix {
-                                            postTranslate(pan.x, pan.y)
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        onGestureEnd = { velocity ->
-                            // Launch fling animation for pan only (only if there's significant velocity)
-                            val minFlingVelocity = 300f // pixels per second threshold - reduced sensitivity
-                            if (velocity.getDistance() > minFlingVelocity && !state.isAnimating) {
-                                coroutineScope.launch {
-                                    var previousValue = panFlingAnimatable.value
-                                    panFlingAnimatable.animateDecay(velocity, decay) {
-                                        // Apply the fling delta incrementally to the matrix
-                                        val flingDelta = value - previousValue
-                                        if (flingDelta != Offset.Zero) {
-                                            // Apply fling movement using runBlocking since we're in animation callback
-                                            kotlinx.coroutines.runBlocking {
-                                                state.updateMatrix {
-                                                    postTranslate(flingDelta.x, flingDelta.y)
-                                                }
-                                            }
-                                            previousValue = value
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    )
-                }
+            modifier = Modifier.transformableGestures(
+                state = state,
+                coroutineScope = coroutineScope,
+                panFlingAnimatable = panFlingAnimatable,
+                decay = decay
+            )
         ) {
             content()
+        }
+    }
+}
+
+/**
+ * Modifier extension that handles transformable gestures (pan, zoom) with fling animation.
+ * Extracted from the original pointerInput block to improve maintainability.
+ */
+private fun Modifier.transformableGestures(
+    state: TransformableState,
+    coroutineScope: kotlinx.coroutines.CoroutineScope,
+    panFlingAnimatable: Animatable<Offset, AnimationVector2D>,
+    decay: androidx.compose.animation.core.DecayAnimationSpec<Offset>
+) = this.pointerInput(Unit) {
+    detectTransformGesturesWithFling(
+        onGestureStart = {
+            handleGestureStart(coroutineScope, panFlingAnimatable)
+        },
+        onGesture = { centroid, pan, zoom ->
+            handleGesture(state, coroutineScope, centroid, pan, zoom)
+        },
+        onGestureEnd = { velocity ->
+            handleGestureEnd(state, coroutineScope, panFlingAnimatable, decay, velocity)
+        }
+    )
+}
+
+/**
+ * Handles the start of a gesture by stopping any ongoing fling animation.
+ */
+private fun handleGestureStart(
+    coroutineScope: kotlinx.coroutines.CoroutineScope,
+    panFlingAnimatable: Animatable<Offset, AnimationVector2D>
+) {
+    coroutineScope.launch {
+        panFlingAnimatable.stop()
+    }
+}
+
+/**
+ * Handles ongoing gesture events by applying zoom and pan transformations.
+ */
+private fun handleGesture(
+    state: TransformableState,
+    coroutineScope: kotlinx.coroutines.CoroutineScope,
+    centroid: Offset,
+    pan: Offset,
+    zoom: Float
+) {
+    if (!state.isAnimating) {
+        coroutineScope.launch {
+            // Apply zoom first and check if it was clamped
+            val wasZoomClamped = state.updateMatrix {
+                postScale(zoom, zoom, centroid.x, centroid.y)
+            }
+
+            // Only apply pan if zoom wasn't clamped
+            if (!wasZoomClamped) {
+                state.updateMatrix {
+                    postTranslate(pan.x, pan.y)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Handles the end of a gesture by potentially starting a fling animation.
+ */
+private fun handleGestureEnd(
+    state: TransformableState,
+    coroutineScope: kotlinx.coroutines.CoroutineScope,
+    panFlingAnimatable: Animatable<Offset, AnimationVector2D>,
+    decay: androidx.compose.animation.core.DecayAnimationSpec<Offset>,
+    velocity: Offset
+) {
+    // Launch fling animation for pan only (only if there's significant velocity)
+    val minFlingVelocity = 300f // pixels per second threshold - reduced sensitivity
+    if (velocity.getDistance() > minFlingVelocity && !state.isAnimating) {
+        coroutineScope.launch {
+            var previousValue = panFlingAnimatable.value
+            panFlingAnimatable.animateDecay(velocity, decay) {
+                // Apply the fling delta incrementally to the matrix
+                val flingDelta = value - previousValue
+                if (flingDelta != Offset.Zero) {
+                    // Apply fling movement using runBlocking since we're in animation callback
+                    kotlinx.coroutines.runBlocking {
+                        state.updateMatrix {
+                            postTranslate(flingDelta.x, flingDelta.y)
+                        }
+                    }
+                    previousValue = value
+                }
+            }
         }
     }
 }
