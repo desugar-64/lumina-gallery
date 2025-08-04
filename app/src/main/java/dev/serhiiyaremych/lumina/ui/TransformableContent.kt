@@ -3,11 +3,19 @@ package dev.serhiiyaremych.lumina.ui
 import android.graphics.Matrix
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.AnimationVector2D
 import androidx.compose.animation.core.AnimationVector4D
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.TwoWayConverter
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.animation.splineBasedDecay
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculateCentroidSize
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +25,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.SaverScope
@@ -26,7 +35,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.drag
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -38,6 +53,91 @@ import dev.serhiiyaremych.lumina.ui.ZoomConstants.MIN_ZOOM
 import dev.serhiiyaremych.lumina.ui.ZoomConstants.MAX_ZOOM
 
 private data class TransformValues(val zoom: Float, val offset: Offset)
+
+/**
+ * Custom gesture detector that supports pan/zoom with fling inertia for panning.
+ * Extends the standard transform gestures with velocity tracking and decay animation.
+ */
+private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectTransformGesturesWithFling(
+    onGestureStart: () -> Unit = {},
+    onGesture: (centroid: Offset, pan: Offset, zoom: Float) -> Unit,
+    onGestureEnd: (velocity: Offset) -> Unit
+) {
+    awaitEachGesture {
+        awaitFirstDown(requireUnconsumed = false)
+        
+        val velocityTracker = VelocityTracker()
+        var zoom = 1f
+        var pan = Offset.Zero
+        var pastTouchSlop = false
+        val touchSlop = viewConfiguration.touchSlop
+        var lockedToPanZoom = false
+
+        onGestureStart()
+
+        do {
+            val event = awaitPointerEvent()
+            val canceled = event.changes.any { it.isConsumed }
+            
+            if (!canceled) {
+                val zoomChange = event.calculateZoom()
+                val panChange = event.calculatePan()
+
+                if (!pastTouchSlop) {
+                    zoom *= zoomChange
+                    pan += panChange
+
+                    val centroidSize = event.calculateCentroidSize(useCurrent = false)
+                    val zoomMotion = kotlin.math.abs(1 - zoom) * centroidSize
+                    val panMotion = pan.getDistance()
+
+                    if (zoomMotion > touchSlop || panMotion > touchSlop) {
+                        pastTouchSlop = true
+                        lockedToPanZoom = zoomMotion < touchSlop
+                    }
+                }
+
+                if (pastTouchSlop) {
+                    val centroid = event.calculateCentroid(useCurrent = false)
+                    val effectiveZoom = if (lockedToPanZoom) 1f else zoomChange
+                    
+                    if (effectiveZoom != 1f || panChange != Offset.Zero) {
+                        onGesture(centroid, panChange, effectiveZoom)
+                    }
+
+                    // Track velocity for single-finger pan gestures only
+                    if (event.changes.size == 1) {
+                        event.changes.forEach { change ->
+                            if (change.pressed) {
+                                velocityTracker.addPosition(
+                                    change.uptimeMillis,
+                                    change.position
+                                )
+                            }
+                        }
+                    }
+
+                    event.changes.forEach {
+                        if (it.position != it.previousPosition) {
+                            it.consume()
+                        }
+                    }
+                }
+            }
+        } while (!canceled && event.changes.any { it.pressed })
+
+        // Calculate velocity and trigger fling only for single-finger gestures  
+        val velocity = if (lockedToPanZoom) {
+            val calculatedVelocity = velocityTracker.calculateVelocity()
+            Offset(calculatedVelocity.x, calculatedVelocity.y)
+        } else {
+            Offset.Zero
+        }
+        
+        onGestureEnd(velocity)
+    }
+}
+
 
 class MatrixAnimator(
     initial: Matrix = Matrix(),
@@ -262,26 +362,61 @@ fun TransformableContent(
         }
 
         val coroutineScope = rememberCoroutineScope()
+        
+        // Fling animation for pan offset only - this tracks pan velocity and provides smooth deceleration
+        val panFlingAnimatable = remember { Animatable(Offset.Zero, Offset.VectorConverter) }
+        val decay = remember { splineBasedDecay<Offset>(density) }
+        
         Box(
             modifier = Modifier
                 .pointerInput(Unit) {
-                    detectTransformGestures { centroid, pan, zoom, _ ->
-                        if (!state.isAnimating) {
+                    detectTransformGesturesWithFling(
+                        onGestureStart = {
+                            // Stop any ongoing fling animation when user starts new gesture
                             coroutineScope.launch {
-                                // Apply zoom first and check if it was clamped
-                                val wasZoomClamped = state.updateMatrix {
-                                    postScale(zoom, zoom, centroid.x, centroid.y)
-                                }
+                                panFlingAnimatable.stop()
+                            }
+                        },
+                        onGesture = { centroid, pan, zoom ->
+                            if (!state.isAnimating) {
+                                coroutineScope.launch {
+                                    // Apply zoom first and check if it was clamped
+                                    val wasZoomClamped = state.updateMatrix {
+                                        postScale(zoom, zoom, centroid.x, centroid.y)
+                                    }
 
-                                // Only apply pan if zoom wasn't clamped
-                                if (!wasZoomClamped) {
-                                    state.updateMatrix {
-                                        postTranslate(pan.x, pan.y)
+                                    // Only apply pan if zoom wasn't clamped
+                                    if (!wasZoomClamped) {
+                                        state.updateMatrix {
+                                            postTranslate(pan.x, pan.y)
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        onGestureEnd = { velocity ->
+                            // Launch fling animation for pan only (only if there's significant velocity)
+                            val minFlingVelocity = 300f // pixels per second threshold - reduced sensitivity
+                            if (velocity.getDistance() > minFlingVelocity && !state.isAnimating) {
+                                coroutineScope.launch {
+                                    var previousValue = panFlingAnimatable.value
+                                    panFlingAnimatable.animateDecay(velocity, decay) {
+                                        // Apply the fling delta incrementally to the matrix
+                                        val flingDelta = value - previousValue
+                                        if (flingDelta != Offset.Zero) {
+                                            // Apply fling movement using runBlocking since we're in animation callback
+                                            kotlinx.coroutines.runBlocking {
+                                                state.updateMatrix {
+                                                    postTranslate(flingDelta.x, flingDelta.y)
+                                                }
+                                            }
+                                            previousValue = value
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
+                    )
                 }
         ) {
             content()
