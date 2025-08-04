@@ -169,8 +169,18 @@ fun App(
         }
 
         Box(modifier = modifier.fillMaxSize()) {
-            if (uiState.permissionGranted) {
-                // Main gallery interface - only shown when permissions are granted
+            // Show permission flow if we're not loading and don't have permission yet
+            // This prevents showing the permission screen during data loading when permissions are already granted
+            if (!uiState.permissionGranted && !uiState.isLoading) {
+                // Permission flow - shown when permissions are not granted
+                MediaPermissionFlow(
+                    onPermissionGranted = { streamingGalleryViewModel.updatePermissionGranted(true) },
+                    onPermissionDenied = {
+                        Log.w("StreamingApp", "Media permissions denied")
+                    }
+                )
+            } else if (uiState.permissionGranted || uiState.isLoading) {
+                // Main gallery interface - shown when permissions are granted OR during loading
                 BoxWithConstraints {
                     val canvasSize = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat())
 

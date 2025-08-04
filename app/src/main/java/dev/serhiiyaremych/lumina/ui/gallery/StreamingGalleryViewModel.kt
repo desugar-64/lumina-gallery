@@ -393,7 +393,14 @@ class StreamingGalleryViewModel @Inject constructor(
      * Update permission granted status
      */
     fun updatePermissionGranted(granted: Boolean) {
+        val previousPermissionStatus = _uiState.value.permissionGranted
+        
         updateUiState { it.copy(permissionGranted = granted) }
+        
+        // If permissions were just granted, reload media to ensure we have access to all photos
+        if (!previousPermissionStatus && granted) {
+            loadMedia()
+        }
     }
 
     /**
