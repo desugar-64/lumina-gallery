@@ -83,3 +83,5 @@ lint/tmp/
 
 # Benchmark results
 benchmark_results/
+# CRUSH directory
+.crush/
