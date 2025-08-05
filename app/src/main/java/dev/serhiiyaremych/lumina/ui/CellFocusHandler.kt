@@ -163,6 +163,9 @@ private fun calculateCellSignificanceScore(
         val centeringScore = 1f - (distance / maxDistance).coerceIn(0f, 1f)
         
         // Combine coverage (70%) and centering (30%) scores
+        // Add additional constraint: require at least 20% coverage to be considered significant
+        if (detectionCoverage < 0.2f) return 0f
+        
         return (detectionCoverage * 0.7f) + (centeringScore * 0.3f)
     } else {
         return detectionCoverage
