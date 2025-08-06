@@ -196,6 +196,8 @@ class TransformableState(
     private val animationSpec: AnimationSpec<Matrix> = spring(),
     private val focusPadding: androidx.compose.ui.unit.Dp = 48.dp
 ) {
+    // Reference to fling animation that gets set by TransformableContent
+    internal var flingStopCallback: (suspend () -> Unit)? = null
     // Reused array for matrix value extraction to avoid allocations
     private val matrixValuesCache = FloatArray(9)
     // Cached matrix instance for focusOn to avoid allocations
@@ -232,21 +234,38 @@ class TransformableState(
     val offset: Offset get() = transformValues.offset
 
     fun updateContentSize(size: Size) = run { contentSize = size }
+    
+    suspend fun stopAllAnimations() {
+        android.util.Log.d("TransformableState", "stopAllAnimations: stopping all animations")
+        // Stop fling animation first
+        flingStopCallback?.invoke()
+        // Then stop matrix animation
+        matrixAnimator.snapTo(matrixAnimator.value)
+    }
 
     suspend fun focusOn(bounds: Rect, padding: androidx.compose.ui.unit.Dp = focusPadding) {
-        if (bounds.isEmpty || contentSize.isEmpty()) return
+        android.util.Log.d("TransformableState", "focusOn: bounds=$bounds, contentSize=$contentSize")
+        if (bounds.isEmpty || contentSize.isEmpty()) {
+            android.util.Log.d("TransformableState", "focusOn: early return - empty bounds or content")
+            return
+        }
 
+        android.util.Log.d("TransformableState", "focusOn: setting isAnimating=true")
         isAnimating = true
         try {
             val targetZoom = calculateZoomToFit(bounds, padding).coerceIn(MIN_ZOOM, MAX_ZOOM)
             val targetOffset = calculateCenteringOffset(bounds, targetZoom)
+            android.util.Log.d("TransformableState", "focusOn: targetZoom=$targetZoom, targetOffset=$targetOffset")
 
             focusMatrix.reset()
             focusMatrix.postScale(targetZoom, targetZoom)
             focusMatrix.postTranslate(targetOffset.x, targetOffset.y)
 
+            android.util.Log.d("TransformableState", "focusOn: starting animation")
             matrixAnimator.animateTo(Matrix(focusMatrix))
+            android.util.Log.d("TransformableState", "focusOn: animation completed")
         } finally {
+            android.util.Log.d("TransformableState", "focusOn: setting isAnimating=false")
             isAnimating = false
         }
     }
@@ -289,10 +308,14 @@ class TransformableState(
         val safeAvailableHeight = availableHeight.coerceAtLeast(bounds.height + 1f)
         
         // Calculate zoom to fit content within available space
-        return min(
-            safeAvailableWidth / bounds.width,
-            safeAvailableHeight / bounds.height
-        )
+        val zoomX = safeAvailableWidth / bounds.width
+        val zoomY = safeAvailableHeight / bounds.height
+        val rawZoom = min(zoomX, zoomY)
+        
+        android.util.Log.d("TransformableState", "calculateZoomToFit: bounds=${bounds.size}, available=${availableWidth}x${availableHeight}, zoomX=$zoomX, zoomY=$zoomY, rawZoom=$rawZoom")
+        
+        // Additional safety: prevent extreme zoom values that could cause animation issues
+        return rawZoom.coerceIn(0.01f, 100f)
     }
 
     private fun calculateCenteringOffset(bounds: Rect, zoom: Float): Offset = Offset(
@@ -361,6 +384,14 @@ fun TransformableContent(
         // Fling animation for pan offset only - this tracks pan velocity and provides smooth deceleration
         val panFlingAnimatable = remember { Animatable(Offset.Zero, Offset.VectorConverter) }
         val decay = remember { splineBasedDecay<Offset>(density) }
+        
+        // Set up fling stop callback for the state
+        LaunchedEffect(state) {
+            state.flingStopCallback = {
+                android.util.Log.d("TransformableState", "flingStopCallback: stopping panFlingAnimatable")
+                panFlingAnimatable.stop()
+            }
+        }
         
         Box(
             modifier = Modifier.transformableGestures(

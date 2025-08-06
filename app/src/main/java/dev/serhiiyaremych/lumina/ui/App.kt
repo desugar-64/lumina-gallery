@@ -5,16 +5,25 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -22,6 +31,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
+
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.ui.animation.AnimationConstants
@@ -148,6 +158,9 @@ fun App(
         // Unified viewport state manager - single source of truth for all viewport decisions
         val viewportStateManager = remember { ViewportStateManager() }
 
+        // State to track if content is out of viewport bounds
+        var showCenterButton by remember { mutableStateOf(false) }
+
         // Create media hex state for streaming system
         val mediaHexState = uiState.hexGridLayout?.let { layout ->
             rememberMediaHexState(
@@ -188,23 +201,37 @@ fun App(
                     val zoomProvider = rememberUpdatedState { transformableState.zoom }
                     val offsetProvider = rememberUpdatedState { transformableState.offset }
 
-                    LaunchedEffect(canvasSize) {
+                    LaunchedEffect(canvasSize, uiState.hexGridLayout) {
                         snapshotFlow {
-                            Triple(zoomProvider.value(), offsetProvider.value(), uiState.focusedCellWithMedia to uiState.selectedMedia)
+                            Triple(zoomProvider.value(), offsetProvider.value(), uiState.hexGridLayout)
                         }
                         .distinctUntilChanged()
-                        .collect { (currentZoom, currentOffset, selectionPair) ->
-                            val (currentFocusedCell, currentSelectedMedia) = selectionPair
-
-                            // Calculate unified viewport state
+                        .collect { (currentZoom, currentOffset, layout) ->
+                            // Calculate viewport state once and reuse
                             val viewportState = viewportStateManager.calculateViewportState(
                                 canvasSize = canvasSize,
                                 zoom = currentZoom,
                                 offset = currentOffset,
-                                focusedCell = currentFocusedCell,
-                                selectedMedia = currentSelectedMedia,
+                                focusedCell = uiState.focusedCellWithMedia,
+                                selectedMedia = uiState.selectedMedia,
                                 currentSelectionMode = uiState.selectionMode
                             )
+
+                            // Update center button visibility using optimized intersection check
+                            layout?.let { hexLayout ->
+                                val viewportRect = viewportState.viewportRect
+                                val gridBounds = hexLayout.bounds
+
+                                // Use Rect.overlaps for efficient intersection check
+                                val hasOverlap = viewportRect.overlaps(gridBounds)
+                                val isContentCompletelyVisible = hasOverlap &&
+                                    (gridBounds.left >= viewportRect.left &&
+                                     gridBounds.top >= viewportRect.top &&
+                                     gridBounds.right <= viewportRect.right &&
+                                     gridBounds.bottom <= viewportRect.bottom)
+
+                                showCenterButton = !isContentCompletelyVisible
+                            }
 
                             // Apply selection mode changes
                             if (viewportState.suggestedSelectionMode != uiState.selectionMode) {
@@ -373,6 +400,49 @@ fun App(
                         }
                     }
 
+                     if (showCenterButton) {
+                         Button(
+                             onClick = {
+                                 Log.d("CenterButton", "Button clicked")
+                                 uiState.hexGridLayout?.let { layout ->
+                                     // Calculate the bounds that encompass all hex cells
+                                     val gridBounds = layout.bounds
+
+                                     Log.d("CenterButton", "Grid bounds: $gridBounds, isEmpty: ${gridBounds.isEmpty}")
+
+                                     // Safety check to ensure we have valid bounds and no animation is in progress
+                                     if (!gridBounds.isEmpty && !transformableState.isAnimating) {
+                                         // Close panel first to avoid conflicts
+                                         streamingGalleryViewModel.updateFocusedCell(null)
+
+                                         // Use focusOn with padding to center and fit the entire grid
+                                         coroutineScope.launch {
+                                             Log.d("CenterButton", "Launching focusOn animation")
+                                             // Stop any ongoing fling animation before starting focus animation
+                                             transformableState.stopAllAnimations()
+                                             transformableState.focusOn(gridBounds, padding = 32.dp)
+                                             Log.d("CenterButton", "FocusOn animation completed")
+                                         }
+                                     } else {
+                                         Log.w("CenterButton", "Skipping focusOn: bounds empty=${gridBounds.isEmpty}, animating=${transformableState.isAnimating}")
+                                     }
+                                 } ?: Log.w("CenterButton", "Skipping focusOn due to null layout")
+                             },
+                             modifier = Modifier
+                                 .align(Alignment.BottomEnd)
+                                 .padding(16.dp),
+                             colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                 containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
+                                 contentColor = MaterialTheme.colorScheme.onSurface
+                             ),
+                             elevation = androidx.compose.material3.ButtonDefaults.buttonElevation(
+                                 defaultElevation = 6.dp,
+                                 pressedElevation = 2.dp
+                             )
+                         ) {
+                             Text("Center")
+                         }
+                     }
                 }
             } else {
                 // Permission flow - shown when permissions are not granted
