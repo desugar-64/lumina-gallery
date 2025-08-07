@@ -207,18 +207,14 @@ private fun Modifier.panelTransformation(
 ): Modifier {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     
-    // Responsive width based on window size class using Material 3 Adaptive breakpoints
     val widthModifier = when {
         !windowSizeClass.isWidthAtLeastBreakpoint(ResponsiveLayoutConstants.SMALL_TO_MEDIUM_BREAKPOINT_DP) -> {
-            // Compact: phones, use full width for optimal space usage
             Modifier.fillMaxWidth()
         }
         !windowSizeClass.isWidthAtLeastBreakpoint(ResponsiveLayoutConstants.MEDIUM_TO_LARGE_BREAKPOINT_DP) -> {
-            // Medium: small tablets, constrained width for better UX
             Modifier.fillMaxWidth(ResponsiveLayoutConstants.SMALL_TABLET_WIDTH_FRACTION)
         }
         else -> {
-            // Expanded: large tablets/desktop, smaller width to prevent awkward stretching
             Modifier.fillMaxWidth(ResponsiveLayoutConstants.LARGE_TABLET_WIDTH_FRACTION)
         }
     }
