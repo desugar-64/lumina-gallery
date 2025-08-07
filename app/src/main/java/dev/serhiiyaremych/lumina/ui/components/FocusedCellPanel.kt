@@ -60,6 +60,7 @@ import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.toPath
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.model.MediaWithPosition
@@ -67,6 +68,23 @@ import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
 import dev.serhiiyaremych.lumina.ui.SelectionMode
 import dev.serhiiyaremych.lumina.ui.drawStyledPhoto
 import dev.serhiiyaremych.lumina.ui.drawPlaceholderRect
+
+/**
+ * Responsive layout constants for FocusedCellPanel width behavior
+ */
+private object ResponsiveLayoutConstants {
+    /** Breakpoint for small to medium device transition (phones to small tablets) */
+    const val SMALL_TO_MEDIUM_BREAKPOINT_DP = 600
+    
+    /** Breakpoint for medium to large device transition (small tablets to large tablets/desktop) */
+    const val MEDIUM_TO_LARGE_BREAKPOINT_DP = 840
+    
+    /** Panel width percentage for small tablets (600-839dp width) */
+    const val SMALL_TABLET_WIDTH_FRACTION = 0.7f
+    
+    /** Panel width percentage for large tablets/desktop (≥840dp width) */
+    const val LARGE_TABLET_WIDTH_FRACTION = 0.5f
+}
 
 /**
  * Panel displaying media items in a focused cell with photo previews.
@@ -77,6 +95,11 @@ import dev.serhiiyaremych.lumina.ui.drawPlaceholderRect
  * - Staggered item animations for smooth reveal
  * - State-aware transitions responsive to selection mode
  * - Loading state animations for better UX
+ *
+ * Responsive design with Material 3 Adaptive:
+ * - < 600dp width (phones): Uses full width for optimal space usage  
+ * - 600dp-839dp width (small tablets): Constrains to 70% width for better UX
+ * - ≥ 840dp width (large tablets): Constrains to 50% width to prevent awkward stretching
  *
  * Supports conditional focus animations based on selection mode:
  * - PHOTO_MODE: Panel selections trigger focus animations
@@ -176,18 +199,39 @@ private data class PanelAnimations(
 )
 
 /**
- * Extension function to apply panel transformation modifiers.
+ * Extension function to apply panel transformation modifiers with responsive width.
  */
+@Composable
 private fun Modifier.panelTransformation(
     provideTranslationOffset: (panelSize: Size) -> Offset
-): Modifier = this
-    .fillMaxWidth()
-    .graphicsLayer {
-        val offset = provideTranslationOffset(size)
-        translationX = offset.x
-        translationY = offset.y
+): Modifier {
+    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+    
+    // Responsive width based on window size class using Material 3 Adaptive breakpoints
+    val widthModifier = when {
+        !windowSizeClass.isWidthAtLeastBreakpoint(ResponsiveLayoutConstants.SMALL_TO_MEDIUM_BREAKPOINT_DP) -> {
+            // Compact: phones, use full width for optimal space usage
+            Modifier.fillMaxWidth()
+        }
+        !windowSizeClass.isWidthAtLeastBreakpoint(ResponsiveLayoutConstants.MEDIUM_TO_LARGE_BREAKPOINT_DP) -> {
+            // Medium: small tablets, constrained width for better UX
+            Modifier.fillMaxWidth(ResponsiveLayoutConstants.SMALL_TABLET_WIDTH_FRACTION)
+        }
+        else -> {
+            // Expanded: large tablets/desktop, smaller width to prevent awkward stretching
+            Modifier.fillMaxWidth(ResponsiveLayoutConstants.LARGE_TABLET_WIDTH_FRACTION)
+        }
     }
-    .padding(16.dp)
+    
+    return this
+        .then(widthModifier)
+        .graphicsLayer {
+            val offset = provideTranslationOffset(size)
+            translationX = offset.x
+            translationY = offset.y
+        }
+        .padding(16.dp)
+}
 
 /**
  * Main content component of the FocusedCellPanel.

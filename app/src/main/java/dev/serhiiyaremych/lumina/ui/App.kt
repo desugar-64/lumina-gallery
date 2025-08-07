@@ -217,20 +217,16 @@ fun App(
                                 currentSelectionMode = uiState.selectionMode
                             )
 
-                            // Update center button visibility using optimized intersection check
+                            // Update center button visibility - show when grid is outside viewport bounds
                             layout?.let { hexLayout ->
                                 val viewportRect = viewportState.viewportRect
                                 val gridBounds = hexLayout.bounds
 
                                 // Use Rect.overlaps for efficient intersection check
                                 val hasOverlap = viewportRect.overlaps(gridBounds)
-                                val isContentCompletelyVisible = hasOverlap &&
-                                    (gridBounds.left >= viewportRect.left &&
-                                     gridBounds.top >= viewportRect.top &&
-                                     gridBounds.right <= viewportRect.right &&
-                                     gridBounds.bottom <= viewportRect.bottom)
 
-                                showCenterButton = !isContentCompletelyVisible
+                                // Show center button only when grid content is outside viewport bounds (no overlap)
+                                showCenterButton = !hasOverlap
                             }
 
                             // Apply selection mode changes

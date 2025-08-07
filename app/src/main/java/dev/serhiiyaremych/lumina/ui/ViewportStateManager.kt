@@ -115,16 +115,20 @@ class ViewportStateManager(
      */
     private fun calculateViewportRect(canvasSize: Size, zoom: Float, offset: Offset): Rect {
         // Transform screen viewport to content coordinates
-        val contentLeft = -offset.x / zoom
-        val contentTop = -offset.y / zoom
-        val contentWidth = canvasSize.width / zoom
-        val contentHeight = canvasSize.height / zoom
+        // The screen viewport (0,0) to (canvasSize.width, canvasSize.height) in screen space
+        // needs to be transformed to content coordinates by:
+        // 1. Subtracting the offset (to reverse the translation)
+        // 2. Dividing by zoom (to reverse the scaling)
+        val contentLeft = (0f - offset.x) / zoom
+        val contentTop = (0f - offset.y) / zoom
+        val contentRight = (canvasSize.width - offset.x) / zoom
+        val contentBottom = (canvasSize.height - offset.y) / zoom
         
         return Rect(
             left = contentLeft,
             top = contentTop,
-            right = contentLeft + contentWidth,
-            bottom = contentTop + contentHeight
+            right = contentRight,
+            bottom = contentBottom
         )
     }
     
