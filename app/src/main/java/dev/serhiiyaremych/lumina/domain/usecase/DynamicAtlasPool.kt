@@ -17,7 +17,6 @@ import dev.serhiiyaremych.lumina.domain.model.AtlasRegion
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.domain.model.PhotoPriority
 import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
-import dev.serhiiyaremych.lumina.domain.usecase.AtlasGenerationResult
 import dev.serhiiyaremych.lumina.domain.usecase.ProcessedPhoto
 import dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager.MemoryPressure
 import dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager.AtlasKey
@@ -183,7 +182,7 @@ class DynamicAtlasPool @Inject constructor(
         val atlasResults = generateAtlasesInParallel(photoGroups, strategy, lodLevel, currentZoom)
 
         // Step 5: Collect results and clean up
-        val allAtlases = atlasResults.mapNotNull { it.atlas }
+        val allAtlases = atlasResults.mapNotNull { it.primaryAtlas }
         val generationFailed = atlasResults.flatMap { it.failed }
         val allFailed = processingFailed + generationFailed
 
@@ -209,7 +208,7 @@ class DynamicAtlasPool @Inject constructor(
         Log.d(TAG, "  - Atlas generation attempts: ${atlasResults.size}")
         Log.d(TAG, "  - Successful atlases: ${allAtlases.size}")
         atlasResults.forEachIndexed { index, result ->
-            Log.d(TAG, "    Result $index: ${result.totalPhotos} input, ${result.atlas?.regions?.size ?: 0} packed, ${result.failed.size} failed")
+            Log.d(TAG, "    Result $index: ${result.totalPhotos} input, ${result.primaryAtlas?.regions?.size ?: 0} packed, ${result.failed.size} failed")
         }
 
         Log.d(TAG, "Step 4 - Final Results:")
@@ -697,7 +696,7 @@ class DynamicAtlasPool @Inject constructor(
         strategy: AtlasStrategy,
         lodLevel: LODLevel,
         currentZoom: Float
-    ): List<AtlasGenerationResult> = coroutineScope {
+    ): List<EnhancedAtlasGenerator.EnhancedAtlasResult> = coroutineScope {
         photoGroups.chunked(strategy.maxParallelAtlases).flatMap { chunk ->
             chunk.map { group ->
                 async {
@@ -714,7 +713,7 @@ class DynamicAtlasPool @Inject constructor(
         photoGroup: PhotoGroup,
         lodLevel: LODLevel,
         currentZoom: Float
-    ): AtlasGenerationResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
+    ): EnhancedAtlasGenerator.EnhancedAtlasResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
         val imagesToPack = photoGroup.photos.map { ImageToPack(it) }
 
         Log.d(TAG, "Generating atlas: ${photoGroup.photos.size} photos → ${photoGroup.atlasSize.width}x${photoGroup.atlasSize.height} atlas at $lodLevel")
@@ -732,12 +731,14 @@ class DynamicAtlasPool @Inject constructor(
 
         if (packResult.packedImages.isEmpty()) {
             Log.e(TAG, "Atlas generation failed: no photos could be packed in ${photoGroup.atlasSize.width}x${photoGroup.atlasSize.height} atlas")
-            return@trace AtlasGenerationResult(
-                atlas = null,
+            return@trace EnhancedAtlasGenerator.EnhancedAtlasResult(
+                primaryAtlas = null,
+                additionalAtlases = emptyList(),
                 failed = photoGroup.photos.map { it.id },
-                packingUtilization = 0f,
                 totalPhotos = photoGroup.photos.size,
-                processedPhotos = photoGroup.photos.size
+                processedPhotos = photoGroup.photos.size,
+                strategy = EnhancedAtlasGenerator.AtlasStrategy.SINGLE_ATLAS,
+                fallbackUsed = true
             )
         }
 
@@ -782,12 +783,14 @@ class DynamicAtlasPool @Inject constructor(
         // Now register atlas - it's already protected from emergency cleanup
         smartMemoryManager.registerAtlas(memoryKey, atlas)
 
-        return@trace AtlasGenerationResult(
-            atlas = atlas,
+        return@trace EnhancedAtlasGenerator.EnhancedAtlasResult(
+            primaryAtlas = atlas,
+            additionalAtlases = emptyList(),
             failed = packResult.failed.map { it.id },
-            packingUtilization = packResult.utilization,
             totalPhotos = photoGroup.photos.size,
-            processedPhotos = photoGroup.photos.size
+            processedPhotos = photoGroup.photos.size,
+            strategy = EnhancedAtlasGenerator.AtlasStrategy.SINGLE_ATLAS,
+            fallbackUsed = false
         )
     }
 

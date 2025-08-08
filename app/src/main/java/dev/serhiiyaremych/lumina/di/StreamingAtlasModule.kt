@@ -5,7 +5,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.serhiiyaremych.lumina.domain.usecase.BitmapAtlasPool
-import dev.serhiiyaremych.lumina.domain.usecase.DisabledMemoryManager
 import dev.serhiiyaremych.lumina.domain.usecase.EnhancedAtlasGenerator
 import dev.serhiiyaremych.lumina.domain.usecase.LODSpecificGenerator
 import dev.serhiiyaremych.lumina.domain.usecase.StreamingAtlasManager
@@ -18,7 +17,6 @@ import javax.inject.Singleton
  * - StreamingAtlasManager (main coordinator)
  * - LODSpecificGenerator (individual LOD generation)
  * - BitmapAtlasPool (texture reuse)
- * - DisabledMemoryManager (temporary - no memory constraints)
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -48,13 +46,4 @@ object StreamingAtlasModule {
         return StreamingAtlasManager(lodSpecificGenerator, bitmapAtlasPool, atlasBucketManager)
     }
 
-    // TEMPORARY: Commented out disabled memory manager - causes type conflicts
-    // TODO: Re-enable when type system is properly handled
-    // @Singleton
-    // @Provides
-    // fun provideDisabledMemoryManager(
-    //     disabledMemoryManager: DisabledMemoryManager
-    // ): dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager {
-    //     return disabledMemoryManager
-    // }
 }

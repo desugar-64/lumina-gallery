@@ -88,16 +88,6 @@ class MediaMetadataRepository @Inject constructor(
         }
     }
     
-    /**
-     * Prefetches metadata for visible cells in current viewport.
-     */
-    @Deprecated("Prefetching all visible cells may cause unnecessary EXIF work; use prefetchActiveCell instead.")
-    fun prefetchVisibleCells(
-        visibleCells: List<HexCellWithMedia>,
-        loadLevel: MetadataLoadLevel = MetadataLoadLevel.ESSENTIAL
-    ) {
-        // Intentionally does nothing now to discourage broad prefetching.
-    }
 
     /**
      * Prefetches metadata only for the currently-active cell.

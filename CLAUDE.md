@@ -178,7 +178,6 @@ gemini -p "@app/src/ How are media permissions handled? Show the complete permis
 - `PhotoLODProcessor.kt` - Photo processing for LOD levels
 - `SmartMemoryManager.kt` - Memory pressure monitoring
 - `DeviceCapabilities.kt` - Device performance detection
-- `AtlasGenerator.kt` - Legacy single-atlas generator (**deprecated**)
 - `GetMediaUseCase.kt`, `GroupMediaUseCase.kt` - Media business logic
 - `GenerateHexGridUseCase.kt`, `GenerateHexGridLayoutUseCase.kt` - Grid generation with **enhanced shape patterns**
 - `shape/ShapePatternGenerator.kt` - **NEW:** Six organic shape pattern generators with breathing room algorithm
@@ -215,7 +214,7 @@ The app follows Clean Architecture principles with clear separation of concerns:
      - **Core Use Cases**: GetMediaUseCase, GroupMediaUseCase, GenerateHexGridUseCase, GenerateHexGridLayoutUseCase, GetHexGridParametersUseCase
      - **Atlas System**: EnhancedAtlasGenerator, DynamicAtlasPool, AtlasManager, PhotoLODProcessor, SmartMemoryManager, DeviceCapabilities
      - **Shape Pattern System**: shape/ShapePatternGenerator (six organic pattern generators with breathing room algorithm)
-     - **Legacy**: AtlasGenerator (deprecated), EnhancedAtlasAdapter (compatibility)
+     - **Legacy**: EnhancedAtlasAdapter (compatibility)
 
 2. **Data Layer** (`app/src/main/java/dev/serhiiyaremych/lumina/data/`):
    - `datasource/`: Data source implementations (FakeMediaDataSource, MediaStoreDataSource)
@@ -264,8 +263,7 @@ The app implements a sophisticated multi-atlas texture system for efficient phot
 15. **DeviceCapabilities** (`domain/usecase/DeviceCapabilities.kt`) - Device-aware atlas size selection and performance tier detection
 
 **Legacy Components (Deprecated):**
-16. **AtlasGenerator** (`domain/usecase/AtlasGenerator.kt`) - Original single-atlas generator (deprecated, replaced by EnhancedAtlasGenerator)
-17. **EnhancedAtlasAdapter** (`domain/usecase/EnhancedAtlasAdapter.kt`) - Compatibility adapter for migration (may be deprecated soon)
+16. **EnhancedAtlasAdapter** (`domain/usecase/EnhancedAtlasAdapter.kt`) - Compatibility adapter for migration (may be deprecated soon)
 
 ### Enhanced Shape Pattern System
 
@@ -365,7 +363,7 @@ The app features a sophisticated benchmarking system with detailed performance t
 - Clear separation between file system access and in-memory bitmap processing
 
 **Software Canvas Instrumentation:**
-- **AtlasGenerator.softwareCanvas**: Tracks actual Canvas.drawBitmap() operations where individual photos are composited onto atlas texture
+- **EnhancedAtlasGenerator.softwareCanvas**: Tracks actual Canvas.drawBitmap() operations where individual photos are composited onto atlas texture
 - Hardware-accelerated bilinear filtering operations with Paint optimization
 - Bitmap-to-bitmap drawing performance with destination rectangle mapping
 
