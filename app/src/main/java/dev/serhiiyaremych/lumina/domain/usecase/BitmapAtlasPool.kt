@@ -3,6 +3,7 @@ package dev.serhiiyaremych.lumina.domain.usecase
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.ui.unit.IntSize
+import androidx.core.graphics.createBitmap
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
@@ -97,7 +98,7 @@ class BitmapAtlasPool @Inject constructor() {
         
         // Pool miss - create new bitmap
         missCount++
-        val newBitmap = Bitmap.createBitmap(width, height, config)
+        val newBitmap = createBitmap(width, height, config)
         
         Log.d(TAG, "Pool MISS: Created new ${atlasSize}K bitmap (pool size: ${pool.size})")
         return@withLock newBitmap
@@ -228,7 +229,7 @@ data class PoolStatistics(
 ) {
     override fun toString(): String {
         return "PoolStats(acquire=$acquireCount, release=$releaseCount, " +
-                "hit=$hitCount, miss=$missCount, hitRate=${String.format("%.1f", hitRate * 100)}%, " +
+                "hit=$hitCount, miss=$missCount, hitRate=${String.format(java.util.Locale.US, "%.1f", hitRate * 100)}%, " +
                 "pools=[2K:$pool2KSize, 4K:$pool4KSize, 8K:$pool8KSize], total=$totalPoolSize)"
     }
 }

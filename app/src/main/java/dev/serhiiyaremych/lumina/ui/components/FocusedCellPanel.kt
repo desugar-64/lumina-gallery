@@ -113,13 +113,13 @@ fun FocusedCellPanel(
     hexCellWithMedia: HexCellWithMedia,
     level0Atlases: List<TextureAtlas>?,
     selectionMode: SelectionMode,
+    modifier: Modifier = Modifier,
     selectedMedia: Media? = null,
     onDismiss: () -> Unit,
     onMediaSelected: (Media) -> Unit,
     onFocusRequested: (Rect) -> Unit,
     getMediaBounds: (Media) -> Rect?,
-    provideTranslationOffset: (panelSize: Size) -> Offset,
-    modifier: Modifier = Modifier
+    provideTranslationOffset: (panelSize: Size) -> Offset
 ) {
     val panelAnimations = rememberPanelAnimations()
 

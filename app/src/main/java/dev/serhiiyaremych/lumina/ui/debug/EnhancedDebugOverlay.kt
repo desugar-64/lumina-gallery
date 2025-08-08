@@ -74,11 +74,11 @@ fun EnhancedDebugOverlay(
     isAtlasGenerating: Boolean,
     currentZoom: Float,
     memoryStatus: SmartMemoryManager.MemoryStatus?,
+    modifier: Modifier = Modifier,
     smartMemoryManager: SmartMemoryManager? = null,
     deviceCapabilities: dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities? = null,
     significantCells: Set<dev.serhiiyaremych.lumina.domain.model.HexCell> = emptySet(),
-    streamingAtlases: Map<LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>? = null,
-    modifier: Modifier = Modifier
+    streamingAtlases: Map<LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>? = null
 ) {
     var isDebugVisible by remember { mutableStateOf(false) }
 
@@ -134,9 +134,9 @@ private fun CompactDebugInfo(
     memoryStatus: SmartMemoryManager.MemoryStatus?,
     smartMemoryManager: SmartMemoryManager?,
     deviceCapabilities: dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities?,
+    modifier: Modifier = Modifier,
     significantCells: Set<dev.serhiiyaremych.lumina.domain.model.HexCell> = emptySet(),
-    streamingAtlases: Map<LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>? = null,
-    modifier: Modifier = Modifier
+    streamingAtlases: Map<LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>? = null
 ) {
     Column(
         modifier = modifier,

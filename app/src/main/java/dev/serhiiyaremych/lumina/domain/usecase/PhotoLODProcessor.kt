@@ -323,10 +323,10 @@ class PhotoLODProcessor @Inject constructor(
     private suspend fun applyExifOrientation(bitmap: Bitmap, uri: Uri): Bitmap {
         return try {
             val exifOrientation = withContext(Dispatchers.IO) {
-                contentResolver.openInputStream(uri)
-            }?.use { inputStream: java.io.InputStream ->
-                val exif = ExifInterface(inputStream)
-                exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+                contentResolver.openInputStream(uri)?.use { inputStream: java.io.InputStream ->
+                    val exif = ExifInterface(inputStream)
+                    exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+                }
             } ?: ExifInterface.ORIENTATION_NORMAL
 
             applyExifOrientationWithValue(bitmap, exifOrientation)

@@ -14,7 +14,7 @@ android {
     defaultConfig {
         applicationId = "dev.serhiiyaremych.lumina"
         minSdk = 29
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -64,7 +64,6 @@ dependencies {
 
     // Hilt dependencies
     implementation(libs.hilt.android)
-    implementation(libs.exifinterface)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
@@ -84,7 +83,7 @@ dependencies {
     implementation(libs.androidx.exifinterface)
 
     // Graphics shapes for polygon morphing
-    implementation("androidx.graphics:graphics-shapes:1.0.1")
+    implementation(libs.androidx.graphics.shapes)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
