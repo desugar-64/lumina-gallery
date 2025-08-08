@@ -148,6 +148,7 @@ private fun CompactDebugInfo(
         // Cell focus debug info
         CompactCellFocusInfo(significantCells)
 
+
         // Device capabilities info
         deviceCapabilities?.let { CompactDeviceInfo(it) }
 
@@ -1023,6 +1024,7 @@ private fun CompactCellFocusInfo(significantCells: Set<dev.serhiiyaremych.lumina
         }
     }
 }
+
 
 private fun formatBytes(bytes: Long): String {
     return when {

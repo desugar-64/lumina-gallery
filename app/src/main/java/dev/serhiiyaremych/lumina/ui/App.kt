@@ -6,7 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
@@ -35,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.ui.animation.AnimationConstants
+import dev.serhiiyaremych.lumina.ui.components.DirectionalIndicatorOverlay
 import dev.serhiiyaremych.lumina.ui.components.FocusedCellPanel
 import dev.serhiiyaremych.lumina.ui.components.MediaPermissionFlow
 import dev.serhiiyaremych.lumina.ui.debug.EnhancedDebugOverlay
@@ -214,7 +218,8 @@ fun App(
                                 offset = currentOffset,
                                 focusedCell = uiState.focusedCellWithMedia,
                                 selectedMedia = uiState.selectedMedia,
-                                currentSelectionMode = uiState.selectionMode
+                                currentSelectionMode = uiState.selectionMode,
+                                gridBounds = layout?.bounds
                             )
 
                             // Update center button visibility - show when grid is outside viewport bounds
@@ -397,9 +402,9 @@ fun App(
                     }
 
                      if (showCenterButton) {
-                         Button(
+                         FloatingActionButton(
                              onClick = {
-                                 Log.d("CenterButton", "Button clicked")
+                                 Log.d("CenterButton", "Tracking button clicked")
                                  uiState.hexGridLayout?.let { layout ->
                                      // Calculate the bounds that encompass all hex cells
                                      val gridBounds = layout.bounds
@@ -427,18 +432,59 @@ fun App(
                              modifier = Modifier
                                  .align(Alignment.BottomEnd)
                                  .padding(16.dp),
-                             colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                 containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
-                                 contentColor = MaterialTheme.colorScheme.onSurface
-                             ),
-                             elevation = androidx.compose.material3.ButtonDefaults.buttonElevation(
-                                 defaultElevation = 6.dp,
-                                 pressedElevation = 2.dp
-                             )
+                             containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
+                             contentColor = MaterialTheme.colorScheme.onSurface
                          ) {
-                             Text("Center")
+                             Text(
+                                 text = "🎯",
+                                 style = MaterialTheme.typography.headlineSmall
+                             )
                          }
                      }
+
+                    // Store current viewport state for indicator access
+                    val currentViewportState = remember { mutableStateOf<ViewportState?>(null) }
+
+                    LaunchedEffect(canvasSize, uiState.hexGridLayout) {
+                        snapshotFlow {
+                            Triple(zoomProvider.value(), offsetProvider.value(), uiState.hexGridLayout)
+                        }
+                        .distinctUntilChanged()
+                        .collect { (currentZoom, currentOffset, layout) ->
+                            if (layout != null) {
+                                currentViewportState.value = viewportStateManager.calculateViewportState(
+                                    canvasSize = canvasSize,
+                                    zoom = currentZoom,
+                                    offset = currentOffset,
+                                    focusedCell = uiState.focusedCellWithMedia,
+                                    selectedMedia = uiState.selectedMedia,
+                                    currentSelectionMode = uiState.selectionMode,
+                                    gridBounds = layout.bounds
+                                )
+                            }
+                        }
+                    }
+
+                    // Directional indicators for offscreen content
+                    currentViewportState.value?.let { viewportState ->
+                        DirectionalIndicatorOverlay(
+                            indicators = viewportState.offscreenIndicators,
+                            onIndicatorClick = { indicator ->
+                                Log.d("DirectionalIndicator", "Indicator clicked for bounds: ${indicator.contentBounds}")
+                                // Close panel first to avoid conflicts
+                                streamingGalleryViewModel.updateFocusedCell(null)
+
+                                // Navigate to the offscreen content
+                                if (!transformableState.isAnimating) {
+                                    coroutineScope.launch {
+                                        transformableState.stopAllAnimations()
+                                        transformableState.focusOn(indicator.contentBounds, padding = 32.dp)
+                                    }
+                                }
+                            },
+                            modifier = Modifier.fillMaxSize().safeDrawingPadding()
+                        )
+                    }
                 }
             } else {
                 // Permission flow - shown when permissions are not granted

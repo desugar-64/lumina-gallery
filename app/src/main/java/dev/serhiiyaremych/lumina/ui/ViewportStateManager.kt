@@ -37,7 +37,10 @@ data class ViewportState(
     val cellLargerThanViewport: Boolean,
     val suggestedSelectionMode: SelectionMode,
     val shouldShowPanel: Boolean,
-    val shouldDeselectMedia: Boolean
+    val shouldDeselectMedia: Boolean,
+    
+    // Offscreen indicator state
+    val offscreenIndicators: List<OffscreenIndicator>
 )
 
 /**
@@ -55,7 +58,8 @@ data class ViewportConfig(
  * Unified viewport state manager - single source of truth for all viewport decisions
  */
 class ViewportStateManager(
-    private val config: ViewportConfig = ViewportConfig()
+    private val config: ViewportConfig = ViewportConfig(),
+    private val offscreenIndicatorManager: OffscreenIndicatorManager = OffscreenIndicatorManager()
 ) {
     
     /**
@@ -67,7 +71,8 @@ class ViewportStateManager(
         offset: Offset,
         focusedCell: HexCellWithMedia?,
         selectedMedia: Media?,
-        currentSelectionMode: SelectionMode
+        currentSelectionMode: SelectionMode,
+        gridBounds: Rect? = null
     ): ViewportState {
         
         // Calculate viewport rectangle in content coordinates
@@ -91,6 +96,13 @@ class ViewportStateManager(
         // Determine if media should be deselected due to viewport constraints
         val shouldDeselect = shouldDeselectMedia(cellState, mediaState, selectedMedia != null)
         
+        // Calculate offscreen indicators if grid bounds are provided
+        val indicators = if (gridBounds != null) {
+            offscreenIndicatorManager.calculateIndicators(viewportRect, canvasSize, gridBounds)
+        } else {
+            emptyList()
+        }
+        
         return ViewportState(
             viewportRect = viewportRect,
             canvasSize = canvasSize,
@@ -106,7 +118,10 @@ class ViewportStateManager(
             cellLargerThanViewport = cellState?.largerThanViewport ?: false,
             suggestedSelectionMode = suggestedMode,
             shouldShowPanel = cellState?.shouldShowPanel ?: false,
-            shouldDeselectMedia = shouldDeselect
+            shouldDeselectMedia = shouldDeselect,
+            
+            // Offscreen indicator state
+            offscreenIndicators = indicators
         )
     }
     
