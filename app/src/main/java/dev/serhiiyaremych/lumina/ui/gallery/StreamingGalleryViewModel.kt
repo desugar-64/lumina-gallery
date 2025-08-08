@@ -78,8 +78,8 @@ class StreamingGalleryViewModel @Inject constructor(
         }
 
     init {
-        loadMedia()
-        // setupAtlasStreaming() // DISABLED: Using bucket system instead
+        // Don't load media automatically - wait for permissions to be granted
+        // loadMedia() will be called when permissions are granted
         setupBucketStreaming()
     }
 

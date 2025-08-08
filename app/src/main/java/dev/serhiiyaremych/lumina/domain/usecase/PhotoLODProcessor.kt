@@ -24,6 +24,8 @@ import dev.serhiiyaremych.lumina.data.BitmapPool
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 /**
  * Processes photos for Level-of-Detail (LOD) atlas system.
@@ -119,8 +121,10 @@ class PhotoLODProcessor @Inject constructor(
      * Attempts to read dimensions and orientation from EXIF metadata
      */
     private suspend fun readExifDimensionsAndOrientation(uri: Uri): Pair<IntSize, Int>? {
-        return trace(PHOTO_LOD_DISK_OPEN_INPUT_STREAM) {
-            contentResolver.openInputStream(uri)
+        return withContext(Dispatchers.IO) {
+            trace(PHOTO_LOD_DISK_OPEN_INPUT_STREAM) {
+                contentResolver.openInputStream(uri)
+            }
         }?.use { inputStream ->
             currentCoroutineContext().ensureActive()
 
@@ -149,8 +153,10 @@ class PhotoLODProcessor @Inject constructor(
     private suspend fun readBoundsDimensionsAndOrientation(uri: Uri): Pair<IntSize, Int>? {
         android.util.Log.d("PhotoLODProcessor", "Falling back to bounds decode for: $uri")
 
-        return trace(PHOTO_LOD_DISK_OPEN_INPUT_STREAM) {
-            contentResolver.openInputStream(uri)
+        return withContext(Dispatchers.IO) {
+            trace(PHOTO_LOD_DISK_OPEN_INPUT_STREAM) {
+                contentResolver.openInputStream(uri)
+            }
         }?.use { inputStream ->
             currentCoroutineContext().ensureActive()
 
@@ -202,8 +208,10 @@ class PhotoLODProcessor @Inject constructor(
     private suspend fun loadBitmapWithSampleSize(
         uri: Uri,
         sampleSize: Int
-    ): Bitmap? = trace(PHOTO_LOD_DISK_OPEN_INPUT_STREAM) {
-        contentResolver.openInputStream(uri)
+    ): Bitmap? = withContext(Dispatchers.IO) {
+        trace(PHOTO_LOD_DISK_OPEN_INPUT_STREAM) {
+            contentResolver.openInputStream(uri)
+        }
     }?.use { inputStream ->
         currentCoroutineContext().ensureActive()
 
@@ -314,7 +322,9 @@ class PhotoLODProcessor @Inject constructor(
      */
     private suspend fun applyExifOrientation(bitmap: Bitmap, uri: Uri): Bitmap {
         return try {
-            val exifOrientation = contentResolver.openInputStream(uri)?.use { inputStream: java.io.InputStream ->
+            val exifOrientation = withContext(Dispatchers.IO) {
+                contentResolver.openInputStream(uri)
+            }?.use { inputStream: java.io.InputStream ->
                 val exif = ExifInterface(inputStream)
                 exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
             } ?: ExifInterface.ORIENTATION_NORMAL
