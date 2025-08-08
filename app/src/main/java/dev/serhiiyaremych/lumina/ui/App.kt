@@ -160,7 +160,16 @@ fun App(
         }
 
         // Unified viewport state manager - single source of truth for all viewport decisions
-        val viewportStateManager = remember { ViewportStateManager() }
+        val viewportPaddingPx = with(density) { 32.dp.toPx() }
+        val viewportStateManager = remember(viewportPaddingPx) {
+            ViewportStateManager(
+                offscreenIndicatorManager = OffscreenIndicatorManager(
+                    OffscreenIndicatorConfig(
+                        viewportPadding = viewportPaddingPx
+                    )
+                )
+            )
+        }
 
         // State to track if content is out of viewport bounds
         var showCenterButton by remember { mutableStateOf(false) }
@@ -482,7 +491,7 @@ fun App(
                                     }
                                 }
                             },
-                            modifier = Modifier.fillMaxSize().safeDrawingPadding()
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
                 }

@@ -8,6 +8,7 @@ import androidx.compose.ui.*
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -37,9 +38,8 @@ fun GridCanvas(
     SideEffect { Log.d("GridCanvas", "GridCanvas: zoom=$zoom") }
     val density = LocalDensity.current
     val gridRenderer = remember { GridRenderer() }
-    
-    // Material 3 dynamic colors for grid dots - muted and understated to avoid visual noise
-    val majorGridColor = MaterialTheme.colorScheme.onSurfaceVariant // Muted major grid dots, less distracting
+
+    val majorGridColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f).compositeOver( MaterialTheme.colorScheme.background)
     val minorGridColor = MaterialTheme.colorScheme.outline // Very subtle minor grid dots
 
     Box(

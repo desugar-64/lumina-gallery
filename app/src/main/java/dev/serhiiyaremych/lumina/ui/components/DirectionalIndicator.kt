@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -59,13 +60,6 @@ fun DirectionalIndicator(
     modifier: Modifier = Modifier,
     style: DirectionalIndicatorStyle = DirectionalIndicatorStyle()
 ) {
-    val density = LocalDensity.current
-
-    // Convert screen coordinates to Compose offset
-    val offsetX = with(density) { indicator.position.x.toDp() - (style.size / 2) }
-    val offsetY = with(density) { indicator.position.y.toDp() - (style.size / 2) }
-
-    // Calculate rotation angle (convert from radians to degrees)
     val rotationAngle = (indicator.direction * 180 / kotlin.math.PI).toFloat()
 
     // Animate rotation smoothly
@@ -85,13 +79,19 @@ fun DirectionalIndicator(
 
     Box(
         modifier = modifier
-            .offset(offsetX, offsetY)
+            .offset {
+                IntOffset(
+                    x = indicator.position.x.roundToInt() - (style.size.roundToPx() / 2),
+                    y = indicator.position.y.roundToInt() - (style.size.roundToPx() / 2)
+                )
+            }
             .size(style.size)
-            .alpha(animatedAlpha)
-            .shadow(
-                elevation = style.elevation,
+            .graphicsLayer {
+                rotationZ = animatedRotation
+                alpha = animatedAlpha
+                clip = true
                 shape = CircleShape
-            )
+            }
             .background(
                 color = MaterialTheme.colorScheme.surfaceColorAtElevation(style.elevation),
                 shape = CircleShape
@@ -106,7 +106,6 @@ fun DirectionalIndicator(
     ) {
         Text(
             text = "➤",
-            modifier = Modifier.rotate(animatedRotation),
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.titleLarge
         )
