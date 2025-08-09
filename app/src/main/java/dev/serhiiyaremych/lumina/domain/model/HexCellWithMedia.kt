@@ -35,15 +35,7 @@ data class HexCellWithMedia(
         return bounds.overlaps(expandedViewport)
     }
 
-    /**
-     * Returns media items that are visible within the given viewport.
-     * Used for fine-grained culling within visible hex cells.
-     */
-    fun getVisibleMedia(viewport: Rect): List<MediaWithPosition> {
-        return mediaItems.filter { mediaWithPosition ->
-            mediaWithPosition.absoluteBounds.overlaps(viewport)
-        }
-    }
+    
 }
 
 /**

@@ -79,16 +79,6 @@ class MetadataCache @Inject constructor(
         }
     }
     
-    /**
-     * Removes metadata from both caches.
-     */
-    suspend fun removeMetadata(mediaId: String) {
-        memoryCache.remove(mediaId)
-        
-        withContext(Dispatchers.IO) {
-            prefs.edit { remove(mediaId) }
-        }
-    }
     
     /**
      * Clears both memory and disk caches.
@@ -156,6 +146,4 @@ data class CacheStats(
     val memoryMaxSize: Int,
     val diskSize: Int
 ) {
-    val memoryHitRate: Float get() = if (memoryHitCount + memoryMissCount == 0L) 0f 
-        else memoryHitCount.toFloat() / (memoryHitCount + memoryMissCount)
 }

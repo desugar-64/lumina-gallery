@@ -198,72 +198,11 @@ class PhotoScaler @Inject constructor(
     /**
      * Downscales a bitmap by a specific factor for memory optimization
      */
-    fun downscale(source: Bitmap, scaleFactor: Float): Bitmap {
-        if (scaleFactor >= 1.0f) return source
-
-        val targetWidth = (source.width * scaleFactor).toInt()
-        val targetHeight = (source.height * scaleFactor).toInt()
-
-        return trace(PHOTO_SCALER_CREATE_SCALED_BITMAP) {
-            val pooledBitmap = bitmapPool.acquire(
-                targetWidth,
-                targetHeight,
-                source.config ?: Bitmap.Config.ARGB_8888
-            )
-            
-            val canvas = android.graphics.Canvas(pooledBitmap)
-            val paint = android.graphics.Paint().apply {
-                isAntiAlias = true
-                isFilterBitmap = true // Enable bilinear filtering
-            }
-            
-            canvas.drawBitmap(
-                source,
-                null,
-                android.graphics.RectF(0f, 0f, targetWidth.toFloat(), targetHeight.toFloat()),
-                paint
-            )
-            
-            pooledBitmap
-        }
-    }
-
-    /**
-     * Creates a thumbnail with maximum dimension constraint
-     */
-    fun createThumbnail(
-        source: Bitmap,
-        maxDimension: Int,
-        strategy: ScaleStrategy = ScaleStrategy.FIT_CENTER
-    ): Bitmap {
-        val maxCurrentDimension = maxOf(source.width, source.height)
-
-        if (maxCurrentDimension <= maxDimension) {
-            return source
-        }
-
-        val aspectRatio = source.width.toFloat() / source.height
-        val targetSize = if (source.width > source.height) {
-            IntSize(
-                width = maxDimension,
-                height = (maxDimension / aspectRatio).toInt()
-            )
-        } else {
-            IntSize(
-                width = (maxDimension * aspectRatio).toInt(),
-                height = maxDimension
-            )
-        }
-
-        return scale(source, targetSize, strategy)
-    }
     
-    /**
-     * Release a bitmap back to the pool instead of recycling
-     */
-    fun releaseBitmap(bitmap: Bitmap) {
-        bitmapPool.release(bitmap)
-    }
+
+    
+    
+    
 }
 
 /**

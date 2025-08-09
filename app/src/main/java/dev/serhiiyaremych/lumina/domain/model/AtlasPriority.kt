@@ -125,16 +125,5 @@ data class TypeSafeLODPriority(
         return photos.associate { it.uri to photoPriority }
     }
     
-    /**
-     * Calculate effective LOD level for photos with this priority
-     */
-    fun calculateEffectiveLOD(requestedLOD: LODLevel): LODLevel {
-        return priority.photoQuality.calculateEffectiveLOD(requestedLOD)
-    }
     
-    /**
-     * Get human-readable description combining priority and reason
-     */
-    val fullDescription: String
-        get() = "${priority.description} - $reason"
 }

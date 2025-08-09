@@ -27,15 +27,7 @@ open class AtlasBucket {
     /**  Quick lookup from photo -> atlas  */
     private val index: MutableMap<Uri, TextureAtlas> = hashMapOf()
 
-    suspend fun addAtlas(atlas: TextureAtlas) {
-        lock.withLock {
-            val deque = bucketsByLod.getOrPut(atlas.lodLevel) { ArrayDeque() }
-            deque.addLast(atlas)
-            atlas.regions.keys.forEach { uri ->
-                index[uri] = atlas
-            }
-        }
-    }
+    
 
     suspend fun addAll(atlases: Collection<TextureAtlas>) {
         lock.withLock {

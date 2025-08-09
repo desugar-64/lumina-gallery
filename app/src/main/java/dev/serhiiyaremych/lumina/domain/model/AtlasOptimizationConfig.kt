@@ -77,11 +77,5 @@ data class AtlasOptimizationConfig(
          */
         fun default(): AtlasOptimizationConfig = AtlasOptimizationConfig()
         
-        /**
-         * Creates a configuration with custom zoom threshold
-         */
-        fun withZoomThreshold(threshold: Float): AtlasOptimizationConfig {
-            return AtlasOptimizationConfig(lowQualityZoomThreshold = threshold)
-        }
     }
 }

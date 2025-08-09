@@ -25,10 +25,7 @@ import javax.inject.Singleton
  * - Integration with SmartMemoryManager for coordinated cleanup
  */
 @Singleton
-class BitmapPool @Inject constructor(
-    private val smartMemoryManager: SmartMemoryManager
-) {
-    
+class BitmapPool @Inject constructor() {    
     companion object {
         private const val TAG = "BitmapPool"
         
@@ -206,23 +203,6 @@ class BitmapPool @Inject constructor(
         }
     }
     
-    /**
-     * Get current pool statistics
-     */
-    fun getStats(): PoolStats {
-        return synchronized(poolLock) {
-            PoolStats(
-                smallPoolSize = smallPool.size(),
-                mediumPoolSize = mediumPool.size(),
-                largePoolSize = largePool.size(),
-                xlargePoolSize = xlargePool.size(),
-                totalMemoryUsed = calculateTotalMemoryUsed(),
-                hitRate = if (totalRequests > 0) totalHits.toFloat() / totalRequests else 0f,
-                totalRequests = totalRequests,
-                totalHits = totalHits
-            )
-        }
-    }
     
     /**
      * Determine bucket size for given dimensions

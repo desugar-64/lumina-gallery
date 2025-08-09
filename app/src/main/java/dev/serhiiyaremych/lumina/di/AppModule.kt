@@ -48,8 +48,8 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideBitmapPool(smartMemoryManager: SmartMemoryManager): BitmapPool =
-        BitmapPool(smartMemoryManager)
+    fun provideBitmapPool(): BitmapPool =
+        BitmapPool()
 
     @Singleton
     @Provides

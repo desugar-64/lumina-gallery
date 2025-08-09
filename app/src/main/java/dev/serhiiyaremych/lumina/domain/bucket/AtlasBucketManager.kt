@@ -101,20 +101,14 @@ class AtlasBucketManager @Inject constructor() {
         return snapshotAll().filter { it.lodLevel == lodLevel }
     }
 
-    /** Get the highest LOD level available for a photo in focus bucket */
-    suspend fun getFocusLODForPhoto(uri: Uri): LODLevel? {
-        return focusBucket.getHighestLODForPhoto(uri)
-    }
+    
 
     /** Get the highest LOD level available for any photos from a cell in focus bucket */
     suspend fun getFocusLODForPhotos(uris: List<Uri>): LODLevel? {
         return focusBucket.getHighestLODForPhotos(uris)
     }
 
-    /** Check if focus bucket has photo at or above required LOD */
-    suspend fun hasFocusPhotoAtLOD(uri: Uri, minLODLevel: LODLevel): Boolean {
-        return focusBucket.hasPhotoAtLOD(uri, minLODLevel)
-    }
+    
 
     /** Get the highest LOD level available for a photo in highlight bucket */
     suspend fun getHighlightLODForPhoto(uri: Uri): LODLevel? {
