@@ -2,17 +2,17 @@ package dev.serhiiyaremych.lumina.domain.model
 
 /**
  * Type-safe atlas generation priorities that determine photo processing quality and resource allocation.
- * 
+ *
  * This replaces the previous unsafe integer-based priority system with clear semantics
  * about what each priority level means and how it affects atlas generation.
- * 
+ *
  * Integration Status:
  * ✅ Type-safe classes created (AtlasPriority, PhotoQuality, TypeSafeLODPriority)
  * ✅ Adapter methods added to StreamingAtlasManager for gradual migration
  * ✅ Type-safe overloads added to LODSpecificGenerator with deprecation warnings
  * ✅ Backward compatibility maintained with existing LODPriority system
  * ✅ Compile-time safety ensured - no more magic numbers
- * 
+ *
  * Usage:
  * - New code should use TypeSafeLODPriority with AtlasPriority sealed classes
  * - Legacy code continues to work with LODPriority (deprecated)
@@ -23,12 +23,12 @@ sealed class AtlasPriority {
      * The photo priority level that determines processing quality
      */
     abstract val photoQuality: PhotoQuality
-    
+
     /**
      * Human-readable description of this priority
      */
     abstract val description: String
-    
+
     /**
      * Persistent cache priority - used for all canvas photos at LEVEL_0 during app startup.
      * These photos are cached permanently for immediate UI feedback.
@@ -37,7 +37,7 @@ sealed class AtlasPriority {
         override val photoQuality = PhotoQuality.STANDARD
         override val description = "Persistent cache - ALL canvas photos"
     }
-    
+
     /**
      * Visible cells priority - used for photos currently visible in viewport.
      * Quality matches the appropriate LOD level for current zoom.
@@ -46,7 +46,7 @@ sealed class AtlasPriority {
         override val photoQuality = PhotoQuality.STANDARD
         override val description = "Visible cells at current zoom"
     }
-    
+
     /**
      * Active cell priority - used for the cell that takes most viewport area.
      * Gets enhanced quality (+1 LOD level above visible cells).
@@ -55,7 +55,7 @@ sealed class AtlasPriority {
         override val photoQuality = PhotoQuality.ENHANCED
         override val description = "Active cell enhancement"
     }
-    
+
     /**
      * Selected photo priority - used for explicitly selected photos.
      * Always gets maximum quality regardless of zoom level.
@@ -74,17 +74,17 @@ enum class PhotoQuality {
      * Standard quality - uses the requested LOD level as-is
      */
     STANDARD,
-    
+
     /**
      * Enhanced quality - uses +1 LOD level above requested (capped at LEVEL_7)
      */
     ENHANCED,
-    
+
     /**
      * Maximum quality - always uses LEVEL_7 regardless of requested LOD
      */
     MAXIMUM;
-    
+
     /**
      * Convert to legacy PhotoPriority for compatibility
      */
@@ -93,7 +93,7 @@ enum class PhotoQuality {
         ENHANCED -> PhotoPriority.HIGH
         MAXIMUM -> PhotoPriority.HIGH
     }
-    
+
     /**
      * Calculate effective LOD level based on quality and requested LOD
      */
@@ -124,6 +124,4 @@ data class TypeSafeLODPriority(
         val photoPriority = priority.photoQuality.toPhotoPriority()
         return photos.associate { it.uri to photoPriority }
     }
-    
-    
 }

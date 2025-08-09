@@ -77,20 +77,16 @@ data class SerializableLocation(
     val accuracy: Float = 0f
 ) {
     companion object {
-        fun fromLocation(location: Location): SerializableLocation {
-            return SerializableLocation(
-                latitude = location.latitude,
-                longitude = location.longitude,
-                accuracy = location.accuracy
-            )
-        }
+        fun fromLocation(location: Location): SerializableLocation = SerializableLocation(
+            latitude = location.latitude,
+            longitude = location.longitude,
+            accuracy = location.accuracy
+        )
     }
-    
-    fun toLocation(): Location {
-        return Location("").apply {
-            latitude = this@SerializableLocation.latitude
-            longitude = this@SerializableLocation.longitude
-            accuracy = this@SerializableLocation.accuracy
-        }
+
+    fun toLocation(): Location = Location("").apply {
+        latitude = this@SerializableLocation.latitude
+        longitude = this@SerializableLocation.longitude
+        accuracy = this@SerializableLocation.accuracy
     }
 }

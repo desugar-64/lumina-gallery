@@ -88,7 +88,7 @@ class CellFocusManager(
     ) {
         val newCell = hexCellWithMedia.hexCell
         val previousCell = currentSignificantCell
-        
+
         // Only proceed if this is a different cell
         if (newCell != previousCell) {
             // Call onCellInsignificant for the previous cell (triggers unrotate animation)
@@ -97,10 +97,10 @@ class CellFocusManager(
                     listener.onCellInsignificant(previousCellWithMedia)
                 }
             }
-            
+
             // Update internal state BEFORE calling onCellSignificant
             currentSignificantCell = newCell
-            
+
             // Call onCellSignificant for the new cell
             listener.onCellSignificant(hexCellWithMedia, 1.0f) // Max coverage for clicks
         }

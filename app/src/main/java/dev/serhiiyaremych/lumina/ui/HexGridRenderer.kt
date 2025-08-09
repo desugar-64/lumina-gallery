@@ -28,12 +28,14 @@ data class HexRenderConfig(
     val selectedColor: Color,
     // Material 3 Expressive selection enhancements
     val mutedColorAlpha: Float = 0.4f, // Reduced alpha for non-selected cells
-    val selectedStrokeWidth: Dp = 2.5.dp // Thicker stroke for selected cells
+    // Thicker stroke for selected cells
+    val selectedStrokeWidth: Dp = 2.5.dp
 )
 
 class HexGridRenderer {
     private val pathCache = mutableMapOf<String, Path>()
     private val reusablePath = Path()
+
     /**
      * Main hex grid rendering function with performance optimizations.
      * Should be called within a transform context that handles zoom/offset.
@@ -130,7 +132,7 @@ class HexGridRenderer {
         // Calculate cell radius from center to first vertex
         val cellRadius = kotlin.math.sqrt(
             (cell.vertices[0].x - cell.center.x).let { it * it } +
-            (cell.vertices[0].y - cell.center.y).let { it * it }
+                (cell.vertices[0].y - cell.center.y).let { it * it }
         )
         val baseGradientRadius = cellRadius * 1.7f // 70% bigger than cell radius
         val gradientRadius = baseGradientRadius * radiusScale // Apply animation scaling
@@ -233,7 +235,8 @@ class HexGridRenderer {
             }
 
             // Calculate corner points
-            val effectiveRadius = min(cornerRadius,
+            val effectiveRadius = min(
+                cornerRadius,
                 min(
                     kotlin.math.sqrt((prev - current).getDistanceSquared()) / 2f,
                     kotlin.math.sqrt((next - current).getDistanceSquared()) / 2f

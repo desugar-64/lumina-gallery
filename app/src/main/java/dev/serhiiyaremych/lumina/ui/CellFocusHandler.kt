@@ -10,7 +10,7 @@ import kotlin.math.min
 /**
  * Unified cell focus handler that provides consistent focus behavior
  * for both manual clicks and automatic viewport-based detection.
- * 
+ *
  * Single source of truth for:
  * - Cell bounds calculation and focus animations
  * - Visual highlighting and selection state
@@ -22,12 +22,12 @@ interface CellFocusHandler {
      * Triggers all the same actions as a manual cell click:
      * - Shows focused cell panel
      * - Triggers focus animation to center on cell
-     * - Sets cell selection visual state 
+     * - Sets cell selection visual state
      * - Clears any selected media
      * - Sets selection mode to CELL_MODE
      */
     fun onCellFocused(hexCellWithMedia: HexCellWithMedia, coverage: Float)
-    
+
     /**
      * Handle cell losing focus/becoming insignificant.
      * Clears focus state and hides panels.
@@ -55,7 +55,7 @@ data class EnhancedCellFocusConfig(
  * Enhanced cell focus detection that prioritizes cells that are:
  * 1. Most centered in the viewport
  * 2. Take significant space in a centered square region
- * 
+ *
  * This provides more intuitive focus behavior compared to simple coverage detection.
  */
 fun calculateCenteredCellFocus(
@@ -66,20 +66,19 @@ fun calculateCenteredCellFocus(
     hexCellsWithMedia: List<HexCellWithMedia>,
     config: EnhancedCellFocusConfig = EnhancedCellFocusConfig()
 ): HexCellWithMedia? {
-    
     // Calculate viewport in content coordinates
     val viewportRect = calculateViewportRect(contentSize, zoom, offset)
-    
+
     // Calculate centered detection region
     val detectionRect = if (config.useCenteredDetection) {
         calculateCenteredDetectionRect(viewportRect, config.centeredSquareFactor)
     } else {
         viewportRect
     }
-    
+
     var mostSignificantCell: HexCellWithMedia? = null
     var highestScore = 0f
-    
+
     hexCellsWithMedia.forEach { cellWithMedia ->
         val cellBounds = geometryReader.getHexCellBounds(cellWithMedia.hexCell)
         if (cellBounds != null) {
@@ -89,14 +88,14 @@ fun calculateCenteredCellFocus(
                 viewportRect = viewportRect,
                 config = config
             )
-            
+
             if (score > highestScore && score >= config.significanceThreshold) {
                 mostSignificantCell = cellWithMedia
                 highestScore = score
             }
         }
     }
-    
+
     return mostSignificantCell
 }
 
@@ -109,7 +108,7 @@ private fun calculateViewportRect(contentSize: Size, zoom: Float, offset: Offset
     val contentHeight = contentSize.height / safeZoom
     val contentLeft = -offset.x / safeZoom
     val contentTop = -offset.y / safeZoom
-    
+
     return Rect(
         left = contentLeft,
         top = contentTop,
@@ -126,7 +125,7 @@ private fun calculateCenteredDetectionRect(viewportRect: Rect, sizeFactor: Float
     val smallestDimension = min(viewportRect.width, viewportRect.height)
     val squareSize = smallestDimension * sizeFactor
     val halfSize = squareSize / 2f
-    
+
     return Rect(
         left = viewportCenter.x - halfSize,
         top = viewportCenter.y - halfSize,
@@ -147,10 +146,10 @@ private fun calculateCellSignificanceScore(
     // Calculate coverage in the detection region
     val detectionIntersection = cellBounds.intersect(detectionRect)
     if (detectionIntersection.isEmpty) return 0f
-    
-    val detectionCoverage = (detectionIntersection.width * detectionIntersection.height) / 
-                           (detectionRect.width * detectionRect.height)
-    
+
+    val detectionCoverage = (detectionIntersection.width * detectionIntersection.height) /
+        (detectionRect.width * detectionRect.height)
+
     if (config.useCenteredDetection) {
         // For centered detection, also consider how well-centered the cell is
         val cellCenter = cellBounds.center
@@ -158,14 +157,14 @@ private fun calculateCellSignificanceScore(
         val maxDistance = min(viewportRect.width, viewportRect.height) / 2f
         val distance = kotlin.math.sqrt(
             (cellCenter.x - viewportCenter.x).let { it * it } +
-            (cellCenter.y - viewportCenter.y).let { it * it }
+                (cellCenter.y - viewportCenter.y).let { it * it }
         )
         val centeringScore = 1f - (distance / maxDistance).coerceIn(0f, 1f)
-        
+
         // Combine coverage (70%) and centering (30%) scores
         // Add additional constraint: require at least 20% coverage to be considered significant
         if (detectionCoverage < 0.2f) return 0f
-        
+
         return (detectionCoverage * 0.7f) + (centeringScore * 0.3f)
     } else {
         return detectionCoverage

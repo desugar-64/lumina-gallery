@@ -4,12 +4,12 @@ import android.net.Uri
 import dev.serhiiyaremych.lumina.domain.model.AtlasRegion
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Orchestrates four AtlasBucket instances that mirror the UI interaction contexts.
@@ -62,11 +62,13 @@ class AtlasBucketManager @Inject constructor() {
     }
 
     suspend fun clearFocus() {
-        focusBucket.clear(); emitSnapshot()
+        focusBucket.clear()
+        emitSnapshot()
     }
 
     suspend fun clearHighlight() {
-        highlightBucket.clear(); emitSnapshot()
+        highlightBucket.clear()
+        emitSnapshot()
     }
 
     suspend fun clearTransient() {
@@ -87,38 +89,22 @@ class AtlasBucketManager @Inject constructor() {
         return baseBucket.getRegionForPhoto(uri)
     }
 
-    suspend fun isBaseBucketInitialized(): Boolean {
-        return baseBucket.size() > 0
-    }
+    suspend fun isBaseBucketInitialized(): Boolean = baseBucket.size() > 0
 
     /** Get base bucket atlases (LEVEL_0 persistent cache) */
-    suspend fun getBaseBucketAtlases(): List<TextureAtlas> {
-        return baseBucket.snapshotAtlases()
-    }
+    suspend fun getBaseBucketAtlases(): List<TextureAtlas> = baseBucket.snapshotAtlases()
 
     /** Get atlases for specific LOD level from all buckets */
-    suspend fun getAtlasesByLOD(lodLevel: LODLevel): List<TextureAtlas> {
-        return snapshotAll().filter { it.lodLevel == lodLevel }
-    }
-
-    
+    suspend fun getAtlasesByLOD(lodLevel: LODLevel): List<TextureAtlas> = snapshotAll().filter { it.lodLevel == lodLevel }
 
     /** Get the highest LOD level available for any photos from a cell in focus bucket */
-    suspend fun getFocusLODForPhotos(uris: List<Uri>): LODLevel? {
-        return focusBucket.getHighestLODForPhotos(uris)
-    }
-
-    
+    suspend fun getFocusLODForPhotos(uris: List<Uri>): LODLevel? = focusBucket.getHighestLODForPhotos(uris)
 
     /** Get the highest LOD level available for a photo in highlight bucket */
-    suspend fun getHighlightLODForPhoto(uri: Uri): LODLevel? {
-        return highlightBucket.getHighestLODForPhoto(uri)
-    }
+    suspend fun getHighlightLODForPhoto(uri: Uri): LODLevel? = highlightBucket.getHighestLODForPhoto(uri)
 
     /** Check if highlight bucket has photo at or above required LOD */
-    suspend fun hasHighlightPhotoAtLOD(uri: Uri, minLODLevel: LODLevel): Boolean {
-        return highlightBucket.hasPhotoAtLOD(uri, minLODLevel)
-    }
+    suspend fun hasHighlightPhotoAtLOD(uri: Uri, minLODLevel: LODLevel): Boolean = highlightBucket.hasPhotoAtLOD(uri, minLODLevel)
 
     suspend fun snapshotAll(): List<TextureAtlas> = snapshotLock.withLock {
         baseBucket.snapshotAtlases() +
@@ -168,4 +154,3 @@ class AtlasBucketManager @Inject constructor() {
         }
     }
 }
-

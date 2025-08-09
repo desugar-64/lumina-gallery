@@ -6,12 +6,12 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import dev.serhiiyaremych.lumina.domain.model.*
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.domain.model.HexGrid
 import dev.serhiiyaremych.lumina.domain.model.HexGridLayout
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.model.MediaWithPosition
-import dev.serhiiyaremych.lumina.domain.model.*
 import dev.serhiiyaremych.lumina.domain.usecase.shape.*
 import java.time.LocalDate
 import javax.inject.Inject
@@ -59,7 +59,8 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         canvasSize: Size,
         groupingPeriod: GroupingPeriod = GroupingPeriod.DAILY,
         thumbnailSizeFactor: Float = 0.45f,
-        cellSpacingDp: Dp = 8.dp // Cell spacing between hex cells
+        // Cell spacing between hex cells
+        cellSpacingDp: Dp = 8.dp
     ): HexGridLayout {
         // Step 1: Fetch all media items
         val allMedia = getMediaUseCase()
@@ -95,9 +96,7 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         hexGrid: HexGrid,
         groupedMedia: Map<LocalDate, List<Media>>,
         thumbnailSizeFactor: Float = 0.4f
-    ): HexGridLayout {
-        return generateLayoutFromGroupedData(hexGrid, groupedMedia, thumbnailSizeFactor)
-    }
+    ): HexGridLayout = generateLayoutFromGroupedData(hexGrid, groupedMedia, thumbnailSizeFactor)
 
     /**
      * Core layout generation from pre-grouped data.
@@ -191,7 +190,9 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         // Calculate aspect ratio and size
         val aspectRatio = if (media.height != 0) {
             media.width.toFloat() / media.height.toFloat()
-        } else 1f
+        } else {
+            1f
+        }
 
         val (width, height) = if (aspectRatio >= 1f) {
             thumbnailMaxSize to thumbnailMaxSize / aspectRatio
@@ -309,7 +310,9 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
             // Calculate size maintaining aspect ratio
             val aspectRatio = if (media.height != 0) {
                 media.width.toFloat() / media.height.toFloat()
-            } else 1f
+            } else {
+                1f
+            }
 
             val (width, height) = if (aspectRatio >= 1f) {
                 thumbnailMaxSize to thumbnailMaxSize / aspectRatio
@@ -334,7 +337,9 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
                 allMediaSizes = mediaList.mapIndexed { index, media ->
                     val aspectRatio = if (media.height != 0) {
                         media.width.toFloat() / media.height.toFloat()
-                    } else 1f
+                    } else {
+                        1f
+                    }
 
                     val (w, h) = if (aspectRatio >= 1f) {
                         thumbnailMaxSize to thumbnailMaxSize / aspectRatio
@@ -479,11 +484,15 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         // Calculate minimum adjustment needed
         val adjustmentX = if (overlap.width > 0) {
             directionX * (overlap.width / 2 + 5f) // 5px padding
-        } else 0f
+        } else {
+            0f
+        }
 
         val adjustmentY = if (overlap.height > 0) {
             directionY * (overlap.height / 2 + 5f) // 5px padding
-        } else 0f
+        } else {
+            0f
+        }
 
         return Offset(adjustmentX, adjustmentY)
     }
@@ -521,7 +530,7 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         corners.forEach { corner ->
             val distance = sqrt(
                 (corner.x - hexCenter.x) * (corner.x - hexCenter.x) +
-                (corner.y - hexCenter.y) * (corner.y - hexCenter.y)
+                    (corner.y - hexCenter.y) * (corner.y - hexCenter.y)
             )
 
             if (distance > hexRadius) {
@@ -562,9 +571,9 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         val baseRotationRange = 20f // Base ±20° rotation
 
         val rotationVariation = when {
-            aspectRatio < 0.8f -> 0.75f + random.nextFloat() * 0.5f  // Portrait: ±15° to ±25°
-            aspectRatio > 1.3f -> 1.0f + random.nextFloat() * 0.5f   // Landscape: ±20° to ±30°
-            else -> 0.8f + random.nextFloat() * 0.6f                 // Square: ±16° to ±28°
+            aspectRatio < 0.8f -> 0.75f + random.nextFloat() * 0.5f // Portrait: ±15° to ±25°
+            aspectRatio > 1.3f -> 1.0f + random.nextFloat() * 0.5f // Landscape: ±20° to ±30°
+            else -> 0.8f + random.nextFloat() * 0.6f // Square: ±16° to ±28°
         }
 
         val maxRotation = baseRotationRange * rotationVariation

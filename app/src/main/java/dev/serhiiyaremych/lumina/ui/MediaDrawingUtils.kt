@@ -28,7 +28,7 @@ fun DrawScope.drawPlaceholderRect(
     val color = placeholderColor
 
     val borderWidth = 2.dp.toPx()
-    val innerCornerRadius = 0.1.dp.toPx()  // Increased for smoother corners
+    val innerCornerRadius = 0.1.dp.toPx() // Increased for smoother corners
     val outerCornerRadius = innerCornerRadius + borderWidth
 
     drawRoundRect(
@@ -77,7 +77,7 @@ fun DrawScope.drawStyledPhoto(
     drawBorder: Boolean = true
 ) {
     val borderWidth = if (drawBorder) 2.dp.toPx() else 0f
-    val innerCornerRadius = if (drawBorder) 0.1.dp.toPx() else 0f  // Increased for smoother corners
+    val innerCornerRadius = if (drawBorder) 0.1.dp.toPx() else 0f // Increased for smoother corners
     val outerCornerRadius = innerCornerRadius + borderWidth
     val shadowOffset = if (drawBorder) 0.1.dp.toPx() else 0f
 
@@ -95,7 +95,7 @@ fun DrawScope.drawStyledPhoto(
             color = Color.White.copy(alpha = alpha),
             topLeft = bounds.topLeft,
             size = bounds.size,
-            cornerRadius = CornerRadius(outerCornerRadius),
+            cornerRadius = CornerRadius(outerCornerRadius)
         )
     }
 

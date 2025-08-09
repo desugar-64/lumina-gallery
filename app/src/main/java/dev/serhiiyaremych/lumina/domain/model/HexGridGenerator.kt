@@ -14,7 +14,8 @@ class HexGridGenerator {
         gridSize: Int,
         cellSizeDp: Dp,
         density: Density,
-        cellSpacingDp: Dp = 0.dp // Add spacing in dp units
+        // Add spacing in dp units
+        cellSpacingDp: Dp = 0.dp
     ): HexGrid {
         val cellSizePx = with(density) { cellSizeDp.toPx() }
         val cellSpacingPx = with(density) { cellSpacingDp.toPx() }
@@ -23,7 +24,7 @@ class HexGridGenerator {
         // Hex dimensions
         val hexWidth = radius * 2f
         val hexHeight = radius * sqrt(3f)
-        
+
         // Add spacing to create gaps between cells while keeping cell size unchanged
         val horizontalSpacing = (hexWidth * 3f / 4f) + cellSpacingPx
         val verticalSpacing = hexHeight + cellSpacingPx

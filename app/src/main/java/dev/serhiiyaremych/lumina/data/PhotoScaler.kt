@@ -3,10 +3,10 @@ package dev.serhiiyaremych.lumina.data
 import android.graphics.Bitmap
 import androidx.compose.ui.unit.IntSize
 import androidx.tracing.trace
-import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_SCALER_SCALE
-import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_SCALER_CREATE_SCALED_BITMAP
-import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_SCALER_CREATE_CROPPED_BITMAP
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_SCALER_CALCULATE_DIMENSIONS
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_SCALER_CREATE_CROPPED_BITMAP
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_SCALER_CREATE_SCALED_BITMAP
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_SCALER_SCALE
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -53,31 +53,29 @@ class PhotoScaler @Inject constructor(
         }
     }
 
-    private fun scaleWithAspectRatio(source: Bitmap, targetSize: IntSize): Bitmap {
-        return trace(PHOTO_SCALER_CREATE_SCALED_BITMAP) {
-            // Try to get bitmap from pool first
-            val pooledBitmap = bitmapPool.acquire(
-                targetSize.width,
-                targetSize.height,
-                source.config ?: Bitmap.Config.ARGB_8888
-            )
-            
-            // Use Canvas to draw scaled bitmap into pooled bitmap
-            val canvas = android.graphics.Canvas(pooledBitmap)
-            val paint = android.graphics.Paint().apply {
-                isAntiAlias = true
-                isFilterBitmap = true // Enable bilinear filtering
-            }
-            
-            canvas.drawBitmap(
-                source,
-                null,
-                android.graphics.RectF(0f, 0f, targetSize.width.toFloat(), targetSize.height.toFloat()),
-                paint
-            )
-            
-            pooledBitmap
+    private fun scaleWithAspectRatio(source: Bitmap, targetSize: IntSize): Bitmap = trace(PHOTO_SCALER_CREATE_SCALED_BITMAP) {
+        // Try to get bitmap from pool first
+        val pooledBitmap = bitmapPool.acquire(
+            targetSize.width,
+            targetSize.height,
+            source.config ?: Bitmap.Config.ARGB_8888
+        )
+
+        // Use Canvas to draw scaled bitmap into pooled bitmap
+        val canvas = android.graphics.Canvas(pooledBitmap)
+        val paint = android.graphics.Paint().apply {
+            isAntiAlias = true
+            isFilterBitmap = true // Enable bilinear filtering
         }
+
+        canvas.drawBitmap(
+            source,
+            null,
+            android.graphics.RectF(0f, 0f, targetSize.width.toFloat(), targetSize.height.toFloat()),
+            paint
+        )
+
+        pooledBitmap
     }
 
     /**
@@ -109,20 +107,20 @@ class PhotoScaler @Inject constructor(
                 intermediateSize.height,
                 source.config ?: Bitmap.Config.ARGB_8888
             )
-            
+
             val canvas = android.graphics.Canvas(pooledBitmap)
             val paint = android.graphics.Paint().apply {
                 isAntiAlias = true
                 isFilterBitmap = true // Enable bilinear filtering
             }
-            
+
             canvas.drawBitmap(
                 source,
                 null,
                 android.graphics.RectF(0f, 0f, intermediateSize.width.toFloat(), intermediateSize.height.toFloat()),
                 paint
             )
-            
+
             pooledBitmap
         }
 
@@ -136,21 +134,25 @@ class PhotoScaler @Inject constructor(
                 targetSize.height,
                 scaledBitmap.config ?: Bitmap.Config.ARGB_8888
             )
-            
+
             val canvas = android.graphics.Canvas(pooledBitmap)
             val paint = android.graphics.Paint().apply {
                 isAntiAlias = true
                 isFilterBitmap = true
             }
-            
+
             canvas.drawBitmap(
                 scaledBitmap,
-                android.graphics.Rect(cropX, cropY, 
-                    cropX + targetSize.width, cropY + targetSize.height),
+                android.graphics.Rect(
+                    cropX,
+                    cropY,
+                    cropX + targetSize.width,
+                    cropY + targetSize.height
+                ),
                 android.graphics.Rect(0, 0, targetSize.width, targetSize.height),
                 paint
             )
-            
+
             pooledBitmap
         }
 
@@ -167,42 +169,35 @@ class PhotoScaler @Inject constructor(
         originalSize: IntSize,
         targetSize: IntSize,
         strategy: ScaleStrategy
-    ): IntSize {
-        return when (strategy) {
-            ScaleStrategy.FIT_CENTER -> {
-                // Scale to fit within target while preserving aspect ratio
-                val aspectRatio = originalSize.width.toFloat() / originalSize.height
-                val targetAspectRatio = targetSize.width.toFloat() / targetSize.height
+    ): IntSize = when (strategy) {
+        ScaleStrategy.FIT_CENTER -> {
+            // Scale to fit within target while preserving aspect ratio
+            val aspectRatio = originalSize.width.toFloat() / originalSize.height
+            val targetAspectRatio = targetSize.width.toFloat() / targetSize.height
 
-                if (aspectRatio > targetAspectRatio) {
-                    // Source is wider - scale to target width
-                    IntSize(
-                        width = targetSize.width,
-                        height = (targetSize.width / aspectRatio).toInt()
-                    )
-                } else {
-                    // Source is taller - scale to target height
-                    IntSize(
-                        width = (targetSize.height * aspectRatio).toInt(),
-                        height = targetSize.height
-                    )
-                }
+            if (aspectRatio > targetAspectRatio) {
+                // Source is wider - scale to target width
+                IntSize(
+                    width = targetSize.width,
+                    height = (targetSize.width / aspectRatio).toInt()
+                )
+            } else {
+                // Source is taller - scale to target height
+                IntSize(
+                    width = (targetSize.height * aspectRatio).toInt(),
+                    height = targetSize.height
+                )
             }
-            ScaleStrategy.CENTER_CROP -> {
-                // Will be handled by scaleAndCrop method
-                targetSize
-            }
+        }
+        ScaleStrategy.CENTER_CROP -> {
+            // Will be handled by scaleAndCrop method
+            targetSize
         }
     }
 
     /**
      * Downscales a bitmap by a specific factor for memory optimization
      */
-    
-
-    
-    
-    
 }
 
 /**

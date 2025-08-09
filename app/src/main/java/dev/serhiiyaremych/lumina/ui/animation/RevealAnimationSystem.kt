@@ -32,7 +32,7 @@ interface RevealAnimationStrategy {
      * Determines if a photo needs reveal animation based on visibility.
      */
     fun shouldAnimate(visibilityRatio: Float): Boolean
-    
+
     /**
      * Calculates animation state for the clicked photo.
      */
@@ -41,7 +41,7 @@ interface RevealAnimationStrategy {
         visibilityRatio: Float,
         animationSpec: AnimationSpec<Float> = tween(AnimationConstants.ANIMATION_DURATION_MS)
     ): RevealAnimationState
-    
+
     /**
      * Calculates animation state for overlapping photos (if needed).
      */
@@ -50,7 +50,7 @@ interface RevealAnimationStrategy {
         clickedItem: AnimatableMediaItem,
         animationSpec: AnimationSpec<Float> = tween(AnimationConstants.ANIMATION_DURATION_MS)
     ): Map<AnimatableMediaItem, RevealAnimationState>
-    
+
     /**
      * Cleanup animation - returns items to original state.
      */
@@ -85,8 +85,11 @@ class AnimatableMediaItem(
     val currentZIndex: Float get() = zIndexAnimatable.value
     val currentAlpha: Float get() = alphaAnimatable.value
     val isAnimating: Boolean get() = listOf(
-        rotationAnimatable, slideOffsetAnimatable, breathingScaleAnimatable, 
-        zIndexAnimatable, alphaAnimatable
+        rotationAnimatable,
+        slideOffsetAnimatable,
+        breathingScaleAnimatable,
+        zIndexAnimatable,
+        alphaAnimatable
     ).any { it.isRunning }
     val originalRotation: Float = mediaWithPosition.rotationAngle
 
@@ -106,7 +109,7 @@ class AnimatableMediaItem(
         val targetRotation = if (isSelected) 0f else originalRotation
         rotationAnimatable.animateTo(targetRotation, animationSpec)
     }
-    
+
     // Reveal animation functions
     suspend fun animateToRevealState(
         state: RevealAnimationState,
@@ -119,7 +122,7 @@ class AnimatableMediaItem(
             launch { alphaAnimatable.animateTo(state.alpha, animationSpec) }
         }
     }
-    
+
     suspend fun resetRevealState(
         animationSpec: AnimationSpec<Float> = tween(AnimationConstants.FAST_ANIMATION_DURATION_MS)
     ) {
@@ -140,10 +143,8 @@ class AnimatableMediaItem(
 class AnimatableMediaManager {
     private val animatableItems = mutableMapOf<dev.serhiiyaremych.lumina.domain.model.Media, AnimatableMediaItem>()
 
-    fun getOrCreateAnimatable(mediaWithPosition: dev.serhiiyaremych.lumina.domain.model.MediaWithPosition): AnimatableMediaItem {
-        return animatableItems.getOrPut(mediaWithPosition.media) {
-            AnimatableMediaItem(mediaWithPosition)
-        }
+    fun getOrCreateAnimatable(mediaWithPosition: dev.serhiiyaremych.lumina.domain.model.MediaWithPosition): AnimatableMediaItem = animatableItems.getOrPut(mediaWithPosition.media) {
+        AnimatableMediaItem(mediaWithPosition)
     }
 
     fun getAnimatable(media: dev.serhiiyaremych.lumina.domain.model.Media): AnimatableMediaItem? = animatableItems[media]
@@ -219,12 +220,12 @@ fun calculateVisibilityRatio(
 ): Float {
     val targetBounds = targetItem.mediaWithPosition.absoluteBounds
     var obscuredArea = 0f
-    
+
     // Check each other item to see if it obscures the target
     allItems.forEach { otherItem ->
         if (otherItem != targetItem) {
             val otherBounds = otherItem.mediaWithPosition.absoluteBounds
-            
+
             // Calculate intersection area
             val intersection = targetBounds.intersect(otherBounds)
             if (!intersection.isEmpty) {
@@ -232,10 +233,10 @@ fun calculateVisibilityRatio(
             }
         }
     }
-    
+
     val totalArea = targetBounds.width * targetBounds.height
     val visibleArea = totalArea - obscuredArea
-    
+
     // Return visibility ratio, clamped between 0 and 1
     return (visibleArea / totalArea).coerceIn(0f, 1f)
 }
@@ -251,13 +252,11 @@ private fun Offset.normalized(): Offset {
 /**
  * Extension function to convert AnimationSpec<Float> to AnimationSpec<Offset>
  */
-private fun AnimationSpec<Float>.convertToOffset(): AnimationSpec<Offset> {
-    return when (this) {
-        is androidx.compose.animation.core.TweenSpec -> tween(
-            durationMillis = this.durationMillis,
-            delayMillis = this.delay,
-            easing = this.easing
-        )
-        else -> tween(AnimationConstants.ANIMATION_DURATION_MS) // Default fallback
-    }
+private fun AnimationSpec<Float>.convertToOffset(): AnimationSpec<Offset> = when (this) {
+    is androidx.compose.animation.core.TweenSpec -> tween(
+        durationMillis = this.durationMillis,
+        delayMillis = this.delay,
+        easing = this.easing
+    )
+    else -> tween(AnimationConstants.ANIMATION_DURATION_MS) // Default fallback
 }

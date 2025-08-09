@@ -1,19 +1,19 @@
 package dev.serhiiyaremych.lumina.ui
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asComposeColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.drawscope.clipPath
-import kotlin.math.max
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.layer.CompositingStrategy
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
@@ -21,13 +21,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.layer.CompositingStrategy
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
 import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaItem
 import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaManager
+import kotlin.math.max
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 /**
  * Configuration for media layer rendering (legacy).
@@ -235,9 +235,7 @@ class MediaLayerManager(
      * @param actualSelectedMedia The current selection state from the UI
      * @return The media item that should be treated as selected for rendering purposes
      */
-    fun getEffectiveSelectedMedia(actualSelectedMedia: Media?): Media? {
-        return actualSelectedMedia ?: delayedSelectedMedia
-    }
+    fun getEffectiveSelectedMedia(actualSelectedMedia: Media?): Media? = actualSelectedMedia ?: delayedSelectedMedia
 
     // Data class to hold gradient circle information for sharing between layers
     private data class GradientCircle(val center: Offset, val radius: Float)
@@ -544,14 +542,14 @@ class MediaLayerManager(
         // The animation creates a growing/shrinking circle effect as alpha increases/decreases uniformly
         val gradient = Brush.radialGradient(
             colors = listOf(
-                Color.Black.copy(alpha = 0f),                                    // Center: always transparent (spotlight effect)
-                Color.Black.copy(alpha = 0.9f * currentGradientAlpha),           // Animated transition
-                Color.Black.copy(alpha = 1f * currentGradientAlpha),             // Edges: animated opacity
+                Color.Black.copy(alpha = 0f), // Center: always transparent (spotlight effect)
+                Color.Black.copy(alpha = 0.9f * currentGradientAlpha), // Animated transition
+                Color.Black.copy(alpha = 1f * currentGradientAlpha), // Edges: animated opacity
                 Color.Black.copy(alpha = 1f * currentGradientAlpha),
-                Color.Black.copy(alpha = 1f * currentGradientAlpha),
+                Color.Black.copy(alpha = 1f * currentGradientAlpha)
             ).reversed(),
             center = center,
-            radius = gradientRadius,
+            radius = gradientRadius
         )
 
         // Draw the circular gradient with DstOut blend mode for hole effect

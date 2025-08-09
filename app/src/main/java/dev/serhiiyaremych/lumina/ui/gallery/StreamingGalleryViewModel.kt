@@ -19,6 +19,7 @@ import dev.serhiiyaremych.lumina.domain.usecase.StreamingAtlasManager
 import dev.serhiiyaremych.lumina.ui.SelectionMode
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +27,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Streaming Gallery ViewModel - UDF Architecture Implementation
@@ -41,7 +41,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * - Persistent cache management for instant fallback rendering
  * - Debounced user interactions to prevent atlas generation spam
  * - Memory-efficient atlas state management
- * 
+ *
  * Reference: https://developer.android.com/develop/ui/compose/architecture
  */
 @HiltViewModel
@@ -65,7 +65,7 @@ class StreamingGalleryViewModel @Inject constructor(
     // Debouncing for rapid user interactions
     private var debounceJob: Job? = null
     private val debounceDelayMs = 100L
-    
+
     // Generation timeout tracking
     private var generationTimeoutJob: Job? = null
     private val generationTimeoutMs = 3000L // 3 seconds timeout
@@ -104,7 +104,7 @@ class StreamingGalleryViewModel @Inject constructor(
 
                     when (result) {
                         is AtlasStreamResult.Loading -> {
-                            updateUiState { 
+                            updateUiState {
                                 it.copy(
                                     isAtlasGenerating = true,
                                     atlasGenerationStatus = result.message
@@ -115,7 +115,7 @@ class StreamingGalleryViewModel @Inject constructor(
                         }
 
                         is AtlasStreamResult.Progress -> {
-                            updateUiState { 
+                            updateUiState {
                                 it.copy(
                                     isAtlasGenerating = true,
                                     atlasGenerationStatus = result.message
@@ -145,23 +145,23 @@ class StreamingGalleryViewModel @Inject constructor(
                             }
 
                             android.util.Log.d("StreamingGalleryVM", "LOD ${result.lodLevel} ready: ${result.atlases.size} atlases - ${result.reason}")
-                            
+
                             // Stop generating indicator after successful LOD completion
                             stopGeneratingIndicator()
                         }
 
                         is AtlasStreamResult.LODFailed -> {
                             android.util.Log.w("StreamingGalleryVM", "LOD ${result.lodLevel} failed: ${result.error}")
-                            updateUiState { 
+                            updateUiState {
                                 it.copy(atlasGenerationStatus = "LOD ${result.lodLevel} failed: ${result.error}")
                             }
-                            
+
                             // Stop generating indicator on failure
                             stopGeneratingIndicator()
                         }
 
                         is AtlasStreamResult.AllComplete -> {
-                            updateUiState { 
+                            updateUiState {
                                 it.copy(
                                     isAtlasGenerating = false,
                                     atlasGenerationStatus = "All LODs complete (${result.totalGenerationTimeMs}ms)"
@@ -198,18 +198,18 @@ class StreamingGalleryViewModel @Inject constructor(
         viewModelScope.launch {
             streamingAtlasManager.getAtlasBucketManager().atlasFlow.collectLatest { bucketAtlases ->
                 android.util.Log.d("StreamingGalleryVM", "Bucket atlas flow update: ${bucketAtlases.size} total atlases")
-                
+
                 // Group bucket atlases by LOD level for UI state
                 val atlasesByLOD = bucketAtlases.groupBy { it.lodLevel }
                 val level0Atlases = atlasesByLOD[LODLevel.LEVEL_0]
-                
+
                 updateUiState { currentState ->
                     currentState.copy(
                         streamingAtlases = atlasesByLOD,
                         persistentCache = level0Atlases
                     )
                 }
-                
+
                 android.util.Log.d("StreamingGalleryVM", "Updated UI state with bucket atlases: ${atlasesByLOD.map { "${it.key.name}(${it.value.size})" }}")
             }
         }
@@ -225,7 +225,7 @@ class StreamingGalleryViewModel @Inject constructor(
     private fun loadMedia() {
         viewModelScope.launch {
             updateUiState { it.copy(isLoading = true) }
-            
+
             try {
                 val media = getMediaUseCase()
                 updateUiState { currentState ->
@@ -242,7 +242,7 @@ class StreamingGalleryViewModel @Inject constructor(
                 initializePersistentCache()
             } catch (e: Exception) {
                 android.util.Log.e("StreamingGalleryVM", "Error loading media", e)
-                updateUiState { 
+                updateUiState {
                     it.copy(
                         isLoading = false,
                         error = "Failed to load media: ${e.message}"
@@ -288,7 +288,7 @@ class StreamingGalleryViewModel @Inject constructor(
                 updateUiState { it.copy(hexGridLayout = layout) }
             } catch (e: Exception) {
                 android.util.Log.e("StreamingGalleryVM", "Error generating hex grid layout", e)
-                updateUiState { 
+                updateUiState {
                     it.copy(error = "Failed to generate layout: ${e.message}")
                 }
             }
@@ -311,7 +311,7 @@ class StreamingGalleryViewModel @Inject constructor(
         // Check if selection changed (especially deselection)
         val selectionChanged = lastSelectedMedia != selectedMedia
         val wasDeselected = lastSelectedMedia != null && selectedMedia == null
-        
+
         if (selectionChanged) {
             android.util.Log.d("StreamingGalleryVM", "Selection changed: ${lastSelectedMedia?.displayName} -> ${selectedMedia?.displayName}")
             lastSelectedMedia = selectedMedia
@@ -345,7 +345,7 @@ class StreamingGalleryViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 android.util.Log.e("StreamingGalleryVM", "Error in streaming atlas update", e)
-                updateUiState { 
+                updateUiState {
                     it.copy(atlasGenerationStatus = "Error: ${e.message}")
                 }
             }
@@ -359,7 +359,7 @@ class StreamingGalleryViewModel @Inject constructor(
      */
     fun updateSelectedMedia(media: Media?) {
         updateUiState { it.copy(selectedMedia = media) }
-        
+
         // Clear highlight bucket when media is deselected
         if (media == null) {
             viewModelScope.launch {
@@ -394,9 +394,9 @@ class StreamingGalleryViewModel @Inject constructor(
      */
     fun updatePermissionGranted(granted: Boolean) {
         val previousPermissionStatus = _uiState.value.permissionGranted
-        
+
         updateUiState { it.copy(permissionGranted = granted) }
-        
+
         // If permissions were just granted, reload media to ensure we have access to all photos
         if (!previousPermissionStatus && granted) {
             loadMedia()
@@ -411,9 +411,7 @@ class StreamingGalleryViewModel @Inject constructor(
     /**
      * Get current atlases for specific LOD level
      */
-    suspend fun getCurrentAtlases(lodLevel: LODLevel): List<TextureAtlas> {
-        return streamingAtlasManager.getCurrentAtlases(lodLevel)
-    }
+    suspend fun getCurrentAtlases(lodLevel: LODLevel): List<TextureAtlas> = streamingAtlasManager.getCurrentAtlases(lodLevel)
 
     /**
      * Get best available atlas region for photo
@@ -431,7 +429,7 @@ class StreamingGalleryViewModel @Inject constructor(
     fun refreshPersistentCache() {
         initializePersistentCache()
     }
-    
+
     /**
      * Start generation timeout to automatically stop generating indicator
      */
@@ -440,7 +438,7 @@ class StreamingGalleryViewModel @Inject constructor(
         generationTimeoutJob = viewModelScope.launch {
             delay(generationTimeoutMs)
             android.util.Log.d("StreamingGalleryVM", "Generation timeout reached - stopping generating indicator")
-            updateUiState { 
+            updateUiState {
                 it.copy(
                     isAtlasGenerating = false,
                     atlasGenerationStatus = "Generation completed"
@@ -448,7 +446,7 @@ class StreamingGalleryViewModel @Inject constructor(
             }
         }
     }
-    
+
     /**
      * Stop generating indicator with delay to avoid flickering
      */

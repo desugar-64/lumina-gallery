@@ -547,13 +547,16 @@ Think hard to understand the true nature of a problem, not just to find a soluti
 
 ### Development Workflow
 
-**IMPORTANT**: After implementing any feature or making code changes, always:
-1. **Format code** to ensure consistent style: `./gradlew ktlintFormat`
-2. **Check code style** for any remaining issues: `./gradlew ktlintCheck`
-3. **Build the project** to verify it compiles: `./gradlew -q assembleDebug`
-4. **Ask the user** if they want to launch the application to test the changes: `./gradlew -q installDebug && adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity`
+**MANDATORY**: After implementing any feature or making code changes, always:
+1. **Build the project first** to verify it compiles: `./gradlew -q assembleDebug`
+2. **If build fails**: **STOP and ASK THE USER** if they want you to fix the build errors before proceeding
+3. **If build succeeds**: Format code to ensure consistent style: `./gradlew ktlintFormat`
+4. **Check code style** for any remaining issues: `./gradlew ktlintCheck`
+5. **Check for lint issues** using: `./gradlew -q lint`
+6. **If ktlint or lint issues are found**: **ASK THE USER** if they want you to fix the issues before proceeding
+7. **Ask the user** if they want to launch the application to test the changes: `./gradlew -q installDebug && adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity`
 
-This ensures code follows project standards, compiles correctly, and gives the user the option to immediately test the implementation.
+**CRITICAL**: Never proceed if build fails. Build success is mandatory before any formatting or style checks. This ensures syntax correctness first, then code standards, and gives the user control over issue resolution.
 
 ### Code Formatting Standards
 
@@ -592,8 +595,15 @@ ktlint -F "**/*.kt"
 - **Trailing commas** for cleaner git diffs
 - **Wildcard imports allowed** (disabled `no-wildcard-imports` for cleaner code organization)
 - **Property naming relaxed** (disabled for Compose patterns like `object Colors`)
-- **Import ordering and spacing** with consistent formatting
+- **Import ordering disabled** (flexible import organization)
 - **Android Studio code style** compliance with experimental rules enabled
+
+**Common ktlint Issue - Parameter Comments**:
+- **NEVER place comments on the same line after function parameters**
+- ❌ `val param: String = "value" // This is wrong`
+- ✅ `// This is correct`<br>&nbsp;&nbsp;&nbsp;&nbsp;`val param: String = "value"`
+- This is the **most frequent ktlint violation** in the project
+- Always move inline parameter comments to the line above
 
 ## Benchmarking Workflow
 

@@ -39,7 +39,7 @@ fun GridCanvas(
     val density = LocalDensity.current
     val gridRenderer = remember { GridRenderer() }
 
-    val majorGridColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f).compositeOver( MaterialTheme.colorScheme.background)
+    val majorGridColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f).compositeOver(MaterialTheme.colorScheme.background)
     val minorGridColor = MaterialTheme.colorScheme.outline // Very subtle minor grid dots
 
     Box(

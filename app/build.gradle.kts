@@ -61,7 +61,6 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material3.adaptive)
 
-
     // Hilt dependencies
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)

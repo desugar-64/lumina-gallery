@@ -10,15 +10,15 @@ import dev.serhiiyaremych.lumina.domain.model.Media
 
 /**
  * Unified viewport state manager that consolidates all viewport-aware decisions.
- * 
+ *
  * Single source of truth for:
  * - Viewport bounds calculation
- * - Selection mode decisions (CELL_MODE vs PHOTO_MODE) 
+ * - Selection mode decisions (CELL_MODE vs PHOTO_MODE)
  * - Panel visibility logic
  * - Media deselection when out of viewport
  * - Cell significance detection
- * 
- * This eliminates duplicate viewport calculations across CellFocusManager, 
+ *
+ * This eliminates duplicate viewport calculations across CellFocusManager,
  * App.kt selection logic, panel positioning, and other components.
  */
 @Stable
@@ -30,7 +30,7 @@ data class ViewportState(
     val focusedCell: HexCellWithMedia?,
     val selectedMedia: Media?,
     val selectionMode: SelectionMode,
-    
+
     // Derived state
     val cellInViewport: Boolean,
     val mediaInViewport: Boolean,
@@ -38,7 +38,7 @@ data class ViewportState(
     val suggestedSelectionMode: SelectionMode,
     val shouldShowPanel: Boolean,
     val shouldDeselectMedia: Boolean,
-    
+
     // Offscreen indicator state
     val offscreenIndicators: List<OffscreenIndicator>
 )
@@ -48,10 +48,11 @@ data class ViewportState(
  */
 data class ViewportConfig(
     val cellSignificanceThreshold: Float = 0.25f, // 25% viewport coverage for cell focus
-    val modeTransitionThreshold: Float = 1.2f,    // 120% viewport size for photo mode
-    val minViewportCoverage: Float = 0.1f,        // 10% minimum coverage to stay selected
-    val gestureDelayMs: Long = 200L,              // Debounce gesture updates
-    val panelVisibilityThreshold: Float = 0.15f   // 15% coverage to show panel
+    val modeTransitionThreshold: Float = 1.2f, // 120% viewport size for photo mode
+    val minViewportCoverage: Float = 0.1f, // 10% minimum coverage to stay selected
+    val gestureDelayMs: Long = 200L, // Debounce gesture updates
+    // 15% coverage to show panel
+    val panelVisibilityThreshold: Float = 0.15f
 )
 
 /**
@@ -61,7 +62,7 @@ class ViewportStateManager(
     private val config: ViewportConfig = ViewportConfig(),
     private val offscreenIndicatorManager: OffscreenIndicatorManager = OffscreenIndicatorManager()
 ) {
-    
+
     /**
      * Calculate the current viewport state based on transformation and selection parameters
      */
@@ -74,35 +75,38 @@ class ViewportStateManager(
         currentSelectionMode: SelectionMode,
         gridBounds: Rect? = null
     ): ViewportState {
-        
         // Calculate viewport rectangle in content coordinates
         val viewportRect = calculateViewportRect(canvasSize, zoom, offset)
-        
+
         // Calculate cell state if we have a focused cell
         val cellState = focusedCell?.let { cell ->
             calculateCellViewportState(cell, viewportRect, canvasSize, zoom, offset)
         }
-        
+
         // Calculate media state if we have selected media
         val mediaState = if (selectedMedia != null && focusedCell != null) {
             calculateMediaViewportState(selectedMedia, focusedCell, viewportRect)
-        } else null
-        
+        } else {
+            null
+        }
+
         // Determine suggested selection mode based on viewport conditions
         val suggestedMode = determineSuggestedSelectionMode(
-            cellState, currentSelectionMode, selectedMedia != null
+            cellState,
+            currentSelectionMode,
+            selectedMedia != null
         )
-        
+
         // Determine if media should be deselected due to viewport constraints
         val shouldDeselect = shouldDeselectMedia(cellState, mediaState, selectedMedia != null)
-        
+
         // Calculate offscreen indicators if grid bounds are provided
         val indicators = if (gridBounds != null) {
             offscreenIndicatorManager.calculateIndicators(viewportRect, canvasSize, gridBounds)
         } else {
             emptyList()
         }
-        
+
         return ViewportState(
             viewportRect = viewportRect,
             canvasSize = canvasSize,
@@ -111,7 +115,7 @@ class ViewportStateManager(
             focusedCell = focusedCell,
             selectedMedia = selectedMedia,
             selectionMode = currentSelectionMode,
-            
+
             // Derived state
             cellInViewport = cellState?.inViewport ?: false,
             mediaInViewport = mediaState?.inViewport ?: false,
@@ -119,12 +123,12 @@ class ViewportStateManager(
             suggestedSelectionMode = suggestedMode,
             shouldShowPanel = cellState?.shouldShowPanel ?: false,
             shouldDeselectMedia = shouldDeselect,
-            
+
             // Offscreen indicator state
             offscreenIndicators = indicators
         )
     }
-    
+
     /**
      * Calculate viewport rectangle in content coordinates
      */
@@ -138,7 +142,7 @@ class ViewportStateManager(
         val contentTop = (0f - offset.y) / zoom
         val contentRight = (canvasSize.width - offset.x) / zoom
         val contentBottom = (canvasSize.height - offset.y) / zoom
-        
+
         return Rect(
             left = contentLeft,
             top = contentTop,
@@ -146,7 +150,7 @@ class ViewportStateManager(
             bottom = contentBottom
         )
     }
-    
+
     /**
      * Cell viewport analysis result
      */
@@ -157,7 +161,7 @@ class ViewportStateManager(
         val shouldShowPanel: Boolean,
         val screenBounds: Rect
     )
-    
+
     /**
      * Calculate cell's relationship to viewport
      */
@@ -168,7 +172,6 @@ class ViewportStateManager(
         zoom: Float,
         offset: Offset
     ): CellViewportState {
-        
         // Calculate cell bounds in content coordinates
         val cellVertices = cell.hexCell.vertices
         val cellMinX = cellVertices.minOf { it.x }
@@ -176,14 +179,14 @@ class ViewportStateManager(
         val cellMinY = cellVertices.minOf { it.y }
         val cellMaxY = cellVertices.maxOf { it.y }
         val contentCellBounds = Rect(cellMinX, cellMinY, cellMaxX, cellMaxY)
-        
+
         // Transform to screen coordinates for size comparison
         val screenMinX = (cellMinX * zoom) + offset.x
         val screenMaxX = (cellMaxX * zoom) + offset.x
         val screenMinY = (cellMinY * zoom) + offset.y
         val screenMaxY = (cellMaxY * zoom) + offset.y
         val screenBounds = Rect(screenMinX, screenMinY, screenMaxX, screenMaxY)
-        
+
         // Calculate viewport coverage (what % of viewport does this cell occupy)
         val intersection = viewportRect.intersect(contentCellBounds)
         val coverage = if (intersection.isEmpty) {
@@ -191,13 +194,13 @@ class ViewportStateManager(
         } else {
             (intersection.width * intersection.height) / (viewportRect.width * viewportRect.height)
         }
-        
+
         // Check if cell is larger than viewport (for mode switching)
         val screenCellWidth = screenMaxX - screenMinX
         val screenCellHeight = screenMaxY - screenMinY
-        val isLargerThanViewport = screenCellWidth > (canvasSize.width * config.modeTransitionThreshold) || 
-                                  screenCellHeight > (canvasSize.height * config.modeTransitionThreshold)
-        
+        val isLargerThanViewport = screenCellWidth > (canvasSize.width * config.modeTransitionThreshold) ||
+            screenCellHeight > (canvasSize.height * config.modeTransitionThreshold)
+
         return CellViewportState(
             inViewport = coverage > config.minViewportCoverage,
             coverage = coverage,
@@ -206,7 +209,7 @@ class ViewportStateManager(
             screenBounds = screenBounds
         )
     }
-    
+
     /**
      * Media viewport analysis result
      */
@@ -214,7 +217,7 @@ class ViewportStateManager(
         val inViewport: Boolean,
         val coverage: Float
     )
-    
+
     /**
      * Calculate media's relationship to viewport (simplified - assumes it's within the cell)
      */
@@ -231,20 +234,20 @@ class ViewportStateManager(
         val cellMinY = cellVertices.minOf { it.y }
         val cellMaxY = cellVertices.maxOf { it.y }
         val contentCellBounds = Rect(cellMinX, cellMinY, cellMaxX, cellMaxY)
-        
+
         val intersection = viewportRect.intersect(contentCellBounds)
         val coverage = if (intersection.isEmpty) {
             0f
         } else {
             (intersection.width * intersection.height) / (viewportRect.width * viewportRect.height)
         }
-        
+
         return MediaViewportState(
             inViewport = coverage > config.minViewportCoverage,
             coverage = coverage
         )
     }
-    
+
     /**
      * Determine suggested selection mode based on viewport conditions
      */
@@ -257,20 +260,20 @@ class ViewportStateManager(
         if (cellState == null || !hasSelectedMedia) {
             return SelectionMode.CELL_MODE
         }
-        
+
         // Switch to PHOTO_MODE if cell is significantly larger than viewport
         if (cellState.largerThanViewport && currentMode == SelectionMode.CELL_MODE) {
             return SelectionMode.PHOTO_MODE
         }
-        
+
         // Switch back to CELL_MODE if cell is no longer larger than viewport
         if (!cellState.largerThanViewport && currentMode == SelectionMode.PHOTO_MODE) {
             return SelectionMode.CELL_MODE
         }
-        
+
         return currentMode
     }
-    
+
     /**
      * Determine if media should be deselected due to viewport constraints
      */
@@ -280,17 +283,17 @@ class ViewportStateManager(
         hasSelectedMedia: Boolean
     ): Boolean {
         if (!hasSelectedMedia) return false
-        
+
         // Deselect if cell is out of viewport
         if (cellState != null && !cellState.inViewport) {
             return true
         }
-        
+
         // Deselect if media is out of viewport (when we have specific media tracking)
         if (mediaState != null && !mediaState.inViewport) {
             return true
         }
-        
+
         return false
     }
 }

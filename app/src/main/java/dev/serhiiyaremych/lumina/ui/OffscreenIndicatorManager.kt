@@ -10,11 +10,12 @@ import kotlin.math.*
  * Configuration for offscreen indicator behavior
  */
 data class OffscreenIndicatorConfig(
-    val edgePadding: Float = 24f,          // Distance from viewport edge
-    val viewportPadding: Float = 50f,      // Inner padding from viewport bounds for marker positioning
+    val edgePadding: Float = 24f, // Distance from viewport edge
+    val viewportPadding: Float = 50f, // Inner padding from viewport bounds for marker positioning
     val minIndicatorDistance: Float = 48f, // Minimum distance between indicators
-    val fadeOutDistance: Float = 0.8f,     // Start fading when grid is X% outside viewport
-    val maxIndicators: Int = 4             // Maximum number of indicators to show
+    val fadeOutDistance: Float = 0.8f, // Start fading when grid is X% outside viewport
+    // Maximum number of indicators to show
+    val maxIndicators: Int = 4
 )
 
 /**
@@ -23,19 +24,26 @@ data class OffscreenIndicatorConfig(
 @Stable
 data class OffscreenIndicator(
     val id: String,
-    val position: Offset,           // Position in screen coordinates
-    val direction: Float,           // Angle in radians pointing toward content
-    val distance: Float,           // Normalized distance to content (0.0-1.0)
-    val contentBounds: Rect,       // The offscreen content bounds
-    val priority: Int = 1          // Priority for when multiple indicators compete
+    val position: Offset, // Position in screen coordinates
+    val direction: Float, // Angle in radians pointing toward content
+    val distance: Float, // Normalized distance to content (0.0-1.0)
+    val contentBounds: Rect, // The offscreen content bounds
+    // Priority for when multiple indicators compete
+    val priority: Int = 1
 )
 
 /**
  * Edge position enum for indicator placement
  */
 enum class ViewportEdge {
-    TOP, BOTTOM, LEFT, RIGHT,
-    TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT
+    TOP,
+    BOTTOM,
+    LEFT,
+    RIGHT,
+    TOP_LEFT,
+    TOP_RIGHT,
+    BOTTOM_LEFT,
+    BOTTOM_RIGHT
 }
 
 /**
@@ -58,7 +66,6 @@ class OffscreenIndicatorManager(
         canvasSize: Size,
         gridBounds: Rect
     ): List<OffscreenIndicator> {
-
         if (viewportRect.overlaps(gridBounds)) {
             return emptyList()
         }
@@ -122,7 +129,6 @@ class OffscreenIndicatorManager(
         val clampedY = point.y.coerceIn(rect.top, rect.bottom)
         return Offset(clampedX, clampedY)
     }
-
 
     /**
      * Calculate normalized distance between viewport and grid (0.0 = touching, 1.0 = far)

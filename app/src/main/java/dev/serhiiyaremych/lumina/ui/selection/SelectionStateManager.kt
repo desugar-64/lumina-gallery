@@ -3,11 +3,11 @@ package dev.serhiiyaremych.lumina.ui.selection
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.model.MediaWithPosition
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Manages photo selection state and handles state transitions.
@@ -15,13 +15,13 @@ import javax.inject.Singleton
  */
 @Singleton
 class SelectionStateManager @Inject constructor() {
-    
+
     private val _state = MutableStateFlow(PhotoSelectionState())
     val state: StateFlow<PhotoSelectionState> = _state.asStateFlow()
-    
+
     private val _config = MutableStateFlow(PhotoSelectionConfig())
     val config: StateFlow<PhotoSelectionConfig> = _config.asStateFlow()
-    
+
     /**
      * Handles photo selection events and updates state accordingly.
      */
@@ -37,7 +37,7 @@ class SelectionStateManager @Inject constructor() {
             is PhotoSelectionEvent.SelectionModeChanged -> handleSelectionModeChanged(event.mode)
         }
     }
-    
+
     /**
      * Selects a photo and updates related state.
      */
@@ -51,7 +51,7 @@ class SelectionStateManager @Inject constructor() {
             overlayVisible = true
         )
     }
-    
+
     /**
      * Clears photo selection.
      */
@@ -65,18 +65,18 @@ class SelectionStateManager @Inject constructor() {
             overlayVisible = false
         )
     }
-    
+
     /**
      * Navigates to the next photo in the current cell.
      */
     private fun handleNavigateNext() {
         val currentState = _state.value
         val cell = currentState.currentCell ?: return
-        
+
         if (currentState.canNavigateNext) {
             val nextIndex = currentState.cellNavigationIndex + 1
             val nextMediaWithPosition = cell.mediaItems[nextIndex]
-            
+
             _state.value = currentState.copy(
                 selectedMedia = nextMediaWithPosition.media,
                 selectedMediaWithPosition = nextMediaWithPosition,
@@ -84,18 +84,18 @@ class SelectionStateManager @Inject constructor() {
             )
         }
     }
-    
+
     /**
      * Navigates to the previous photo in the current cell.
      */
     private fun handleNavigatePrevious() {
         val currentState = _state.value
         val cell = currentState.currentCell ?: return
-        
+
         if (currentState.canNavigatePrevious) {
             val prevIndex = currentState.cellNavigationIndex - 1
             val prevMediaWithPosition = cell.mediaItems[prevIndex]
-            
+
             _state.value = currentState.copy(
                 selectedMedia = prevMediaWithPosition.media,
                 selectedMediaWithPosition = prevMediaWithPosition,
@@ -103,17 +103,17 @@ class SelectionStateManager @Inject constructor() {
             )
         }
     }
-    
+
     /**
      * Navigates to a specific photo index in the current cell.
      */
     private fun handleNavigateToIndex(index: Int) {
         val currentState = _state.value
         val cell = currentState.currentCell ?: return
-        
+
         if (index >= 0 && index < cell.mediaItems.size) {
             val mediaWithPosition = cell.mediaItems[index]
-            
+
             _state.value = currentState.copy(
                 selectedMedia = mediaWithPosition.media,
                 selectedMediaWithPosition = mediaWithPosition,
@@ -121,28 +121,28 @@ class SelectionStateManager @Inject constructor() {
             )
         }
     }
-    
+
     /**
      * Updates overlay visibility.
      */
     private fun handleOverlayVisibilityChanged(visible: Boolean) {
         _state.value = _state.value.copy(overlayVisible = visible)
     }
-    
+
     /**
      * Updates viewport occupation and handles auto mode logic.
      */
     private fun handleViewportOccupationChanged(occupation: Float) {
         val currentState = _state.value
         val currentConfig = _config.value
-        
+
         val newState = currentState.copy(viewportOccupation = occupation)
-        
+
         // Handle auto mode logic
         if (currentConfig.autoModeEnabled && currentState.selectionMode == SelectionMode.AUTO_VIEWPORT) {
             val shouldShow = currentConfig.shouldAutoShow(occupation)
             val shouldHide = currentConfig.shouldAutoHide(occupation)
-            
+
             when {
                 shouldShow && !currentState.overlayVisible -> {
                     _state.value = newState.copy(overlayVisible = true)
@@ -158,21 +158,21 @@ class SelectionStateManager @Inject constructor() {
             _state.value = newState
         }
     }
-    
+
     /**
      * Updates selection mode.
      */
     private fun handleSelectionModeChanged(mode: SelectionMode) {
         _state.value = _state.value.copy(selectionMode = mode)
     }
-    
+
     /**
      * Updates configuration.
      */
     fun updateConfig(config: PhotoSelectionConfig) {
         _config.value = config
     }
-    
+
     /**
      * Convenience method to select a photo by finding it in the grid.
      */
@@ -199,19 +199,17 @@ class SelectionStateManager @Inject constructor() {
             }
         }
     }
-    
+
     /**
      * Convenience method to check if a media item is currently selected.
      */
-    fun isSelected(media: Media): Boolean {
-        return _state.value.selectedMedia?.id == media.id
-    }
-    
+    fun isSelected(media: Media): Boolean = _state.value.selectedMedia?.id == media.id
+
     /**
      * Gets the current selection state.
      */
     fun getCurrentState(): PhotoSelectionState = _state.value
-    
+
     /**
      * Gets the current configuration.
      */

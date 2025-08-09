@@ -4,9 +4,9 @@ import android.content.ContentResolver
 import android.os.Bundle
 import android.provider.MediaStore
 import dev.serhiiyaremych.lumina.domain.model.Media
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
 class MediaStoreDataSource @Inject constructor(
     private val contentResolver: ContentResolver,
@@ -59,7 +59,6 @@ class MediaStoreDataSource @Inject constructor(
             val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.SIZE)
             val widthColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.WIDTH)
             val heightColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.HEIGHT)
-            val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)

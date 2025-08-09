@@ -4,14 +4,17 @@ import android.net.Uri
 import android.util.Log
 import androidx.tracing.trace
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
-import dev.serhiiyaremych.lumina.domain.model.AtlasRegion
 import dev.serhiiyaremych.lumina.domain.model.AtlasPriority
+import dev.serhiiyaremych.lumina.domain.model.AtlasRegion
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
 import dev.serhiiyaremych.lumina.domain.model.TypeSafeLODPriority
 import dev.serhiiyaremych.lumina.ui.SelectionMode
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.time.measureTimedValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -25,13 +28,10 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.runBlocking
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.time.measureTimedValue
 
 /**
  * Streaming Atlas Manager - Responsive Atlas System Implementation
@@ -74,7 +74,7 @@ class StreamingAtlasManager @Inject constructor(
             atlasMutex.withLock {
                 val currentLOD = LODLevel.forZoom(currentZoom)
                 val requiredLOD = getHigherLOD(currentLOD) // +1 LOD for focus
-                
+
                 if (focusedCell == null) {
                     if (currentFocusedCell != null) {
                         Log.d(TAG, "Clearing focused cell")
@@ -83,33 +83,33 @@ class StreamingAtlasManager @Inject constructor(
                     }
                     return@withLock
                 }
-                
+
                 // Extract photo URIs from focused cell
                 val photoUris = focusedCell.mediaItems
                     .mapNotNull { it.media as? Media.Image }
                     .map { it.uri }
-                
+
                 if (photoUris.isEmpty()) {
                     Log.d(TAG, "No photos in focused cell, clearing focus bucket")
                     atlasBucketManager.clearFocus()
                     currentFocusedCell = focusedCell
                     return@withLock
                 }
-                
+
                 // Check if we need to update using efficient bucket lookups
                 val cellChanged = currentFocusedCell?.hexCell != focusedCell.hexCell
                 val existingFocusLOD = atlasBucketManager.getFocusLODForPhotos(photoUris)
                 val needsRegeneration = cellChanged || existingFocusLOD == null || existingFocusLOD.level < requiredLOD.level
-                
+
                 if (!needsRegeneration) {
                     Log.d(TAG, "Focus cell atlas already exists at adequate LOD (${existingFocusLOD?.name} >= ${requiredLOD.name}), skipping update")
                     currentFocusedCell = focusedCell // Update tracking even if no regeneration
                     return@withLock
                 }
-                
+
                 currentFocusedCell = focusedCell
                 Log.d(TAG, "Updating focused cell: ${focusedCell.hexCell.q},${focusedCell.hexCell.r} at zoom $currentZoom -> LOD $requiredLOD (existing: ${existingFocusLOD?.name ?: "none"})")
-                
+
                 val focusResult = lodSpecificGenerator.generateLODAtlas(
                     photos = photoUris,
                     lodLevel = requiredLOD,
@@ -120,7 +120,7 @@ class StreamingAtlasManager @Inject constructor(
                         reason = "Focus cell enhancement at zoom $currentZoom"
                     )
                 )
-                
+
                 when (focusResult) {
                     is LODGenerationResult.Success -> {
                         atlasBucketManager.replaceFocus(focusResult.atlases)
@@ -150,32 +150,32 @@ class StreamingAtlasManager @Inject constructor(
                     }
                     return@withLock
                 }
-                
+
                 if (selectedMedia !is Media.Image) {
                     Log.d(TAG, "Selected media is not an image, clearing highlight bucket")
                     atlasBucketManager.clearHighlight()
                     currentSelectedMedia = null
                     return@withLock
                 }
-                
+
                 // Check if we need to update using efficient bucket lookups
                 val mediaChanged = currentSelectedMedia?.uri != selectedMedia.uri
                 val requiredLOD = LODLevel.LEVEL_7 // Always max quality for selected photo
                 val hasAdequateLOD = atlasBucketManager.hasHighlightPhotoAtLOD(selectedMedia.uri, requiredLOD)
-                
+
                 val needsRegeneration = mediaChanged || !hasAdequateLOD
-                
+
                 if (!needsRegeneration) {
                     val existingLOD = atlasBucketManager.getHighlightLODForPhoto(selectedMedia.uri)
                     Log.d(TAG, "Selected media atlas already exists at adequate LOD (${existingLOD?.name} >= ${requiredLOD.name}), skipping update")
                     currentSelectedMedia = selectedMedia // Update tracking even if no regeneration
                     return@withLock
                 }
-                
+
                 currentSelectedMedia = selectedMedia
                 val existingLOD = atlasBucketManager.getHighlightLODForPhoto(selectedMedia.uri)
                 Log.d(TAG, "Updating selected media: ${selectedMedia.displayName} at zoom $currentZoom -> LOD $requiredLOD (existing: ${existingLOD?.name ?: "none"})")
-                
+
                 val highlightResult = lodSpecificGenerator.generateLODAtlas(
                     photos = listOf(selectedMedia.uri),
                     lodLevel = requiredLOD,
@@ -186,7 +186,7 @@ class StreamingAtlasManager @Inject constructor(
                         reason = "Selected photo maximum quality at zoom $currentZoom"
                     )
                 )
-                
+
                 when (highlightResult) {
                     is LODGenerationResult.Success -> {
                         atlasBucketManager.replaceHighlight(highlightResult.atlases)
@@ -258,13 +258,15 @@ class StreamingAtlasManager @Inject constructor(
                 Log.d(TAG, "Persistent cache initialized: ${result.atlases.size} atlases, ${result.atlases.sumOf { it.regions.size }} photos in ${duration.inWholeMilliseconds}ms")
 
                 // Emit immediate availability for UI
-                atlasResultFlow.tryEmit(AtlasStreamResult.LODReady(
-                    requestSequence = ++requestSequence,
-                    lodLevel = LODLevel.LEVEL_0,
-                    atlases = result.atlases,
-                    generationTimeMs = duration.inWholeMilliseconds,
-                    reason = "Persistent cache ready - immediate UI rendering"
-                ))
+                atlasResultFlow.tryEmit(
+                    AtlasStreamResult.LODReady(
+                        requestSequence = ++requestSequence,
+                        lodLevel = LODLevel.LEVEL_0,
+                        atlases = result.atlases,
+                        generationTimeMs = duration.inWholeMilliseconds,
+                        reason = "Persistent cache ready - immediate UI rendering"
+                    )
+                )
             }
 
             is LODGenerationResult.Failed -> {
@@ -272,7 +274,6 @@ class StreamingAtlasManager @Inject constructor(
             }
         }
     }
-
 
     /**
      * Immediately clean up L7 atlas when photo is deselected (synchronous version).
@@ -290,12 +291,14 @@ class StreamingAtlasManager @Inject constructor(
                     atlasBucketManager.clearHighlight()
 
                     // Notify UI immediately
-                    atlasResultFlow.tryEmit(AtlasStreamResult.AtlasRemoved(
-                        requestSequence = ++requestSequence,
-                        lodLevel = LODLevel.LEVEL_7,
-                        reason = "Photo deselected - L7 no longer needed",
-                        removedAtlasCount = existingHighlightAtlases.size
-                    ))
+                    atlasResultFlow.tryEmit(
+                        AtlasStreamResult.AtlasRemoved(
+                            requestSequence = ++requestSequence,
+                            lodLevel = LODLevel.LEVEL_7,
+                            reason = "Photo deselected - L7 no longer needed",
+                            removedAtlasCount = existingHighlightAtlases.size
+                        )
+                    )
 
                     Log.d(TAG, "CleanupL7Sync: Successfully removed L7 atlas and notified UI")
                 } else {
@@ -350,13 +353,15 @@ class StreamingAtlasManager @Inject constructor(
             if (atlasBucketManager.isBaseBucketInitialized()) {
                 Log.d(TAG, "Persistent cache available - immediate fallback rendering")
                 val persistentAtlases = atlasBucketManager.getBaseBucketAtlases()
-                atlasResultFlow.tryEmit(AtlasStreamResult.LODReady(
-                    requestSequence = sequence,
-                    lodLevel = LODLevel.LEVEL_0,
-                    atlases = persistentAtlases,
-                    generationTimeMs = 0,
-                    reason = "Persistent cache - immediate rendering"
-                ))
+                atlasResultFlow.tryEmit(
+                    AtlasStreamResult.LODReady(
+                        requestSequence = sequence,
+                        lodLevel = LODLevel.LEVEL_0,
+                        atlases = persistentAtlases,
+                        generationTimeMs = 0,
+                        reason = "Persistent cache - immediate rendering"
+                    )
+                )
             }
 
             // Step 3: Cancel any conflicting previous generations
@@ -391,8 +396,6 @@ class StreamingAtlasManager @Inject constructor(
         }
     }
 
-
-
     /**
      * Generate specific LOD level independently and emit result immediately
      */
@@ -401,19 +404,21 @@ class StreamingAtlasManager @Inject constructor(
         effectiveLOD: LODLevel,
         requestSequence: Long,
         currentZoom: Float
-    ) = trace("${BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS}_${effectiveLOD}") {
+    ) = trace("${BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS}_$effectiveLOD") {
         try {
             currentCoroutineContext().ensureActive()
 
             Log.d(TAG, "Starting independent generation: $effectiveLOD (${priority.photos.size} photos)")
 
             // Emit immediate progress update
-            atlasResultFlow.tryEmit(AtlasStreamResult.Progress(
-                requestSequence = requestSequence,
-                lodLevel = effectiveLOD,
-                message = "Generating $effectiveLOD atlas...",
-                progress = 0f
-            ))
+            atlasResultFlow.tryEmit(
+                AtlasStreamResult.Progress(
+                    requestSequence = requestSequence,
+                    lodLevel = effectiveLOD,
+                    message = "Generating $effectiveLOD atlas...",
+                    progress = 0f
+                )
+            )
 
             val (result, duration) = measureTimedValue {
                 lodSpecificGenerator.generateLODAtlas(
@@ -462,7 +467,7 @@ class StreamingAtlasManager @Inject constructor(
                         generationTimeMs = duration.inWholeMilliseconds,
                         reason = priority.reason
                     )
-                    Log.d(TAG, "Attempting to emit LODReady for ${effectiveLOD}, sequence=$requestSequence")
+                    Log.d(TAG, "Attempting to emit LODReady for $effectiveLOD, sequence=$requestSequence")
                     val emitSuccess = atlasResultFlow.tryEmit(lodReadyResult)
                     Log.d(TAG, "LODReady emission result: $emitSuccess for $effectiveLOD")
                 }
@@ -470,24 +475,27 @@ class StreamingAtlasManager @Inject constructor(
                 is LODGenerationResult.Failed -> {
                     Log.w(TAG, "LOD $effectiveLOD generation failed: ${result.error}")
 
-                    atlasResultFlow.tryEmit(AtlasStreamResult.LODFailed(
-                        requestSequence = requestSequence,
-                        lodLevel = effectiveLOD,
-                        error = result.error,
-                        retryable = result.retryable
-                    ))
+                    atlasResultFlow.tryEmit(
+                        AtlasStreamResult.LODFailed(
+                            requestSequence = requestSequence,
+                            lodLevel = effectiveLOD,
+                            error = result.error,
+                            retryable = result.retryable
+                        )
+                    )
                 }
             }
-
         } catch (e: Exception) {
             Log.e(TAG, "Exception in LOD $effectiveLOD generation", e)
 
-            atlasResultFlow.tryEmit(AtlasStreamResult.LODFailed(
-                requestSequence = requestSequence,
-                lodLevel = effectiveLOD,
-                error = e.message ?: "Unknown error",
-                retryable = true
-            ))
+            atlasResultFlow.tryEmit(
+                AtlasStreamResult.LODFailed(
+                    requestSequence = requestSequence,
+                    lodLevel = effectiveLOD,
+                    error = e.message ?: "Unknown error",
+                    retryable = true
+                )
+            )
         } finally {
             // Clean up job tracking
             jobsMutex.withLock {
@@ -561,16 +569,12 @@ class StreamingAtlasManager @Inject constructor(
     /**
      * Get SmartMemoryManager for debug overlay and memory status
      */
-    fun getSmartMemoryManager(): SmartMemoryManager {
-        return lodSpecificGenerator.getSmartMemoryManager()
-    }
+    fun getSmartMemoryManager(): SmartMemoryManager = lodSpecificGenerator.getSmartMemoryManager()
 
     /**
      * Get AtlasBucketManager for direct bucket access
      */
-    fun getAtlasBucketManager(): dev.serhiiyaremych.lumina.domain.bucket.AtlasBucketManager {
-        return atlasBucketManager
-    }
+    fun getAtlasBucketManager(): dev.serhiiyaremych.lumina.domain.bucket.AtlasBucketManager = atlasBucketManager
 
     // Helper methods
 
@@ -598,8 +602,6 @@ class StreamingAtlasManager @Inject constructor(
         return result
     }
 
-
-
     // Type-safe priority system adapter methods
 
     /**
@@ -620,11 +622,13 @@ class StreamingAtlasManager @Inject constructor(
 
         // Persistent cache priority - only if not initialized
         if (!atlasBucketManager.isBaseBucketInitialized() && allPhotos.isNotEmpty()) {
-            priorities.add(TypeSafeLODPriority(
-                priority = AtlasPriority.PersistentCache,
-                photos = allPhotos,
-                reason = "Initialize persistent cache"
-            ))
+            priorities.add(
+                TypeSafeLODPriority(
+                    priority = AtlasPriority.PersistentCache,
+                    photos = allPhotos,
+                    reason = "Initialize persistent cache"
+                )
+            )
         }
 
         // Visible cells priority
@@ -635,11 +639,13 @@ class StreamingAtlasManager @Inject constructor(
         }
 
         if (visiblePhotos.isNotEmpty()) {
-            priorities.add(TypeSafeLODPriority(
-                priority = AtlasPriority.VisibleCells,
-                photos = visiblePhotos,
-                reason = "Visible cells at zoom $currentZoom"
-            ))
+            priorities.add(
+                TypeSafeLODPriority(
+                    priority = AtlasPriority.VisibleCells,
+                    photos = visiblePhotos,
+                    reason = "Visible cells at zoom $currentZoom"
+                )
+            )
         }
 
         // Active cell priority
@@ -647,22 +653,26 @@ class StreamingAtlasManager @Inject constructor(
             val activePhotos = activeCell.mediaItems.mapNotNull { it.media as? Media.Image }
             if (activePhotos.isNotEmpty()) {
                 Log.d(TAG, "Creating ActiveCell priority: activeCell=${activeCell.hexCell.q},${activeCell.hexCell.r}, selectionMode=$selectionMode, photos=${activePhotos.size}")
-                priorities.add(TypeSafeLODPriority(
-                    priority = AtlasPriority.ActiveCell,
-                    photos = activePhotos,
-                    reason = "Active cell enhancement"
-                ))
+                priorities.add(
+                    TypeSafeLODPriority(
+                        priority = AtlasPriority.ActiveCell,
+                        photos = activePhotos,
+                        reason = "Active cell enhancement"
+                    )
+                )
             }
         }
 
         // Selected photo priority
         if (selectedMedia is Media.Image && selectionMode == SelectionMode.PHOTO_MODE) {
             Log.d(TAG, "Creating SelectedPhoto priority for: ${selectedMedia.uri.lastPathSegment}")
-            priorities.add(TypeSafeLODPriority(
-                priority = AtlasPriority.SelectedPhoto,
-                photos = listOf(selectedMedia),
-                reason = "Selected photo maximum quality"
-            ))
+            priorities.add(
+                TypeSafeLODPriority(
+                    priority = AtlasPriority.SelectedPhoto,
+                    photos = listOf(selectedMedia),
+                    reason = "Selected photo maximum quality"
+                )
+            )
         }
 
         return priorities
@@ -733,9 +743,7 @@ class StreamingAtlasManager @Inject constructor(
         Log.d(TAG, "UpfrontDeduplication: Reduced from ${priorities.size} to ${deduplicatedPriorities.size} priorities")
         return deduplicatedPriorities
     }
-
 }
-
 
 /**
  * Streaming atlas results - immediate UI updates

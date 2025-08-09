@@ -23,7 +23,8 @@ class GenerateHexGridUseCase @Inject constructor() {
         cellSizeDp: Dp,
         density: Density,
         canvasSize: Size,
-        cellSpacingDp: Dp = 0.dp // Add spacing between cells in dp units
+        // Add spacing between cells in dp units
+        cellSpacingDp: Dp = 0.dp
     ): HexGrid {
         val cellSizePx = with(density) { cellSizeDp.toPx() }
         val cellSpacingPx = with(density) { cellSpacingDp.toPx() }
@@ -32,7 +33,7 @@ class GenerateHexGridUseCase @Inject constructor() {
         // Hex dimensions
         val hexWidth = radius * 2f
         val hexHeight = radius * sqrt(3f)
-        
+
         // Add spacing to create gaps between cells while keeping cell size unchanged
         val horizontalSpacing = (hexWidth * 3f / 4f) + cellSpacingPx
         val verticalSpacing = hexHeight + cellSpacingPx
@@ -78,7 +79,7 @@ class GenerateHexGridUseCase @Inject constructor() {
         radius: Float
     ): List<HexCell> {
         val cells = mutableListOf<HexCell>()
-        
+
         if (cellCount <= 0) return cells
 
         // Start with center cell (0,0)
@@ -108,7 +109,7 @@ class GenerateHexGridUseCase @Inject constructor() {
                 hexHeight = hexHeight,
                 radius = radius
             )
-            
+
             // Add cells from this ring until we reach the target count
             for (cell in ringCells) {
                 if (cells.size < cellCount) {
@@ -117,7 +118,7 @@ class GenerateHexGridUseCase @Inject constructor() {
                     break
                 }
             }
-            
+
             currentRing++
         }
 
@@ -139,43 +140,45 @@ class GenerateHexGridUseCase @Inject constructor() {
         radius: Float
     ): List<HexCell> {
         if (ring == 0) return emptyList() // Center handled separately
-        
+
         val cells = mutableListOf<HexCell>()
-        
+
         // Hex ring coordinates using axial coordinates
         // Start at top-right and move counter-clockwise
         var q = ring
         var r = -ring
-        
+
         // Six directions for hexagon neighbors
         val directions = listOf(
-            Pair(0, 1),   // SE
-            Pair(-1, 1),  // S
-            Pair(-1, 0),  // SW
-            Pair(0, -1),  // NW
-            Pair(1, -1),  // N
-            Pair(1, 0)    // NE
+            Pair(0, 1), // SE
+            Pair(-1, 1), // S
+            Pair(-1, 0), // SW
+            Pair(0, -1), // NW
+            Pair(1, -1), // N
+            Pair(1, 0) // NE
         )
-        
+
         // Generate ring by walking around the perimeter
         for (direction in directions) {
             repeat(ring) {
-                cells.add(createHexCell(
-                    q = q, r = r,
-                    startX = startX, startY = startY,
-                    horizontalSpacing = horizontalSpacing,
-                    verticalSpacing = verticalSpacing,
-                    hexWidth = hexWidth,
-                    hexHeight = hexHeight,
-                    radius = radius
-                ))
-                
+                cells.add(
+                    createHexCell(
+                        q = q, r = r,
+                        startX = startX, startY = startY,
+                        horizontalSpacing = horizontalSpacing,
+                        verticalSpacing = verticalSpacing,
+                        hexWidth = hexWidth,
+                        hexHeight = hexHeight,
+                        radius = radius
+                    )
+                )
+
                 // Move to next position in current direction
                 q += direction.first
                 r += direction.second
             }
         }
-        
+
         return cells
     }
 

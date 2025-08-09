@@ -4,11 +4,11 @@ import android.net.Uri
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.IntSize
 import androidx.tracing.trace
-import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_PACK_ALGORITHM
-import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_SORT_IMAGES
-import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_PACK_SINGLE_IMAGE
-import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_FIND_SHELF_FIT
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_CREATE_NEW_SHELF
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_FIND_SHELF_FIT
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_PACK_ALGORITHM
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_PACK_SINGLE_IMAGE
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.TEXTURE_PACKER_SORT_IMAGES
 import dev.serhiiyaremych.lumina.domain.usecase.ProcessedPhoto
 
 /**
@@ -23,36 +23,34 @@ class ShelfTexturePacker(
     /**
      * Pack images into atlas using shelf packing algorithm
      */
-    fun pack(images: List<ImageToPack>): PackResult {
-        return trace(TEXTURE_PACKER_PACK_ALGORITHM) {
-            val shelves = mutableListOf<Shelf>()
-            val packedImages = mutableListOf<PackedImage>()
-            val failedImages = mutableListOf<ImageToPack>()
+    fun pack(images: List<ImageToPack>): PackResult = trace(TEXTURE_PACKER_PACK_ALGORITHM) {
+        val shelves = mutableListOf<Shelf>()
+        val packedImages = mutableListOf<PackedImage>()
+        val failedImages = mutableListOf<ImageToPack>()
 
-            // Sort images by height (descending) for better packing
-            val sortedImages = trace(TEXTURE_PACKER_SORT_IMAGES) {
-                images.sortedByDescending { it.size.height }
-            }
-
-            for (image in sortedImages) {
-                val packedImage = trace(TEXTURE_PACKER_PACK_SINGLE_IMAGE) {
-                    packImage(image, shelves)
-                }
-                if (packedImage != null) {
-                    packedImages.add(packedImage)
-                } else {
-                    failedImages.add(image)
-                }
-            }
-
-            val utilization = calculateUtilization(packedImages)
-
-            PackResult(
-                packedImages = packedImages,
-                utilization = utilization,
-                failed = failedImages
-            )
+        // Sort images by height (descending) for better packing
+        val sortedImages = trace(TEXTURE_PACKER_SORT_IMAGES) {
+            images.sortedByDescending { it.size.height }
         }
+
+        for (image in sortedImages) {
+            val packedImage = trace(TEXTURE_PACKER_PACK_SINGLE_IMAGE) {
+                packImage(image, shelves)
+            }
+            if (packedImage != null) {
+                packedImages.add(packedImage)
+            } else {
+                failedImages.add(image)
+            }
+        }
+
+        val utilization = calculateUtilization(packedImages)
+
+        PackResult(
+            packedImages = packedImages,
+            utilization = utilization,
+            failed = failedImages
+        )
     }
 
     /**
@@ -66,8 +64,10 @@ class ShelfTexturePacker(
 
         // Check if image fits in atlas at all
         if (imageWithPadding.width > atlasSize.width || imageWithPadding.height > atlasSize.height) {
-            android.util.Log.w("TexturePacker", 
-                "Photo ${image.id} too large for atlas: ${imageWithPadding.width}x${imageWithPadding.height} > ${atlasSize.width}x${atlasSize.height}")
+            android.util.Log.w(
+                "TexturePacker",
+                "Photo ${image.id} too large for atlas: ${imageWithPadding.width}x${imageWithPadding.height} > ${atlasSize.width}x${atlasSize.height}"
+            )
             return null
         }
 
@@ -118,12 +118,16 @@ class ShelfTexturePacker(
                 )
             }
         } else {
-            android.util.Log.w("TexturePacker", 
-                "Photo ${image.id} cannot fit: need shelf height ${imageWithPadding.height} but only ${atlasSize.height - nextShelfY} available")
+            android.util.Log.w(
+                "TexturePacker",
+                "Photo ${image.id} cannot fit: need shelf height ${imageWithPadding.height} but only ${atlasSize.height - nextShelfY} available"
+            )
         }
 
-        android.util.Log.w("TexturePacker", 
-            "Photo ${image.id} failed to pack in ${atlasSize.width}x${atlasSize.height} atlas with ${shelves.size} shelves")
+        android.util.Log.w(
+            "TexturePacker",
+            "Photo ${image.id} failed to pack in ${atlasSize.width}x${atlasSize.height} atlas with ${shelves.size} shelves"
+        )
         return null
     }
 

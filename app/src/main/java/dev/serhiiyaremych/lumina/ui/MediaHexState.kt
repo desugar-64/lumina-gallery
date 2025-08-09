@@ -58,12 +58,11 @@ fun rememberMediaHexState(
 
     // Animation manager for media items
     val animationManager = remember { AnimatableMediaManager() }
-    
+
     // Bounce animation manager for hex cell Material 3 bounce animations
     val bounceAnimationManager = rememberHexCellBounceAnimationManager()
 
     // Remember coroutine scope for immediate animation triggering
-    val animationScope = rememberCoroutineScope()
 
     // Capture latest callback to avoid restarting effect when callback changes
     val currentOnVisibleCellsChanged by rememberUpdatedState(onVisibleCellsChanged)
@@ -106,9 +105,9 @@ fun rememberMediaHexState(
             val mediaWithPosition = hexGridLayout.hexCellsWithMedia
                 .flatMap { it.mediaItems }
                 .find { it.media == media }
-            
+
             // Get or create AnimatableMediaItem for proper animation setup
-            mediaWithPosition?.let { 
+            mediaWithPosition?.let {
                 animationManager.getOrCreateAnimatable(it).apply {
                     updateSelection(true)
                 }
@@ -153,14 +152,14 @@ fun rememberMediaHexState(
         snapshotFlow {
             provideZoom() to provideOffset()
         }.distinctUntilChanged()
-        .collect { (zoom, offset) ->
-            val visibleCells = calculateVisibleCells(
-                hexGridLayout = hexGridLayout,
-                zoom = zoom,
-                offset = offset
-            )
-            currentOnVisibleCellsChanged(visibleCells)
-        }
+            .collect { (zoom, offset) ->
+                val visibleCells = calculateVisibleCells(
+                    hexGridLayout = hexGridLayout,
+                    zoom = zoom,
+                    offset = offset
+                )
+                currentOnVisibleCellsChanged(visibleCells)
+            }
     }
 
     return MediaHexState(

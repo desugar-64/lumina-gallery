@@ -81,7 +81,6 @@ fun MediaHexVisualization(
         }
     }
 
-
     // Input handling configuration
     val inputConfig = state.toInputConfig(
         hexGridLayout = hexGridLayout,
@@ -119,8 +118,8 @@ fun MediaHexVisualization(
             }
         }
 
-        val gridColor = MaterialTheme.colorScheme.outline             // Subtle and clean normal grid lines
-        val selectedColor = MaterialTheme.colorScheme.tertiary       // Vibrant and energetic selected grid lines
+        val gridColor = MaterialTheme.colorScheme.outline // Subtle and clean normal grid lines
+        val selectedColor = MaterialTheme.colorScheme.tertiary // Vibrant and energetic selected grid lines
         val placeholderColor = MaterialTheme.colorScheme.surfaceVariant // Light and muted placeholder color
 
         Canvas(
@@ -181,8 +180,6 @@ fun MediaHexVisualization(
                         )
                     }
                 }
-
-
             }
 
             // Ripple effect for taps
@@ -203,4 +200,3 @@ fun MediaHexVisualization(
         }
     }
 }
-

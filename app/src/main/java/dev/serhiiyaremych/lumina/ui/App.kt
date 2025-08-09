@@ -30,7 +30,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
-
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.ui.animation.AnimationConstants
@@ -78,7 +77,7 @@ fun App(
     modifier: Modifier = Modifier,
     streamingGalleryViewModel: StreamingGalleryViewModel,
     isBenchmarkMode: Boolean = false,
-    autoZoom: Boolean = false,
+    autoZoom: Boolean = false
 ) {
     LuminaGalleryTheme {
         // Single UI state following UDF architecture
@@ -213,44 +212,44 @@ fun App(
                         snapshotFlow {
                             Triple(zoomProvider.value(), offsetProvider.value(), uiState.hexGridLayout)
                         }
-                        .distinctUntilChanged()
-                        .collect { (currentZoom, currentOffset, layout) ->
-                            // Calculate viewport state once and reuse
-                            val viewportState = viewportStateManager.calculateViewportState(
-                                canvasSize = canvasSize,
-                                zoom = currentZoom,
-                                offset = currentOffset,
-                                focusedCell = uiState.focusedCellWithMedia,
-                                selectedMedia = uiState.selectedMedia,
-                                currentSelectionMode = uiState.selectionMode,
-                                gridBounds = layout?.bounds
-                            )
+                            .distinctUntilChanged()
+                            .collect { (currentZoom, currentOffset, layout) ->
+                                // Calculate viewport state once and reuse
+                                val viewportState = viewportStateManager.calculateViewportState(
+                                    canvasSize = canvasSize,
+                                    zoom = currentZoom,
+                                    offset = currentOffset,
+                                    focusedCell = uiState.focusedCellWithMedia,
+                                    selectedMedia = uiState.selectedMedia,
+                                    currentSelectionMode = uiState.selectionMode,
+                                    gridBounds = layout?.bounds
+                                )
 
-                            // Update center button visibility - show when grid is outside viewport bounds
-                            layout?.let { hexLayout ->
-                                val viewportRect = viewportState.viewportRect
-                                val gridBounds = hexLayout.bounds
+                                // Update center button visibility - show when grid is outside viewport bounds
+                                layout?.let { hexLayout ->
+                                    val viewportRect = viewportState.viewportRect
+                                    val gridBounds = hexLayout.bounds
 
-                                // Use Rect.overlaps for efficient intersection check
-                                val hasOverlap = viewportRect.overlaps(gridBounds)
+                                    // Use Rect.overlaps for efficient intersection check
+                                    val hasOverlap = viewportRect.overlaps(gridBounds)
 
-                                // Show center button only when grid content is outside viewport bounds (no overlap)
-                                showCenterButton = !hasOverlap
+                                    // Show center button only when grid content is outside viewport bounds (no overlap)
+                                    showCenterButton = !hasOverlap
+                                }
+
+                                // Apply selection mode changes
+                                if (viewportState.suggestedSelectionMode != uiState.selectionMode) {
+                                    streamingGalleryViewModel.updateSelectionMode(viewportState.suggestedSelectionMode)
+                                    Log.d("StreamingApp", "Selection mode changed: ${viewportState.suggestedSelectionMode} (viewport-based)")
+                                }
+
+                                // Apply media deselection when out of viewport
+                                if (viewportState.shouldDeselectMedia && uiState.selectedMedia != null) {
+                                    streamingGalleryViewModel.updateSelectedMedia(null)
+                                    streamingGalleryViewModel.updateSelectionMode(SelectionMode.CELL_MODE)
+                                    Log.d("StreamingApp", "Media deselected: out of viewport")
+                                }
                             }
-
-                            // Apply selection mode changes
-                            if (viewportState.suggestedSelectionMode != uiState.selectionMode) {
-                                streamingGalleryViewModel.updateSelectionMode(viewportState.suggestedSelectionMode)
-                                Log.d("StreamingApp", "Selection mode changed: ${viewportState.suggestedSelectionMode} (viewport-based)")
-                            }
-
-                            // Apply media deselection when out of viewport
-                            if (viewportState.shouldDeselectMedia && uiState.selectedMedia != null) {
-                                streamingGalleryViewModel.updateSelectedMedia(null)
-                                streamingGalleryViewModel.updateSelectionMode(SelectionMode.CELL_MODE)
-                                Log.d("StreamingApp", "Media deselected: out of viewport")
-                            }
-                        }
                     }
 
                     // Generate hex grid layout when canvas size is available
@@ -405,46 +404,46 @@ fun App(
                         }
                     }
 
-                     if (showCenterButton) {
-                         FloatingActionButton(
-                             onClick = {
-                                 Log.d("CenterButton", "Tracking button clicked")
-                                 uiState.hexGridLayout?.let { layout ->
-                                     // Calculate the bounds that encompass all hex cells
-                                     val gridBounds = layout.bounds
+                    if (showCenterButton) {
+                        FloatingActionButton(
+                            onClick = {
+                                Log.d("CenterButton", "Tracking button clicked")
+                                uiState.hexGridLayout?.let { layout ->
+                                    // Calculate the bounds that encompass all hex cells
+                                    val gridBounds = layout.bounds
 
-                                     Log.d("CenterButton", "Grid bounds: $gridBounds, isEmpty: ${gridBounds.isEmpty}")
+                                    Log.d("CenterButton", "Grid bounds: $gridBounds, isEmpty: ${gridBounds.isEmpty}")
 
-                                     // Safety check to ensure we have valid bounds and no animation is in progress
-                                     if (!gridBounds.isEmpty && !transformableState.isAnimating) {
-                                         // Close panel first to avoid conflicts
-                                         streamingGalleryViewModel.updateFocusedCell(null)
+                                    // Safety check to ensure we have valid bounds and no animation is in progress
+                                    if (!gridBounds.isEmpty && !transformableState.isAnimating) {
+                                        // Close panel first to avoid conflicts
+                                        streamingGalleryViewModel.updateFocusedCell(null)
 
-                                         // Use focusOn with padding to center and fit the entire grid
-                                         coroutineScope.launch {
-                                             Log.d("CenterButton", "Launching focusOn animation")
-                                             // Stop any ongoing fling animation before starting focus animation
-                                             transformableState.stopAllAnimations()
-                                             transformableState.focusOn(gridBounds, padding = 32.dp)
-                                             Log.d("CenterButton", "FocusOn animation completed")
-                                         }
-                                     } else {
-                                         Log.w("CenterButton", "Skipping focusOn: bounds empty=${gridBounds.isEmpty}, animating=${transformableState.isAnimating}")
-                                     }
-                                 } ?: Log.w("CenterButton", "Skipping focusOn due to null layout")
-                             },
-                             modifier = Modifier
-                                 .align(Alignment.BottomEnd)
-                                 .padding(16.dp),
-                             containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
-                             contentColor = MaterialTheme.colorScheme.onSurface
-                         ) {
-                             Text(
-                                 text = "🎯",
-                                 style = MaterialTheme.typography.headlineSmall
-                             )
-                         }
-                     }
+                                        // Use focusOn with padding to center and fit the entire grid
+                                        coroutineScope.launch {
+                                            Log.d("CenterButton", "Launching focusOn animation")
+                                            // Stop any ongoing fling animation before starting focus animation
+                                            transformableState.stopAllAnimations()
+                                            transformableState.focusOn(gridBounds, padding = 32.dp)
+                                            Log.d("CenterButton", "FocusOn animation completed")
+                                        }
+                                    } else {
+                                        Log.w("CenterButton", "Skipping focusOn: bounds empty=${gridBounds.isEmpty}, animating=${transformableState.isAnimating}")
+                                    }
+                                } ?: Log.w("CenterButton", "Skipping focusOn due to null layout")
+                            },
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(16.dp),
+                            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ) {
+                            Text(
+                                text = "🎯",
+                                style = MaterialTheme.typography.headlineSmall
+                            )
+                        }
+                    }
 
                     // Store current viewport state for indicator access
                     val currentViewportState = remember { mutableStateOf<ViewportState?>(null) }
@@ -453,20 +452,20 @@ fun App(
                         snapshotFlow {
                             Triple(zoomProvider.value(), offsetProvider.value(), uiState.hexGridLayout)
                         }
-                        .distinctUntilChanged()
-                        .collect { (currentZoom, currentOffset, layout) ->
-                            if (layout != null) {
-                                currentViewportState.value = viewportStateManager.calculateViewportState(
-                                    canvasSize = canvasSize,
-                                    zoom = currentZoom,
-                                    offset = currentOffset,
-                                    focusedCell = uiState.focusedCellWithMedia,
-                                    selectedMedia = uiState.selectedMedia,
-                                    currentSelectionMode = uiState.selectionMode,
-                                    gridBounds = layout.bounds
-                                )
+                            .distinctUntilChanged()
+                            .collect { (currentZoom, currentOffset, layout) ->
+                                if (layout != null) {
+                                    currentViewportState.value = viewportStateManager.calculateViewportState(
+                                        canvasSize = canvasSize,
+                                        zoom = currentZoom,
+                                        offset = currentOffset,
+                                        focusedCell = uiState.focusedCellWithMedia,
+                                        selectedMedia = uiState.selectedMedia,
+                                        currentSelectionMode = uiState.selectionMode,
+                                        gridBounds = layout.bounds
+                                    )
+                                }
                             }
-                        }
                     }
 
                     // Directional indicators for offscreen content
@@ -494,8 +493,6 @@ fun App(
         }
     }
 }
-
-
 
 /**
  * Calculates the translation offset for positioning a panel relative to a hex cell.
@@ -554,5 +551,3 @@ private fun calculateCellPanelPosition(
         y = clampedY
     )
 }
-
-

@@ -1,0 +1,156 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/TexturePacker.kt</file>
+  <line>20</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.data</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.ShelfTexturePacker ShelfTexturePacker(long atlasSize, int padding)" />
+  <problem_class id="SameParameterValue" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method parameter always has the same value</problem_class>
+  <hints />
+  <description>Value of parameter &lt;code&gt;padding&lt;/code&gt; is always 'DynamicAtlasPool.ATLAS_PADDING'</description>
+  <highlighted_element>padding</highlighted_element>
+  <language>kotlin</language>
+  <offset>16</offset>
+  <length>7</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/DeviceCapabilities.kt</file>
+  <line>57</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities.Capabilities Capabilities(dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities.MemoryTier memoryTier, long maxAtlasSize, int memoryBudgetMB, boolean isLowRamDevice, int totalMemoryMB, int androidVersion, dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities.PerformanceTier performanceTier)" />
+  <problem_class id="SameParameterValue" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method parameter always has the same value</problem_class>
+  <hints />
+  <description>Value of parameter &lt;code&gt;androidVersion&lt;/code&gt; is always 'VERSION.SDK_INT'</description>
+  <highlighted_element>androidVersion</highlighted_element>
+  <language>kotlin</language>
+  <offset>12</offset>
+  <length>14</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/DeviceCapabilities.kt</file>
+  <line>160</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities.PerformanceTier classifyPerformanceTier(dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities.MemoryTier memoryTier, int androidVersion)" />
+  <problem_class id="SameParameterValue" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method parameter always has the same value</problem_class>
+  <hints />
+  <description>Value of parameter &lt;code&gt;androidVersion&lt;/code&gt; is always 'VERSION.SDK_INT'</description>
+  <highlighted_element>androidVersion</highlighted_element>
+  <language>kotlin</language>
+  <offset>64</offset>
+  <length>14</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/GridRenderer.kt</file>
+  <line>41</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.GridPoint GridPoint(long offset, float alpha)" />
+  <problem_class id="SameParameterValue" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method parameter always has the same value</problem_class>
+  <hints />
+  <description>Value of parameter &lt;code&gt;alpha&lt;/code&gt; is always '1.0'</description>
+  <highlighted_element>alpha</highlighted_element>
+  <language>kotlin</language>
+  <offset>8</offset>
+  <length>5</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/HexGridRenderer.kt</file>
+  <line>30</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.HexRenderConfig HexRenderConfig(float baseStrokeWidth, float cellPadding, float cornerRadius, long gridColor, long selectedColor, float mutedColorAlpha, float selectedStrokeWidth)" />
+  <problem_class id="SameParameterValue" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method parameter always has the same value</problem_class>
+  <hints />
+  <description>Value of parameter &lt;code&gt;mutedColorAlpha&lt;/code&gt; is always '0.4'</description>
+  <highlighted_element>mutedColorAlpha</highlighted_element>
+  <language>kotlin</language>
+  <offset>8</offset>
+  <length>15</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/OffscreenIndicatorManager.kt</file>
+  <line>25</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.OffscreenIndicator OffscreenIndicator(java.lang.String id, long position, float direction, float distance, androidx.compose.ui.geometry.Rect contentBounds, int priority)" />
+  <problem_class id="SameParameterValue" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method parameter always has the same value</problem_class>
+  <hints />
+  <description>Value of parameter &lt;code&gt;id&lt;/code&gt; is always '&quot;grid_indicator&quot;'</description>
+  <highlighted_element>id</highlighted_element>
+  <language>kotlin</language>
+  <offset>8</offset>
+  <length>2</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/OffscreenIndicatorManager.kt</file>
+  <line>30</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.OffscreenIndicator OffscreenIndicator(java.lang.String id, long position, float direction, float distance, androidx.compose.ui.geometry.Rect contentBounds, int priority)" />
+  <problem_class id="SameParameterValue" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method parameter always has the same value</problem_class>
+  <hints />
+  <description>Value of parameter &lt;code&gt;priority&lt;/code&gt; is always '1'</description>
+  <highlighted_element>priority</highlighted_element>
+  <language>kotlin</language>
+  <offset>8</offset>
+  <length>8</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/animation/RevealAnimationSystem.kt</file>
+  <line>21</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.animation</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.animation.RevealAnimationState RevealAnimationState(long slideOffset, float breathingScale, float zIndex, float alpha)" />
+  <problem_class id="SameParameterValue" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method parameter always has the same value</problem_class>
+  <hints />
+  <description>Value of parameter &lt;code&gt;slideOffset&lt;/code&gt; is always 'Offset.Zero'</description>
+  <highlighted_element>slideOffset</highlighted_element>
+  <language>kotlin</language>
+  <offset>8</offset>
+  <length>11</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/animation/RevealAnimationSystem.kt</file>
+  <line>22</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.animation</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.animation.RevealAnimationState RevealAnimationState(long slideOffset, float breathingScale, float zIndex, float alpha)" />
+  <problem_class id="SameParameterValue" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method parameter always has the same value</problem_class>
+  <hints />
+  <description>Value of parameter &lt;code&gt;breathingScale&lt;/code&gt; is always '1.0'</description>
+  <highlighted_element>breathingScale</highlighted_element>
+  <language>kotlin</language>
+  <offset>8</offset>
+  <length>14</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/animation/RevealAnimationSystem.kt</file>
+  <line>23</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.animation</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.animation.RevealAnimationState RevealAnimationState(long slideOffset, float breathingScale, float zIndex, float alpha)" />
+  <problem_class id="SameParameterValue" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method parameter always has the same value</problem_class>
+  <hints />
+  <description>Value of parameter &lt;code&gt;zIndex&lt;/code&gt; is always '0.0'</description>
+  <highlighted_element>zIndex</highlighted_element>
+  <language>kotlin</language>
+  <offset>8</offset>
+  <length>6</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/animation/RevealAnimationSystem.kt</file>
+  <line>24</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.animation</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.animation.RevealAnimationState RevealAnimationState(long slideOffset, float breathingScale, float zIndex, float alpha)" />
+  <problem_class id="SameParameterValue" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method parameter always has the same value</problem_class>
+  <hints />
+  <description>Value of parameter &lt;code&gt;alpha&lt;/code&gt; is always '1.0'</description>
+  <highlighted_element>alpha</highlighted_element>
+  <language>kotlin</language>
+  <offset>8</offset>
+  <length>5</length>
+</problem>
+</problems>

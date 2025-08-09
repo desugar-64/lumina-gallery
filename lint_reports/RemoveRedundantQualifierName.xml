@@ -1,0 +1,262 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/AtlasManager.kt</file>
+  <line>81</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.AtlasManager java.lang.Object updateVisibleCells(java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia&gt; visibleCells, float currentZoom, int marginRings, dev.serhiiyaremych.lumina.domain.model.Media selectedMedia, dev.serhiiyaremych.lumina.ui.SelectionMode selectionMode, kotlin.coroutines.Continuation&lt;? super dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult&gt; $completion)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>dev.serhiiyaremych.lumina.ui</highlighted_element>
+  <language>kotlin</language>
+  <offset>23</offset>
+  <length>28</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/AtlasManager.kt</file>
+  <line>81</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.AtlasManager java.lang.Object updateVisibleCells(java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia&gt; visibleCells, float currentZoom, int marginRings, dev.serhiiyaremych.lumina.domain.model.Media selectedMedia, dev.serhiiyaremych.lumina.ui.SelectionMode selectionMode, kotlin.coroutines.Continuation&lt;? super dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult&gt; $completion)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>dev.serhiiyaremych.lumina.ui</highlighted_element>
+  <language>kotlin</language>
+  <offset>68</offset>
+  <length>28</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/AtlasManager.kt</file>
+  <line>391</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.AtlasManager java.lang.Object generateAtlasForCells(java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia&gt; cells, dev.serhiiyaremych.lumina.domain.model.LODLevel lodLevel, float currentZoom, dev.serhiiyaremych.lumina.domain.model.Media selectedMedia, dev.serhiiyaremych.lumina.ui.SelectionMode selectionMode, kotlin.coroutines.Continuation&lt;? super dev.serhiiyaremych.lumina.domain.usecase.EnhancedAtlasGenerator.EnhancedAtlasResult&gt; $completion)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>dev.serhiiyaremych.lumina.ui</highlighted_element>
+  <language>kotlin</language>
+  <offset>23</offset>
+  <length>28</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/AtlasManager.kt</file>
+  <line>391</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.AtlasManager java.lang.Object generateAtlasForCells(java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia&gt; cells, dev.serhiiyaremych.lumina.domain.model.LODLevel lodLevel, float currentZoom, dev.serhiiyaremych.lumina.domain.model.Media selectedMedia, dev.serhiiyaremych.lumina.ui.SelectionMode selectionMode, kotlin.coroutines.Continuation&lt;? super dev.serhiiyaremych.lumina.domain.usecase.EnhancedAtlasGenerator.EnhancedAtlasResult&gt; $completion)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>dev.serhiiyaremych.lumina.ui</highlighted_element>
+  <language>kotlin</language>
+  <offset>68</offset>
+  <length>28</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/AtlasManager.kt</file>
+  <line>410</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.AtlasManager java.lang.Object generateAtlasForCells(java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia&gt; cells, dev.serhiiyaremych.lumina.domain.model.LODLevel lodLevel, float currentZoom, dev.serhiiyaremych.lumina.domain.model.Media selectedMedia, dev.serhiiyaremych.lumina.ui.SelectionMode selectionMode, kotlin.coroutines.Continuation&lt;? super dev.serhiiyaremych.lumina.domain.usecase.EnhancedAtlasGenerator.EnhancedAtlasResult&gt; $completion)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>dev.serhiiyaremych.lumina.ui</highlighted_element>
+  <language>kotlin</language>
+  <offset>33</offset>
+  <length>28</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/AtlasManager.kt</file>
+  <line>506</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.AtlasManager java.lang.Object generateSelectiveAtlas(dev.serhiiyaremych.lumina.domain.model.Media selectedMedia, float currentZoom, dev.serhiiyaremych.lumina.ui.SelectionMode selectionMode, kotlin.coroutines.Continuation&lt;? super dev.serhiiyaremych.lumina.domain.usecase.EnhancedAtlasGenerator.EnhancedAtlasResult&gt; $completion)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>dev.serhiiyaremych.lumina.ui</highlighted_element>
+  <language>kotlin</language>
+  <offset>54</offset>
+  <length>28</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/GenerateHexGridLayoutUseCase.kt</file>
+  <line>147</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.GenerateHexGridLayoutUseCase dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia generateHexCellWithMedia(dev.serhiiyaremych.lumina.domain.model.HexCell hexCell, java.util.List&lt;? extends dev.serhiiyaremych.lumina.domain.model.Media&gt; mediaList, float thumbnailSizeFactor)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>dev.serhiiyaremych.lumina.domain.model</highlighted_element>
+  <language>kotlin</language>
+  <offset>17</offset>
+  <length>38</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/GenerateHexGridLayoutUseCase.kt</file>
+  <line>187</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.GenerateHexGridLayoutUseCase dev.serhiiyaremych.lumina.domain.model.MediaWithPosition generateMediaWithPosition(dev.serhiiyaremych.lumina.domain.model.Media media, dev.serhiiyaremych.lumina.domain.model.HexCell hexCell, androidx.compose.ui.geometry.Rect hexBounds, float thumbnailMaxSize)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>dev.serhiiyaremych.lumina.domain.model</highlighted_element>
+  <language>kotlin</language>
+  <offset>17</offset>
+  <length>38</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/GenerateHexGridLayoutUseCase.kt</file>
+  <line>270</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.GenerateHexGridLayoutUseCase java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.MediaWithPosition&gt; generateMediaWithShapePattern(java.util.List&lt;? extends dev.serhiiyaremych.lumina.domain.model.Media&gt; mediaList, dev.serhiiyaremych.lumina.domain.model.HexCell hexCell, androidx.compose.ui.geometry.Rect hexBounds, float thumbnailMaxSize)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>dev.serhiiyaremych.lumina.domain.model</highlighted_element>
+  <language>kotlin</language>
+  <offset>17</offset>
+  <length>38</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/GenerateHexGridLayoutUseCase.kt</file>
+  <line>578</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.GenerateHexGridLayoutUseCase androidx.compose.ui.geometry.Rect calculateHexBounds(dev.serhiiyaremych.lumina.domain.model.HexCell hexCell)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>dev.serhiiyaremych.lumina.domain.model</highlighted_element>
+  <language>kotlin</language>
+  <offset>44</offset>
+  <length>38</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/GenerateHexGridUseCase.kt</file>
+  <line>41</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.GenerateHexGridUseCase dev.serhiiyaremych.lumina.domain.model.HexGrid invoke(int cellCount, float cellSizeDp, androidx.compose.ui.unit.Density density, long canvasSize, float cellSpacingDp)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>kotlin.math</highlighted_element>
+  <language>kotlin</language>
+  <offset>46</offset>
+  <length>11</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/GenerateHexGridUseCase.kt</file>
+  <line>59</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.GenerateHexGridUseCase dev.serhiiyaremych.lumina.domain.model.HexGrid invoke(int cellCount, float cellSizeDp, androidx.compose.ui.unit.Density density, long canvasSize, float cellSpacingDp)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>kotlin.math</highlighted_element>
+  <language>kotlin</language>
+  <offset>36</offset>
+  <length>11</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/App.kt</file>
+  <line>515</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.AppKt long calculateCellPanelPosition(dev.serhiiyaremych.lumina.domain.model.HexCell hexCell, float zoom, long offset, long canvasSize, long panelSize, androidx.compose.ui.geometry.Rect viewportRect)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>androidx.compose.ui.geometry</highlighted_element>
+  <language>kotlin</language>
+  <offset>18</offset>
+  <length>28</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/App.kt</file>
+  <line>523</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.AppKt long calculateCellPanelPosition(dev.serhiiyaremych.lumina.domain.model.HexCell hexCell, float zoom, long offset, long canvasSize, long panelSize, androidx.compose.ui.geometry.Rect viewportRect)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>androidx.compose.ui.geometry</highlighted_element>
+  <language>kotlin</language>
+  <offset>21</offset>
+  <length>28</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/App.kt</file>
+  <line>530</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.AppKt long calculateCellPanelPosition(dev.serhiiyaremych.lumina.domain.model.HexCell hexCell, float zoom, long offset, long canvasSize, long panelSize, androidx.compose.ui.geometry.Rect viewportRect)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>androidx.compose.ui.geometry</highlighted_element>
+  <language>kotlin</language>
+  <offset>35</offset>
+  <length>28</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/GridRenderer.kt</file>
+  <line>201</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.GridRendererKt java.util.List&lt;dev.serhiiyaremych.lumina.ui.GridLevel&gt; calculateGridLevels(float zoom, androidx.compose.ui.unit.Density density, float majorGridSpacing)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>kotlin.math</highlighted_element>
+  <language>kotlin</language>
+  <offset>31</offset>
+  <length>11</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/FocusedCellPanel.kt</file>
+  <line>470</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.components.FocusedCellPanelKt void PhotoPreviewItem(dev.serhiiyaremych.lumina.domain.model.Media media, java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.TextureAtlas&gt; level0Atlases, boolean isSelected, kotlin.jvm.functions.Function0&lt;kotlin.Unit&gt; onClick, androidx.compose.ui.Modifier modifier)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>dev.serhiiyaremych.lumina.domain.model</highlighted_element>
+  <language>kotlin</language>
+  <offset>11</offset>
+  <length>38</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/FocusedCellPanel.kt</file>
+  <line>546</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.components.FocusedCellPanelKt void PhotoPreviewItem(dev.serhiiyaremych.lumina.domain.model.Media media, java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.TextureAtlas&gt; level0Atlases, boolean isSelected, kotlin.jvm.functions.Function0&lt;kotlin.Unit&gt; onClick, androidx.compose.ui.Modifier modifier)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>androidx.compose.ui.geometry</highlighted_element>
+  <language>kotlin</language>
+  <offset>29</offset>
+  <length>28</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/FocusedCellPanel.kt</file>
+  <line>570</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.components.FocusedCellPanelKt void PhotoPreviewItem(dev.serhiiyaremych.lumina.domain.model.Media media, java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.TextureAtlas&gt; level0Atlases, boolean isSelected, kotlin.jvm.functions.Function0&lt;kotlin.Unit&gt; onClick, androidx.compose.ui.Modifier modifier)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>androidx.compose.ui.geometry</highlighted_element>
+  <language>kotlin</language>
+  <offset>36</offset>
+  <length>28</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/FocusedCellPanel.kt</file>
+  <line>580</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.components.FocusedCellPanelKt void PhotoPreviewItem(dev.serhiiyaremych.lumina.domain.model.Media media, java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.TextureAtlas&gt; level0Atlases, boolean isSelected, kotlin.jvm.functions.Function0&lt;kotlin.Unit&gt; onClick, androidx.compose.ui.Modifier modifier)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>androidx.compose.ui.geometry</highlighted_element>
+  <language>kotlin</language>
+  <offset>36</offset>
+  <length>28</length>
+</problem>
+</problems>

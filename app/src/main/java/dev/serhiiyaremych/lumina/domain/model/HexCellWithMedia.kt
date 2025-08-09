@@ -30,12 +30,12 @@ data class HexCellWithMedia(
                 right = viewport.right + margin,
                 bottom = viewport.bottom + margin
             )
-        } else viewport
+        } else {
+            viewport
+        }
 
         return bounds.overlaps(expandedViewport)
     }
-
-    
 }
 
 /**
@@ -62,14 +62,14 @@ data class MediaWithPosition(
      */
     val aspectRatio: Float = if (media.height != 0) {
         media.width.toFloat() / media.height.toFloat()
-    } else 1f
+    } else {
+        1f
+    }
 
     /**
      * Returns true if the given point (in world coordinates) hits this media item
      */
-    fun containsPoint(point: Offset): Boolean {
-        return absoluteBounds.contains(point)
-    }
+    fun containsPoint(point: Offset): Boolean = absoluteBounds.contains(point)
 }
 
 /**
@@ -91,35 +91,29 @@ data class HexGridLayout(
      * Returns hex cells that are visible within the given viewport.
      * This is the primary method for viewport-based filtering.
      */
-    fun getVisibleHexCells(viewport: Rect, margin: Float = 0f): List<HexCellWithMedia> {
-        return hexCellsWithMedia.filter { hexCellWithMedia ->
-            hexCellWithMedia.isInViewport(viewport, margin)
-        }
+    fun getVisibleHexCells(viewport: Rect, margin: Float = 0f): List<HexCellWithMedia> = hexCellsWithMedia.filter { hexCellWithMedia ->
+        hexCellWithMedia.isInViewport(viewport, margin)
     }
 
     /**
      * Finds the media item at the given world coordinate position.
      * Used for click/tap handling.
      */
-    fun getMediaAtPosition(position: Offset): Media? {
-        return hexCellsWithMedia
-            .firstNotNullOfOrNull { hexCellWithMedia ->
-                hexCellWithMedia.mediaItems.find { mediaWithPosition ->
-                    mediaWithPosition.containsPoint(position)
-                }?.media
-            }
-    }
+    fun getMediaAtPosition(position: Offset): Media? = hexCellsWithMedia
+        .firstNotNullOfOrNull { hexCellWithMedia ->
+            hexCellWithMedia.mediaItems.find { mediaWithPosition ->
+                mediaWithPosition.containsPoint(position)
+            }?.media
+        }
 
     /**
      * Finds the hex cell at the given world coordinate position.
      * Used for hex cell click/tap handling.
      */
-    fun getHexCellAtPosition(position: Offset): HexCell? {
-        return hexCellsWithMedia
-            .find { hexCellWithMedia ->
-                hexCellWithMedia.bounds.contains(position)
-            }?.hexCell
-    }
+    fun getHexCellAtPosition(position: Offset): HexCell? = hexCellsWithMedia
+        .find { hexCellWithMedia ->
+            hexCellWithMedia.bounds.contains(position)
+        }?.hexCell
 }
 
 /**

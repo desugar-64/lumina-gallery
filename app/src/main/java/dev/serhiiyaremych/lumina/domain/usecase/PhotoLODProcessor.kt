@@ -5,27 +5,27 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
-import androidx.exifinterface.media.ExifInterface
 import androidx.compose.ui.unit.IntSize
+import androidx.exifinterface.media.ExifInterface
 import androidx.tracing.trace
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels
-import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_LOD_DISK_OPEN_INPUT_STREAM
-import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_LOD_MEMORY_DECODE_BOUNDS
-import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_LOD_MEMORY_DECODE_BITMAP
-import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_LOD_MEMORY_SAMPLE_SIZE_CALC
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels.ATLAS_MEMORY_BITMAP_ALLOCATE
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels.ATLAS_MEMORY_BITMAP_RECYCLE
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_LOD_DISK_OPEN_INPUT_STREAM
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_LOD_MEMORY_DECODE_BITMAP
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_LOD_MEMORY_DECODE_BOUNDS
+import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_LOD_MEMORY_SAMPLE_SIZE_CALC
+import dev.serhiiyaremych.lumina.data.BitmapPool
+import dev.serhiiyaremych.lumina.data.PhotoScaler
+import dev.serhiiyaremych.lumina.data.ScaleStrategy
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import javax.inject.Inject
 import javax.inject.Singleton
-import dev.serhiiyaremych.lumina.data.PhotoScaler
-import dev.serhiiyaremych.lumina.data.ScaleStrategy
-import dev.serhiiyaremych.lumina.data.BitmapPool
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withTimeout
 
 /**
  * Processes photos for Level-of-Detail (LOD) atlas system.
@@ -75,7 +75,8 @@ class PhotoLODProcessor @Inject constructor(
      * OPTIMIZED: Reads EXIF data first for dimensions + orientation in single I/O operation
      */
     private suspend fun loadOriginalPhoto(uri: Uri, lodLevel: LODLevel): Pair<Bitmap, IntSize>? {
-        return withTimeout(10_000) { // 10 second timeout per photo
+        return withTimeout(10_000) {
+            // 10 second timeout per photo
             android.util.Log.d("PhotoLODProcessor", "Loading photo: $uri")
 
             // Check cancellation before starting
@@ -120,30 +121,28 @@ class PhotoLODProcessor @Inject constructor(
     /**
      * Attempts to read dimensions and orientation from EXIF metadata
      */
-    private suspend fun readExifDimensionsAndOrientation(uri: Uri): Pair<IntSize, Int>? {
-        return withContext(Dispatchers.IO) {
-            trace(PHOTO_LOD_DISK_OPEN_INPUT_STREAM) {
-                contentResolver.openInputStream(uri)
-            }
-        }?.use { inputStream ->
-            currentCoroutineContext().ensureActive()
+    private suspend fun readExifDimensionsAndOrientation(uri: Uri): Pair<IntSize, Int>? = withContext(Dispatchers.IO) {
+        trace(PHOTO_LOD_DISK_OPEN_INPUT_STREAM) {
+            contentResolver.openInputStream(uri)
+        }
+    }?.use { inputStream ->
+        currentCoroutineContext().ensureActive()
 
-            try {
-                val exif = ExifInterface(inputStream)
-                val width = exif.getAttributeInt(ExifInterface.TAG_IMAGE_WIDTH, 0)
-                val height = exif.getAttributeInt(ExifInterface.TAG_IMAGE_LENGTH, 0)
-                val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+        try {
+            val exif = ExifInterface(inputStream)
+            val width = exif.getAttributeInt(ExifInterface.TAG_IMAGE_WIDTH, 0)
+            val height = exif.getAttributeInt(ExifInterface.TAG_IMAGE_LENGTH, 0)
+            val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
 
-                if (width > 0 && height > 0) {
-                    android.util.Log.d("PhotoLODProcessor", "EXIF dimensions: ${width}x${height} for $uri")
-                    Pair(IntSize(width, height), orientation)
-                } else {
-                    null // EXIF doesn't contain dimensions, fall back to bounds decode
-                }
-            } catch (e: Exception) {
-                android.util.Log.d("PhotoLODProcessor", "EXIF reading failed for $uri: ${e.message}")
-                null // Fall back to bounds decode
+            if (width > 0 && height > 0) {
+                android.util.Log.d("PhotoLODProcessor", "EXIF dimensions: ${width}x$height for $uri")
+                Pair(IntSize(width, height), orientation)
+            } else {
+                null // EXIF doesn't contain dimensions, fall back to bounds decode
             }
+        } catch (e: Exception) {
+            android.util.Log.d("PhotoLODProcessor", "EXIF reading failed for $uri: ${e.message}")
+            null // Fall back to bounds decode
         }
     }
 
@@ -263,56 +262,54 @@ class PhotoLODProcessor @Inject constructor(
      * Apply EXIF orientation to bitmap using pre-read orientation value
      * OPTIMIZED: Uses pre-read orientation to avoid additional I/O operations
      */
-    private suspend fun applyExifOrientationWithValue(bitmap: Bitmap, exifOrientation: Int): Bitmap {
-        return try {
-            // Calculate rotation matrix based on EXIF orientation
-            val matrix = when (exifOrientation) {
-                ExifInterface.ORIENTATION_ROTATE_90 -> Matrix().apply { postRotate(90f) }
-                ExifInterface.ORIENTATION_ROTATE_180 -> Matrix().apply { postRotate(180f) }
-                ExifInterface.ORIENTATION_ROTATE_270 -> Matrix().apply { postRotate(270f) }
-                ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> Matrix().apply { postScale(-1f, 1f) }
-                ExifInterface.ORIENTATION_FLIP_VERTICAL -> Matrix().apply { postScale(1f, -1f) }
-                ExifInterface.ORIENTATION_TRANSPOSE -> Matrix().apply {
-                    postRotate(90f)
-                    postScale(-1f, 1f)
-                }
-
-                ExifInterface.ORIENTATION_TRANSVERSE -> Matrix().apply {
-                    postRotate(270f)
-                    postScale(-1f, 1f)
-                }
-
-                else -> null // ORIENTATION_NORMAL - no transformation needed
+    private suspend fun applyExifOrientationWithValue(bitmap: Bitmap, exifOrientation: Int): Bitmap = try {
+        // Calculate rotation matrix based on EXIF orientation
+        val matrix = when (exifOrientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> Matrix().apply { postRotate(90f) }
+            ExifInterface.ORIENTATION_ROTATE_180 -> Matrix().apply { postRotate(180f) }
+            ExifInterface.ORIENTATION_ROTATE_270 -> Matrix().apply { postRotate(270f) }
+            ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> Matrix().apply { postScale(-1f, 1f) }
+            ExifInterface.ORIENTATION_FLIP_VERTICAL -> Matrix().apply { postScale(1f, -1f) }
+            ExifInterface.ORIENTATION_TRANSPOSE -> Matrix().apply {
+                postRotate(90f)
+                postScale(-1f, 1f)
             }
 
-            // Apply transformation if needed
-            if (matrix != null) {
-                android.util.Log.d("PhotoLODProcessor", "Applying EXIF orientation $exifOrientation")
-
-                val orientedBitmap = trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
-                    Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-                }
-
-                // Recycle original bitmap since we created a new one
-                if (orientedBitmap != bitmap) {
-                    trace(ATLAS_MEMORY_BITMAP_RECYCLE) {
-                        bitmap.recycle()
-                    }
-                }
-
-                android.util.Log.d(
-                    "PhotoLODProcessor",
-                    "EXIF orientation applied: ${bitmap.width}x${bitmap.height} -> ${orientedBitmap.width}x${orientedBitmap.height}"
-                )
-                orientedBitmap
-            } else {
-                bitmap
+            ExifInterface.ORIENTATION_TRANSVERSE -> Matrix().apply {
+                postRotate(270f)
+                postScale(-1f, 1f)
             }
-        } catch (e: Exception) {
-            // If EXIF processing fails, return original bitmap
-            android.util.Log.w("PhotoLODProcessor", "Failed to apply EXIF orientation: ${e.message}")
+
+            else -> null // ORIENTATION_NORMAL - no transformation needed
+        }
+
+        // Apply transformation if needed
+        if (matrix != null) {
+            android.util.Log.d("PhotoLODProcessor", "Applying EXIF orientation $exifOrientation")
+
+            val orientedBitmap = trace(ATLAS_MEMORY_BITMAP_ALLOCATE) {
+                Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            }
+
+            // Recycle original bitmap since we created a new one
+            if (orientedBitmap != bitmap) {
+                trace(ATLAS_MEMORY_BITMAP_RECYCLE) {
+                    bitmap.recycle()
+                }
+            }
+
+            android.util.Log.d(
+                "PhotoLODProcessor",
+                "EXIF orientation applied: ${bitmap.width}x${bitmap.height} -> ${orientedBitmap.width}x${orientedBitmap.height}"
+            )
+            orientedBitmap
+        } else {
             bitmap
         }
+    } catch (e: Exception) {
+        // If EXIF processing fails, return original bitmap
+        android.util.Log.w("PhotoLODProcessor", "Failed to apply EXIF orientation: ${e.message}")
+        bitmap
     }
 
     /**
@@ -320,21 +317,19 @@ class PhotoLODProcessor @Inject constructor(
      * OPTIMIZED: Only applies rotation when needed, preserves original bitmap when possible
      * @deprecated Use applyExifOrientationWithValue for better performance
      */
-    private suspend fun applyExifOrientation(bitmap: Bitmap, uri: Uri): Bitmap {
-        return try {
-            val exifOrientation = withContext(Dispatchers.IO) {
-                contentResolver.openInputStream(uri)?.use { inputStream: java.io.InputStream ->
-                    val exif = ExifInterface(inputStream)
-                    exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
-                }
-            } ?: ExifInterface.ORIENTATION_NORMAL
+    private suspend fun applyExifOrientation(bitmap: Bitmap, uri: Uri): Bitmap = try {
+        val exifOrientation = withContext(Dispatchers.IO) {
+            contentResolver.openInputStream(uri)?.use { inputStream: java.io.InputStream ->
+                val exif = ExifInterface(inputStream)
+                exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+            }
+        } ?: ExifInterface.ORIENTATION_NORMAL
 
-            applyExifOrientationWithValue(bitmap, exifOrientation)
-        } catch (e: Exception) {
-            // If EXIF processing fails, return original bitmap
-            android.util.Log.w("PhotoLODProcessor", "Failed to apply EXIF orientation for $uri: ${e.message}")
-            bitmap
-        }
+        applyExifOrientationWithValue(bitmap, exifOrientation)
+    } catch (e: Exception) {
+        // If EXIF processing fails, return original bitmap
+        android.util.Log.w("PhotoLODProcessor", "Failed to apply EXIF orientation for $uri: ${e.message}")
+        bitmap
     }
 
     /**
@@ -369,7 +364,6 @@ class PhotoLODProcessor @Inject constructor(
             }
         }
     }
-
 }
 
 /**

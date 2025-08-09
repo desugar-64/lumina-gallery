@@ -8,10 +8,10 @@ import dev.serhiiyaremych.lumina.data.ScaleStrategy
 import dev.serhiiyaremych.lumina.domain.model.AtlasOptimizationConfig
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 /**
  * Enhanced Atlas Generator with emergency fallback system for oversized textures.
@@ -29,7 +29,7 @@ class EnhancedAtlasGenerator @Inject constructor(
     private val smartMemoryManager: SmartMemoryManager,
     private val deviceCapabilities: DeviceCapabilities
 ) {
-    
+
     // Configuration for atlas optimization based on zoom levels
     private val optimizationConfig = AtlasOptimizationConfig.default()
 
@@ -54,7 +54,6 @@ class EnhancedAtlasGenerator @Inject constructor(
         scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER,
         priorityMapping: Map<Uri, dev.serhiiyaremych.lumina.domain.model.PhotoPriority> = emptyMap()
     ): EnhancedAtlasResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
-
         Log.d(TAG, "EnhancedAtlasGenerator.generateAtlasEnhanced called:")
         Log.d(TAG, "  - Photo URIs: ${photoUris.size} total")
         Log.d(TAG, "  - LOD Level: $lodLevel")
@@ -98,13 +97,12 @@ class EnhancedAtlasGenerator @Inject constructor(
         )
     }
 
-
     /**
      * Atlas generation strategy
      */
     enum class AtlasStrategy {
-        SINGLE_ATLAS,   // Used original single atlas generation
-        MULTI_ATLAS     // Used multi-atlas fallback system
+        SINGLE_ATLAS, // Used original single atlas generation
+        MULTI_ATLAS // Used multi-atlas fallback system
     }
 
     /**
@@ -146,24 +144,20 @@ class EnhancedAtlasGenerator @Inject constructor(
             get() = allAtlases.isNotEmpty()
 
         companion object {
-            fun empty(): EnhancedAtlasResult {
-                return EnhancedAtlasResult(
-                    primaryAtlas = null,
-                    additionalAtlases = emptyList(),
-                    failed = emptyList(),
-                    totalPhotos = 0,
-                    processedPhotos = 0,
-                    strategy = AtlasStrategy.SINGLE_ATLAS,
-                    fallbackUsed = false
-                )
-            }
+            fun empty(): EnhancedAtlasResult = EnhancedAtlasResult(
+                primaryAtlas = null,
+                additionalAtlases = emptyList(),
+                failed = emptyList(),
+                totalPhotos = 0,
+                processedPhotos = 0,
+                strategy = AtlasStrategy.SINGLE_ATLAS,
+                fallbackUsed = false
+            )
         }
     }
-    
+
     /**
      * Get SmartMemoryManager for debug overlay and memory status
      */
-    fun getSmartMemoryManager(): SmartMemoryManager {
-        return smartMemoryManager
-    }
+    fun getSmartMemoryManager(): SmartMemoryManager = smartMemoryManager
 }

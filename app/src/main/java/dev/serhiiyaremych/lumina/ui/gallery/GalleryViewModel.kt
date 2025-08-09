@@ -9,13 +9,14 @@ import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.domain.model.HexGridLayout
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.usecase.AtlasManager
-import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
 import dev.serhiiyaremych.lumina.domain.usecase.GenerateHexGridLayoutUseCase
 import dev.serhiiyaremych.lumina.domain.usecase.GetMediaUseCase
 import dev.serhiiyaremych.lumina.domain.usecase.GroupMediaUseCase
 import dev.serhiiyaremych.lumina.domain.usecase.GroupingPeriod
+import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +26,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class GalleryViewModel @Inject constructor(
@@ -74,7 +74,7 @@ class GalleryViewModel @Inject constructor(
 
     init {
         loadMedia()
-        
+
         // Initialize memory status
         updateMemoryStatus()
 
@@ -92,7 +92,7 @@ class GalleryViewModel @Inject constructor(
                 .distinctUntilChanged()
                 .collectLatest { (visibleCells, currentZoom, selectedMedia, selectionMode) ->
                     _isAtlasGenerating.value = true
-                    
+
                     runCatching {
                         atlasManager.updateVisibleCells(
                             visibleCells = visibleCells,
@@ -115,7 +115,7 @@ class GalleryViewModel @Inject constructor(
                                 )
                                 currentRequestSequence = result.requestSequence
                                 _atlasState.value = result
-                                
+
                                 // Update memory status immediately after atlas state change
                                 updateMemoryStatus()
                             } else {
@@ -128,14 +128,14 @@ class GalleryViewModel @Inject constructor(
                         onFailure = { e ->
                             android.util.Log.e("GalleryViewModel", "Atlas generation failed", e)
                             if (e is CancellationException) throw e
-                            
+
                             // Update memory status even on failure to reflect current state
                             updateMemoryStatus()
                         }
                     )
-                    
+
                     _isAtlasGenerating.value = false
-                    
+
                     // Final memory status update after generation completes
                     updateMemoryStatus()
                 }
@@ -182,7 +182,7 @@ class GalleryViewModel @Inject constructor(
     ) {
         android.util.Log.d("GalleryViewModel", "onVisibleCellsChanged: ${visibleCells.size} cells, zoom=$currentZoom, selectedMedia=${selectedMedia?.let { "present" } ?: "none"}, selectionMode=$selectionMode")
         updateAtlasFlow.value = Tuple4(visibleCells, currentZoom, selectedMedia, selectionMode)
-        
+
         // Update memory status for debug panel
         updateMemoryStatus()
     }

@@ -1,17 +1,17 @@
 package dev.serhiiyaremych.lumina.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -26,48 +26,48 @@ import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.geometry.Rect
 import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.toPath
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.model.MediaWithPosition
 import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
 import dev.serhiiyaremych.lumina.ui.SelectionMode
-import dev.serhiiyaremych.lumina.ui.drawStyledPhoto
 import dev.serhiiyaremych.lumina.ui.drawPlaceholderRect
+import dev.serhiiyaremych.lumina.ui.drawStyledPhoto
+import kotlinx.coroutines.delay
 
 /**
  * Responsive layout constants for FocusedCellPanel width behavior
@@ -75,13 +75,13 @@ import dev.serhiiyaremych.lumina.ui.drawPlaceholderRect
 private object ResponsiveLayoutConstants {
     /** Breakpoint for small to medium device transition (phones to small tablets) */
     const val SMALL_TO_MEDIUM_BREAKPOINT_DP = 600
-    
+
     /** Breakpoint for medium to large device transition (small tablets to large tablets/desktop) */
     const val MEDIUM_TO_LARGE_BREAKPOINT_DP = 840
-    
+
     /** Panel width percentage for small tablets (600-839dp width) */
     const val SMALL_TABLET_WIDTH_FRACTION = 0.7f
-    
+
     /** Panel width percentage for large tablets/desktop (≥840dp width) */
     const val LARGE_TABLET_WIDTH_FRACTION = 0.5f
 }
@@ -97,7 +97,7 @@ private object ResponsiveLayoutConstants {
  * - Loading state animations for better UX
  *
  * Responsive design with Material 3 Adaptive:
- * - < 600dp width (phones): Uses full width for optimal space usage  
+ * - < 600dp width (phones): Uses full width for optimal space usage
  * - 600dp-839dp width (small tablets): Constrains to 70% width for better UX
  * - ≥ 840dp width (large tablets): Constrains to 50% width to prevent awkward stretching
  *
@@ -206,7 +206,7 @@ private fun Modifier.panelTransformation(
     provideTranslationOffset: (panelSize: Size) -> Offset
 ): Modifier {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-    
+
     val widthModifier = when {
         !windowSizeClass.isWidthAtLeastBreakpoint(ResponsiveLayoutConstants.SMALL_TO_MEDIUM_BREAKPOINT_DP) -> {
             Modifier.fillMaxWidth()
@@ -218,7 +218,7 @@ private fun Modifier.panelTransformation(
             Modifier.fillMaxWidth(ResponsiveLayoutConstants.LARGE_TABLET_WIDTH_FRACTION)
         }
     }
-    
+
     return this
         .then(widthModifier)
         .graphicsLayer {
@@ -600,7 +600,6 @@ private fun PhotoPreviewItem(
                                     alpha = 1f,
                                     drawBorder = false // No border for small previews
                                 )
-
                             } else {
                                 // Fallback: placeholder when photo not in L0 atlases
                                 drawPlaceholderRect(bounds, placeholderColor, zoom = 1f, alpha = 1f)
@@ -612,6 +611,6 @@ private fun PhotoPreviewItem(
                         }
                     }
                 }
-            },
+            }
     )
 }

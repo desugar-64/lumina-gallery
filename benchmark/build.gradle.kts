@@ -58,17 +58,17 @@ tasks.register("trackOptimization") {
     group = "benchmarking"
     description = "Track optimization progress with iterative benchmark collection"
     dependsOn("connectedBenchmarkAndroidTest")
-    
+
     doLast {
         val benchmarkConfig = findLatestBenchmarkResult()
         val optimizationName = project.findProperty("optimization.name")?.toString()
             ?: throw GradleException("❌ Please specify optimization name: -Poptimization.name='bitmap_pooling'")
-        
+
         println("📈 Tracking optimization progress: $optimizationName")
-        
+
         executeOptimizationTracker("collect", optimizationName, benchmarkConfig.benchmarkFile)
         executeOptimizationTracker("compare", optimizationName)
-        
+
         println("✅ Optimization tracking complete!")
     }
 }
@@ -76,27 +76,27 @@ tasks.register("trackOptimization") {
 tasks.register("compareOptimization") {
     group = "benchmarking"
     description = "Compare all runs within a specific optimization"
-    
+
     doLast {
         val optimizationName = project.findProperty("optimization.name")?.toString()
             ?: throw GradleException("❌ Please specify optimization name: -Poptimization.name='bitmap_pooling'")
         val showAllMetrics = project.hasProperty("all.metrics")
-        
+
         println("📊 Comparing optimization runs: $optimizationName")
         println("=" + "=".repeat(59))
-        
+
         executeOptimizationTracker("compare", optimizationName, showAllMetrics = showAllMetrics)
     }
 }
 
 tasks.register("listOptimizationRuns") {
-    group = "benchmarking" 
+    group = "benchmarking"
     description = "List all runs for a specific optimization"
-    
+
     doLast {
         val optimizationName = project.findProperty("optimization.name")?.toString()
             ?: throw GradleException("❌ Please specify optimization name: -Poptimization.name='bitmap_pooling'")
-        
+
         executeOptimizationTracker("list", optimizationName)
     }
 }
@@ -104,40 +104,44 @@ tasks.register("listOptimizationRuns") {
 // Helper functions for atlas benchmarking
 fun findLatestBenchmarkResult(): BenchmarkConfig {
     val outputDir = File(buildDir, "outputs/connected_android_test_additional_output/benchmark/connected")
-    
+
     if (!outputDir.exists()) {
         throw GradleException("❌ Benchmark output directory not found: ${outputDir.absolutePath}")
     }
-    
+
     val benchmarkFiles = outputDir.walkTopDown()
-        .filter { 
-            it.name.contains("benchmarkData") && 
-            it.extension == "json"
+        .filter {
+            it.name.contains("benchmarkData") &&
+                it.extension == "json"
         }
         .sortedByDescending { it.lastModified() }
-    
+
     if (!benchmarkFiles.iterator().hasNext()) {
         throw GradleException("❌ No atlas benchmark results found in ${outputDir.absolutePath}")
     }
-    
+
     val latestResult = benchmarkFiles.first()
     println("📊 Found latest benchmark result: ${latestResult.name}")
-    
+
     return BenchmarkConfig(latestResult.absolutePath, latestResult.name)
 }
 
 // Optimization tracking functions
-fun executeOptimizationTracker(command: String, optimizationName: String, benchmarkFile: String? = null, 
-                              showAllMetrics: Boolean = false) {
+fun executeOptimizationTracker(
+    command: String,
+    optimizationName: String,
+    benchmarkFile: String? = null,
+    showAllMetrics: Boolean = false
+) {
     val scriptsDir = File(project.rootProject.projectDir, "scripts")
     val trackerScript = File(scriptsDir, "optimization_tracker.py")
-    
+
     if (!trackerScript.exists()) {
         throw GradleException("❌ Optimization tracker script not found: ${trackerScript.absolutePath}")
     }
-    
+
     val cmdArgs = mutableListOf("python3", trackerScript.absolutePath, command, optimizationName)
-    
+
     // Add command-specific arguments
     when (command) {
         "collect" -> {
@@ -151,9 +155,9 @@ fun executeOptimizationTracker(command: String, optimizationName: String, benchm
             }
         }
     }
-    
+
     println("🔧 Executing: ${cmdArgs.joinToString(" ")}")
-    
+
     exec {
         workingDir = project.rootProject.projectDir
         commandLine = cmdArgs
@@ -163,7 +167,7 @@ fun executeOptimizationTracker(command: String, optimizationName: String, benchm
 fun printReportLocation() {
     val resultsDir = File(project.rootProject.projectDir, "benchmark_results")
     val reportFile = File(resultsDir, "atlas_performance_report.html")
-    
+
     if (reportFile.exists()) {
         println("\n📊 Atlas Performance Report Generated!")
         println("🌐 View report: file://${reportFile.absolutePath}")

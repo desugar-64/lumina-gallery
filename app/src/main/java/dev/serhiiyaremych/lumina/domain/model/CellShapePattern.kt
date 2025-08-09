@@ -137,22 +137,20 @@ data class ShapePatternMetadata(
 fun selectShapePattern(
     mediaCount: Int,
     random: Random
-): CellShapePattern {
-    return when (mediaCount) {
-        1 -> CellShapePattern.IRREGULAR_CLUSTER // Single photo works best as cluster
-        2 -> if (random.nextBoolean()) CellShapePattern.CURVED_ARC else CellShapePattern.FLOWING_LINE
-        3, 4 -> {
-            val patterns = listOf(
-                CellShapePattern.LOOSE_SPIRAL,
-                CellShapePattern.CURVED_ARC,
-                CellShapePattern.IRREGULAR_CLUSTER
-            )
-            patterns[random.nextInt(patterns.size)]
-        }
-        else -> {
-            // For 5+ photos, all patterns are viable
-            val allPatterns = CellShapePattern.entries
-            allPatterns[random.nextInt(allPatterns.size)]
-        }
+): CellShapePattern = when (mediaCount) {
+    1 -> CellShapePattern.IRREGULAR_CLUSTER // Single photo works best as cluster
+    2 -> if (random.nextBoolean()) CellShapePattern.CURVED_ARC else CellShapePattern.FLOWING_LINE
+    3, 4 -> {
+        val patterns = listOf(
+            CellShapePattern.LOOSE_SPIRAL,
+            CellShapePattern.CURVED_ARC,
+            CellShapePattern.IRREGULAR_CLUSTER
+        )
+        patterns[random.nextInt(patterns.size)]
+    }
+    else -> {
+        // For 5+ photos, all patterns are viable
+        val allPatterns = CellShapePattern.entries
+        allPatterns[random.nextInt(allPatterns.size)]
     }
 }

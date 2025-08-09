@@ -44,25 +44,25 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import java.util.Locale
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.domain.usecase.MultiAtlasUpdateResult
 import dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager
+import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
  * Debug overlay font size constants for centralized control
  */
 private object DebugTextSizes {
-    val TOGGLE_BUTTON = 16.sp          // Debug toggle button (×/◐)
-    val LARGE_ICON = 14.sp             // Large icons (🔍, 📱)
-    val PRIMARY_TEXT = 13.sp           // Primary values (zoom level)
-    val SECONDARY_TEXT = 12.sp         // Secondary text (LOD level, icons, tier labels)
-    val TERTIARY_TEXT = 11.sp          // Small labels (strategy name, memory %, atlas sizes)
-    val DETAIL_TEXT = 10.sp            // Detail info (atlas count, photo count, dimensions)
-    val MICRO_TEXT = 9.sp              // Very small text (compact atlas photo count, utilization)
+    val TOGGLE_BUTTON = 16.sp // Debug toggle button (×/◐)
+    val LARGE_ICON = 14.sp // Large icons (🔍, 📱)
+    val PRIMARY_TEXT = 13.sp // Primary values (zoom level)
+    val SECONDARY_TEXT = 12.sp // Secondary text (LOD level, icons, tier labels)
+    val TERTIARY_TEXT = 11.sp // Small labels (strategy name, memory %, atlas sizes)
+    val DETAIL_TEXT = 10.sp // Detail info (atlas count, photo count, dimensions)
+    val MICRO_TEXT = 9.sp // Very small text (compact atlas photo count, utilization)
 }
 
 /**
@@ -147,7 +147,6 @@ private fun CompactDebugInfo(
 
         // Cell focus debug info
         CompactCellFocusInfo(significantCells)
-
 
         // Device capabilities info
         deviceCapabilities?.let { CompactDeviceInfo(it) }
@@ -290,14 +289,14 @@ private fun StreamingAtlasStrategyIndicator(streamingAtlases: Map<LODLevel, List
 
     val strategyColor = when (strategy) {
         "STREAMING" -> Color(0xFF9C27B0) // Purple for streaming
-        "MULTI" -> Color(0xFF2196F3)    // Blue for multi-size
-        else -> Color(0xFFFF9800)       // Orange for single
+        "MULTI" -> Color(0xFF2196F3) // Blue for multi-size
+        else -> Color(0xFFFF9800) // Orange for single
     }
 
     val strategyIcon = when (strategy) {
-        "STREAMING" -> "🌊"  // Wave for streaming
-        "MULTI" -> "🔄"     // Recycle for multi
-        else -> "📄"        // Single page for single
+        "STREAMING" -> "🌊" // Wave for streaming
+        "MULTI" -> "🔄" // Recycle for multi
+        else -> "📄" // Single page for single
     }
 
     Row(
@@ -368,14 +367,14 @@ private fun AtlasStrategyIndicator(atlasState: MultiAtlasUpdateResult.Success) {
 
     val strategyColor = when (strategy) {
         "PRIORITY" -> Color(0xFF4CAF50) // Green for priority-based
-        "MULTI" -> Color(0xFF2196F3)   // Blue for multi-size
-        else -> Color(0xFFFF9800)      // Orange for single
+        "MULTI" -> Color(0xFF2196F3) // Blue for multi-size
+        else -> Color(0xFFFF9800) // Orange for single
     }
 
     val strategyIcon = when (strategy) {
-        "PRIORITY" -> "⭐"  // Star for priority
-        "MULTI" -> "🔄"    // Recycle for multi
-        else -> "📄"       // Single page for single
+        "PRIORITY" -> "⭐" // Star for priority
+        "MULTI" -> "🔄" // Recycle for multi
+        else -> "📄" // Single page for single
     }
 
     Row(
@@ -436,10 +435,10 @@ private fun LODGroupView(lod: LODLevel?, atlases: List<dev.serhiiyaremych.lumina
     }
 
     val lodIcon = when (lod?.level) {
-        0, 1 -> "🔽"  // Low quality
-        2, 3 -> "📷"  // Medium quality
-        4, 5 -> "📸"  // High quality
-        6, 7 -> "🎯"  // Very high/precise quality
+        0, 1 -> "🔽" // Low quality
+        2, 3 -> "📷" // Medium quality
+        4, 5 -> "📸" // High quality
+        6, 7 -> "🎯" // Very high/precise quality
         else -> "❓"
     }
 
@@ -531,7 +530,13 @@ private fun CompactAtlasCard(atlas: dev.serhiiyaremych.lumina.domain.model.Textu
 
         // Utilization indicator as colored border
         val utilizationColor =
-            if (atlas.utilization > 0.7f) Color.Green else if (atlas.utilization > 0.4f) Color.Yellow else Color.Red
+            if (atlas.utilization > 0.7f) {
+                Color.Green
+            } else if (atlas.utilization > 0.4f) {
+                Color.Yellow
+            } else {
+                Color.Red
+            }
         Box(
             modifier = Modifier
                 .size(28.dp)
@@ -577,7 +582,13 @@ private fun ExpandedAtlasCard(atlas: dev.serhiiyaremych.lumina.domain.model.Text
 
             // Utilization indicator in bottom-left corner
             val utilizationColor =
-                if (atlas.utilization > 0.7f) Color.Green else if (atlas.utilization > 0.4f) Color.Yellow else Color.Red
+                if (atlas.utilization > 0.7f) {
+                    Color.Green
+                } else if (atlas.utilization > 0.4f) {
+                    Color.Yellow
+                } else {
+                    Color.Red
+                }
             Text(
                 text = "${(atlas.utilization * 100).roundToInt()}%",
                 color = Color.White,
@@ -787,12 +798,14 @@ private fun MemoryLeakDetectionStatus(smartMemoryManager: SmartMemoryManager) {
     ) {
         val leakIcon = if (leakReport?.detected == true) {
             when {
-                leakReport.severity > 0.8f -> "🆘"  // Critical leak
-                leakReport.severity > 0.6f -> "⚠️"  // High leak
-                leakReport.severity > 0.4f -> "🟡"  // Medium leak
-                else -> "🟢"  // Low leak
+                leakReport.severity > 0.8f -> "🆘" // Critical leak
+                leakReport.severity > 0.6f -> "⚠️" // High leak
+                leakReport.severity > 0.4f -> "🟡" // Medium leak
+                else -> "🟢" // Low leak
             }
-        } else "✅"  // No leak detected
+        } else {
+            "✅" // No leak detected
+        }
 
         Text(
             text = leakIcon,
@@ -904,7 +917,6 @@ private fun CompactErrorView(message: String) {
             .padding(4.dp)
     )
 }
-
 
 @Composable
 private fun CompactDeviceInfo(deviceCapabilities: dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities) {
@@ -1025,12 +1037,9 @@ private fun CompactCellFocusInfo(significantCells: Set<dev.serhiiyaremych.lumina
     }
 }
 
-
-private fun formatBytes(bytes: Long): String {
-    return when {
-        bytes >= 1024 * 1024 * 1024 -> String.format(Locale.US, "%.1f GB", bytes / (1024.0 * 1024.0 * 1024.0))
-        bytes >= 1024 * 1024 -> String.format(Locale.US, "%.1f MB", bytes / (1024.0 * 1024.0))
-        bytes >= 1024 -> String.format(Locale.US, "%.1f KB", bytes / 1024.0)
-        else -> "$bytes B"
-    }
+private fun formatBytes(bytes: Long): String = when {
+    bytes >= 1024 * 1024 * 1024 -> String.format(Locale.US, "%.1f GB", bytes / (1024.0 * 1024.0 * 1024.0))
+    bytes >= 1024 * 1024 -> String.format(Locale.US, "%.1f MB", bytes / (1024.0 * 1024.0))
+    bytes >= 1024 -> String.format(Locale.US, "%.1f KB", bytes / 1024.0)
+    else -> "$bytes B"
 }

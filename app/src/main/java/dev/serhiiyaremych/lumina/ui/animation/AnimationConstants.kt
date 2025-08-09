@@ -12,13 +12,13 @@ object AnimationConstants {
      * - Selection state animations
      */
     const val ANIMATION_DURATION_MS = 400
-    
+
     /**
      * Fast animation duration for quick transitions.
      * Used for cleanup and reset animations.
      */
     const val FAST_ANIMATION_DURATION_MS = 200
-    
+
     /**
      * Alpha value for faded photos in pile shuffle animation.
      */

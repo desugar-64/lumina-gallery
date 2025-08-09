@@ -1,0 +1,587 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/PhotoScaler.kt</file>
+  <line>10</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.data</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/PhotoScaler.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import dev.serhiiyaremych.lumina.common.BenchmarkLabels.ATLAS_MEMORY_BITMAP_ALLOCATE</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>84</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/PhotoScaler.kt</file>
+  <line>11</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.data</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/PhotoScaler.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import dev.serhiiyaremych.lumina.common.BenchmarkLabels.ATLAS_MEMORY_BITMAP_RECYCLE</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>83</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/ExifDataExtractor.kt</file>
+  <line>4</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.data.metadata</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/ExifDataExtractor.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import android.location.Location</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>32</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MediaMetadataRepository.kt</file>
+  <line>3</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.data.metadata</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MediaMetadataRepository.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import android.net.Uri</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>22</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MediaMetadataRepository.kt</file>
+  <line>7</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.data.metadata</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MediaMetadataRepository.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import dev.serhiiyaremych.lumina.domain.model.MediaWithPosition</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>63</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MetadataCache.kt</file>
+  <line>7</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.data.metadata</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MetadataCache.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import dev.serhiiyaremych.lumina.domain.model.MetadataLoadingState</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>66</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MetadataCache.kt</file>
+  <line>10</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.data.metadata</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MetadataCache.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import kotlinx.serialization.encodeToString</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>43</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/di/AppModule.kt</file>
+  <line>17</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.di</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/di/AppModule.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>66</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/di/AppModule.kt</file>
+  <line>18</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.di</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/di/AppModule.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import dev.serhiiyaremych.lumina.domain.usecase.DynamicAtlasPool</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>64</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/HexCellWithMedia.kt</file>
+  <line>6</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.model</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/HexCellWithMedia.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.ui.graphics.asComposeColorFilter</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>56</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/BitmapAtlasPool.kt</file>
+  <line>5</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/BitmapAtlasPool.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.ui.unit.IntSize</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>39</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/DynamicAtlasPool.kt</file>
+  <line>20</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/DynamicAtlasPool.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import dev.serhiiyaremych.lumina.domain.usecase.ProcessedPhoto</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>62</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/SmartMemoryManager.kt</file>
+  <line>6</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/SmartMemoryManager.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import android.graphics.Bitmap</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>30</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/App.kt</file>
+  <line>9</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/App.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.foundation.layout.safeDrawingPadding</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>60</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/App.kt</file>
+  <line>10</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/App.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.material3.Button</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>40</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/App.kt</file>
+  <line>12</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/App.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.material3.Icon</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>38</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/App.kt</file>
+  <line>29</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/App.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.ui.geometry.Rect</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>40</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/GridCanvas.kt</file>
+  <line>10</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/GridCanvas.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.ui.graphics.Color</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>41</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/GridRenderer.kt</file>
+  <line>8</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/GridRenderer.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import kotlin.math.max</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>22</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/TransformableContent.kt</file>
+  <line>8</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/TransformableContent.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.animation.core.Spring</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>45</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/ViewportStateManager.kt</file>
+  <line>7</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/ViewportStateManager.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import dev.serhiiyaremych.lumina.domain.model.HexCell</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>53</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/DirectionalIndicator.kt</file>
+  <line>20</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/DirectionalIndicator.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.ui.draw.alpha</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>37</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/DirectionalIndicator.kt</file>
+  <line>21</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/DirectionalIndicator.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.ui.draw.rotate</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>38</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/DirectionalIndicator.kt</file>
+  <line>22</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/DirectionalIndicator.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.ui.draw.shadow</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>38</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/DirectionalIndicator.kt</file>
+  <line>23</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/DirectionalIndicator.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.ui.graphics.Color</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>41</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/DirectionalIndicator.kt</file>
+  <line>25</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/DirectionalIndicator.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.ui.platform.LocalDensity</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>48</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/DirectionalIndicator.kt</file>
+  <line>29</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/DirectionalIndicator.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import kotlin.math.cos</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>22</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/DirectionalIndicator.kt</file>
+  <line>31</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/DirectionalIndicator.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import kotlin.math.sin</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>22</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/FocusedCellPanel.kt</file>
+  <line>25</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/FocusedCellPanel.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.foundation.shape.GenericShape</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>53</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/FocusedCellPanel.kt</file>
+  <line>29</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/FocusedCellPanel.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.material3.ripple</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>40</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/FocusedCellPanel.kt</file>
+  <line>50</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/FocusedCellPanel.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.ui.graphics.Path</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>40</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/MediaPermissionManager.kt</file>
+  <line>7</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/MediaPermissionManager.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import android.provider.MediaStore</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>34</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/MediaPermissionManager.kt</file>
+  <line>8</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/MediaPermissionManager.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.activity.compose.rememberLauncherForActivityResult</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>66</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/MediaPermissionManager.kt</file>
+  <line>9</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.components</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/MediaPermissionManager.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.activity.result.contract.ActivityResultContracts</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>64</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt</file>
+  <line>4</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.debug</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.animation.core.LinearEasing</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>51</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt</file>
+  <line>5</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.debug</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.animation.core.RepeatMode</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>49</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt</file>
+  <line>6</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.debug</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.animation.core.animateFloat</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>51</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt</file>
+  <line>7</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.debug</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.animation.core.infiniteRepeatable</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>57</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt</file>
+  <line>8</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.debug</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.animation.core.rememberInfiniteTransition</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>65</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt</file>
+  <line>9</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.debug</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.animation.core.tween</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>44</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt</file>
+  <line>17</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.debug</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.foundation.layout.Spacer</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>48</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt</file>
+  <line>43</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.debug</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/debug/EnhancedDebugOverlay.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import androidx.compose.ui.graphics.graphicsLayer</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>49</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/StreamingGalleryViewModel.kt</file>
+  <line>9</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.gallery</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/StreamingGalleryViewModel.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import dev.serhiiyaremych.lumina.domain.model.HexGridLayout</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>59</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/StreamingGalleryViewModel.kt</file>
+  <line>20</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.gallery</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/StreamingGalleryViewModel.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import java.time.LocalDate</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>26</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/selection/SelectionStateManager.kt</file>
+  <line>5</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.selection</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/selection/SelectionStateManager.kt" />
+  <problem_class id="KotlinUnusedImport" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+  <description>Unused import directive</description>
+  <highlighted_element>import dev.serhiiyaremych.lumina.domain.model.MediaWithPosition</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>63</length>
+</problem>
+</problems>

@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     streamingGalleryViewModel = streamingGalleryViewModel,
                     isBenchmarkMode = isBenchmarkMode,
-                    autoZoom = autoZoom,
+                    autoZoom = autoZoom
                 )
             }
         }

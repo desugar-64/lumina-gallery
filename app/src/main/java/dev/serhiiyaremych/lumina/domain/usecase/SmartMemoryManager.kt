@@ -10,16 +10,16 @@ import androidx.compose.ui.unit.IntSize
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
-import java.util.Locale
 import javax.inject.Singleton
 import kotlin.math.ceil
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Smart Memory Manager for optimal memory allocation and pressure handling in the atlas system.
@@ -41,9 +41,9 @@ class SmartMemoryManager @Inject constructor(
         private const val TAG = "SmartMemoryManager"
 
         // Relaxed memory pressure thresholds (will be dynamically adjusted)
-        private const val DEFAULT_PRESSURE_LOW = 0.7f      // Was 0.8f
-        private const val DEFAULT_PRESSURE_MEDIUM = 0.85f  // Was 0.9f
-        private const val DEFAULT_PRESSURE_HIGH = 0.92f    // Was 0.95f
+        private const val DEFAULT_PRESSURE_LOW = 0.7f // Was 0.8f
+        private const val DEFAULT_PRESSURE_MEDIUM = 0.85f // Was 0.9f
+        private const val DEFAULT_PRESSURE_HIGH = 0.92f // Was 0.95f
         private const val DEFAULT_PRESSURE_CRITICAL = 0.96f // Was 0.98f
 
         // Relaxed memory allocation safety margins
@@ -81,11 +81,11 @@ class SmartMemoryManager @Inject constructor(
      * Memory pressure levels with enhanced detection
      */
     enum class MemoryPressure {
-        NORMAL,     // < 70% usage, system healthy
-        LOW,        // 70-80% usage, minor pressure
-        MEDIUM,     // 80-90% usage, moderate pressure
-        HIGH,       // 90-95% usage, high pressure
-        CRITICAL    // > 95% usage, emergency cleanup needed
+        NORMAL, // < 70% usage, system healthy
+        LOW, // 70-80% usage, minor pressure
+        MEDIUM, // 80-90% usage, moderate pressure
+        HIGH, // 90-95% usage, high pressure
+        CRITICAL // > 95% usage, emergency cleanup needed
     }
 
     /**
@@ -163,7 +163,8 @@ class SmartMemoryManager @Inject constructor(
     data class AtlasKey(
         val lodLevel: LODLevel,
         val atlasSize: IntSize,
-        val photosHash: Int // Hash of photo URIs for identification
+        // Hash of photo URIs for identification
+        val photosHash: Int
     )
 
     /**
@@ -173,7 +174,8 @@ class SmartMemoryManager @Inject constructor(
         val atlas: TextureAtlas,
         val memoryUsageBytes: Long,
         val lastAccessTime: Long,
-        val priority: Float // Higher priority = less likely to be evicted
+        // Higher priority = less likely to be evicted
+        val priority: Float
     )
 
     /**
@@ -448,8 +450,10 @@ class SmartMemoryManager @Inject constructor(
     private fun attemptMemoryEviction(requiredMemory: Long, newPriority: Float): Long {
         val candidates = atlasRegistry.entries
             .filter { it.value.priority < newPriority }
-            .sortedWith(compareBy<Map.Entry<AtlasKey, AtlasEntry>> { it.value.priority }
-                .thenBy { it.value.lastAccessTime })
+            .sortedWith(
+                compareBy<Map.Entry<AtlasKey, AtlasEntry>> { it.value.priority }
+                    .thenBy { it.value.lastAccessTime }
+            )
 
         var freedMemory = 0L
         for ((key, entry) in candidates) {
@@ -567,15 +571,15 @@ class SmartMemoryManager @Inject constructor(
         return when {
             // High-end device with system stress - more relaxed
             capabilities.memoryTier == DeviceCapabilities.MemoryTier.HIGH && isSystemUnderStress ->
-                DynamicThresholds(0.65f, 0.78f, 0.88f, 0.93f)  // Was: 0.7f, 0.8f, 0.9f, 0.95f
+                DynamicThresholds(0.65f, 0.78f, 0.88f, 0.93f) // Was: 0.7f, 0.8f, 0.9f, 0.95f
 
             // Low-end device under normal conditions - more permissive
             capabilities.memoryTier == DeviceCapabilities.MemoryTier.MINIMAL && !isSystemUnderStress ->
-                DynamicThresholds(0.55f, 0.7f, 0.82f, 0.9f)   // Was: 0.6f, 0.75f, 0.85f, 0.92f
+                DynamicThresholds(0.55f, 0.7f, 0.82f, 0.9f) // Was: 0.6f, 0.75f, 0.85f, 0.92f
 
             // Background apps consuming memory - less aggressive
             systemPressure.backgroundAppCount > 10 ->
-                DynamicThresholds(0.6f, 0.75f, 0.85f, 0.92f)  // Was: 0.65f, 0.78f, 0.88f, 0.94f
+                DynamicThresholds(0.6f, 0.75f, 0.85f, 0.92f) // Was: 0.65f, 0.78f, 0.88f, 0.94f
 
             else ->
                 DynamicThresholds(DEFAULT_PRESSURE_LOW, DEFAULT_PRESSURE_MEDIUM, DEFAULT_PRESSURE_HIGH, DEFAULT_PRESSURE_CRITICAL)
@@ -592,9 +596,9 @@ class SmartMemoryManager @Inject constructor(
         val isSystemUnderStress = systemPressure.isLowMemory || systemPressure.isNearThreshold
 
         val contextFactor = when {
-            backgroundUsage.totalBackgroundMemoryMB > 3000 -> 0.8f  // Heavy background usage (was 2000 -> 0.7f)
-            backgroundUsage.highMemoryAppCount > 8 -> 0.85f         // Many memory-intensive apps (was 5 -> 0.8f)
-            isSystemUnderStress -> 0.85f                            // System under stress (was 0.75f)
+            backgroundUsage.totalBackgroundMemoryMB > 3000 -> 0.8f // Heavy background usage (was 2000 -> 0.7f)
+            backgroundUsage.highMemoryAppCount > 8 -> 0.85f // Many memory-intensive apps (was 5 -> 0.8f)
+            isSystemUnderStress -> 0.85f // System under stress (was 0.75f)
             else -> 1.0f
         }
 
@@ -644,33 +648,31 @@ class SmartMemoryManager @Inject constructor(
      */
     private fun predictMemoryUsage(photoCount: Int, lodLevel: LODLevel): Long {
         val avgPhotoSize = LODLevel.getMemoryUsageKB(lodLevel) * 1024L
-        val estimatedAtlasCount = ceil(photoCount.toFloat() / LODLevel.getAtlasCapacity2K(lodLevel))
-        val packingOverhead = 1.2f // 20% overhead for packing inefficiency
 
-        return (photoCount * avgPhotoSize * packingOverhead).toLong()
+        return (photoCount * avgPhotoSize * 1.2f).toLong()
     }
 
     /**
      * Calculate confidence level for memory prediction
      */
-    private fun calculateConfidence(photoCount: Int, lodLevel: LODLevel): Float {
-        return when {
-            photoCount < 10 -> 0.9f  // High confidence for small sets
-            photoCount < 100 -> 0.8f // Good confidence for medium sets
-            photoCount < 1000 -> 0.7f // Moderate confidence for large sets
-            else -> 0.6f  // Lower confidence for very large sets
-        }
+    private fun calculateConfidence(photoCount: Int, lodLevel: LODLevel): Float = when {
+        photoCount < 10 -> 0.9f // High confidence for small sets
+        photoCount < 100 -> 0.8f // Good confidence for medium sets
+        photoCount < 1000 -> 0.7f // Moderate confidence for large sets
+        else -> 0.6f // Lower confidence for very large sets
     }
 
     /**
      * Record memory snapshot for leak detection
      */
     private fun recordMemorySnapshot() {
-        memorySnapshots.add(MemorySnapshot(
-            timestamp = System.currentTimeMillis(),
-            atlasCount = atlasRegistry.size,
-            memoryUsage = currentMemoryUsage.get().toLong()
-        ))
+        memorySnapshots.add(
+            MemorySnapshot(
+                timestamp = System.currentTimeMillis(),
+                atlasCount = atlasRegistry.size,
+                memoryUsage = currentMemoryUsage.get().toLong()
+            )
+        )
 
         // Keep only last snapshots
         if (memorySnapshots.size > MEMORY_SNAPSHOT_LIMIT) {
@@ -691,11 +693,11 @@ class SmartMemoryManager @Inject constructor(
         val leakRateBytesPerMin = (memoryIncrease * 60000) / timeSpan
 
         return when {
-            leakRateBytesPerMin > 20 * 1024 * 1024 -> 1.0f  // > 20MB/min = critical (was 10MB/min)
-            leakRateBytesPerMin > 10 * 1024 * 1024 -> 0.8f  // > 10MB/min = high (was 5MB/min)
-            leakRateBytesPerMin > 3 * 1024 * 1024 -> 0.6f   // > 3MB/min = medium (was 1MB/min)
-            leakRateBytesPerMin > 1 * 1024 * 1024 -> 0.4f   // > 1MB/min = low (was 512KB/min)
-            else -> 0.2f  // < 1MB/min = minimal
+            leakRateBytesPerMin > 20 * 1024 * 1024 -> 1.0f // > 20MB/min = critical (was 10MB/min)
+            leakRateBytesPerMin > 10 * 1024 * 1024 -> 0.8f // > 10MB/min = high (was 5MB/min)
+            leakRateBytesPerMin > 3 * 1024 * 1024 -> 0.6f // > 3MB/min = medium (was 1MB/min)
+            leakRateBytesPerMin > 1 * 1024 * 1024 -> 0.4f // > 1MB/min = low (was 512KB/min)
+            else -> 0.2f // < 1MB/min = minimal
         }
     }
 
@@ -726,7 +728,7 @@ class SmartMemoryManager @Inject constructor(
             ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW -> {
                 Log.w(TAG, "System memory pressure: LOW")
                 // Release some resources - less aggressive
-                val toEvict = atlasRegistry.size / 6  // Evict ~17% of atlases (was 25%)
+                val toEvict = atlasRegistry.size / 6 // Evict ~17% of atlases (was 25%)
                 evictOldestAtlases(toEvict)
             }
             ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL -> {
@@ -737,7 +739,7 @@ class SmartMemoryManager @Inject constructor(
             ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN -> {
                 Log.d(TAG, "UI hidden, releasing some resources")
                 // App moved to background, release UI-related resources - less aggressive
-                val toEvict = atlasRegistry.size / 3  // Evict ~33% of atlases (was 50%)
+                val toEvict = atlasRegistry.size / 3 // Evict ~33% of atlases (was 50%)
                 evictOldestAtlases(toEvict)
             }
             ComponentCallbacks2.TRIM_MEMORY_BACKGROUND,
@@ -783,25 +785,21 @@ class SmartMemoryManager @Inject constructor(
         val registeredAtlases: Int,
         val deviceCapabilities: DeviceCapabilities.Capabilities
     ) {
-        override fun toString(): String {
-            return "MemoryStatus(" +
-                    "totalBudget=${formatBytes(totalBudgetBytes)}, " +
-                    "currentUsage=${formatBytes(currentUsageBytes)}, " +
-                    "available=${formatBytes(availableBytes)}, " +
-                    "usagePercent=${String.format(Locale.US, "%.1f", usagePercent * 100)}%, " +
-                    "pressure=$pressureLevel, " +
-                    "atlases=$registeredAtlases, " +
-                    "capabilities=$deviceCapabilities" +
-                    ")"
-        }
+        override fun toString(): String = "MemoryStatus(" +
+            "totalBudget=${formatBytes(totalBudgetBytes)}, " +
+            "currentUsage=${formatBytes(currentUsageBytes)}, " +
+            "available=${formatBytes(availableBytes)}, " +
+            "usagePercent=${String.format(Locale.US, "%.1f", usagePercent * 100)}%, " +
+            "pressure=$pressureLevel, " +
+            "atlases=$registeredAtlases, " +
+            "capabilities=$deviceCapabilities" +
+            ")"
 
-        private fun formatBytes(bytes: Long): String {
-            return when {
-                bytes >= 1024 * 1024 * 1024 -> String.format(Locale.US, "%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0))
-                bytes >= 1024 * 1024 -> String.format(Locale.US, "%.2f MB", bytes / (1024.0 * 1024.0))
-                bytes >= 1024 -> String.format(Locale.US, "%.2f KB", bytes / 1024.0)
-                else -> "$bytes B"
-            }
+        private fun formatBytes(bytes: Long): String = when {
+            bytes >= 1024 * 1024 * 1024 -> String.format(Locale.US, "%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0))
+            bytes >= 1024 * 1024 -> String.format(Locale.US, "%.2f MB", bytes / (1024.0 * 1024.0))
+            bytes >= 1024 -> String.format(Locale.US, "%.2f KB", bytes / 1024.0)
+            else -> "$bytes B"
         }
     }
 

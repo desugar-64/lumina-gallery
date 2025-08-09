@@ -57,9 +57,12 @@ class AtlasPerformanceBenchmark {
 
         // Look for various permission dialog buttons
         val allowButtons = listOf(
-            "Allow", "ALLOW",
-            "Allow all", "ALLOW ALL",
-            "While using the app", "WHILE USING THE APP"
+            "Allow",
+            "ALLOW",
+            "Allow all",
+            "ALLOW ALL",
+            "While using the app",
+            "WHILE USING THE APP"
         )
 
         for (buttonText in allowButtons) {

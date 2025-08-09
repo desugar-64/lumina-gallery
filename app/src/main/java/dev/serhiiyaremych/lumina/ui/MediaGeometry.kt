@@ -13,7 +13,7 @@ import dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaManager
 /**
  * Finds the topmost animatable media item at the given position.
  * Uses rotation-aware hit testing to handle rotated media items.
- * 
+ *
  * @param position The position to test in world coordinates
  * @param hexGridLayout The hex grid layout containing media items
  * @param animationManager Manager for animatable media items
@@ -55,7 +55,7 @@ fun findAnimatableMediaAtPosition(
 /**
  * Transforms a point by applying the inverse of a rotation transformation.
  * This is used for hit testing on rotated media items.
- * 
+ *
  * @param point The point to transform
  * @param center The center of rotation
  * @param rotationDegrees The rotation angle in degrees (positive = clockwise)
@@ -65,11 +65,9 @@ fun transformPointWithInverseRotation(
     point: Offset,
     center: Offset,
     rotationDegrees: Float
-): Offset {
-    return with(Matrix()) {
-        translate(center.x, center.y)
-        rotateZ(-rotationDegrees)
-        translate(-center.x, -center.y)
-        map(point)
-    }
+): Offset = with(Matrix()) {
+    translate(center.x, center.y)
+    rotateZ(-rotationDegrees)
+    translate(-center.x, -center.y)
+    map(point)
 }

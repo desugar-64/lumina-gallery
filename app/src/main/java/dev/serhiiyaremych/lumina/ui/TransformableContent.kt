@@ -60,7 +60,7 @@ private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectTr
 ) {
     awaitEachGesture {
         awaitFirstDown(requireUnconsumed = false)
-        
+
         val velocityTracker = VelocityTracker()
         var zoom = 1f
         var pan = Offset.Zero
@@ -73,7 +73,7 @@ private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectTr
         do {
             val event = awaitPointerEvent()
             val canceled = event.changes.any { it.isConsumed }
-            
+
             if (!canceled) {
                 val zoomChange = event.calculateZoom()
                 val panChange = event.calculatePan()
@@ -95,7 +95,7 @@ private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectTr
                 if (pastTouchSlop) {
                     val centroid = event.calculateCentroid(useCurrent = false)
                     val effectiveZoom = if (lockedToPanZoom) 1f else zoomChange
-                    
+
                     if (effectiveZoom != 1f || panChange != Offset.Zero) {
                         onGesture(centroid, panChange, effectiveZoom)
                     }
@@ -121,18 +121,17 @@ private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectTr
             }
         } while (!canceled && event.changes.any { it.pressed })
 
-        // Calculate velocity and trigger fling only for single-finger gestures  
+        // Calculate velocity and trigger fling only for single-finger gestures
         val velocity = if (lockedToPanZoom) {
             val calculatedVelocity = velocityTracker.calculateVelocity()
             Offset(calculatedVelocity.x, calculatedVelocity.y)
         } else {
             Offset.Zero
         }
-        
+
         onGestureEnd(velocity)
     }
 }
-
 
 class MatrixAnimator(
     initial: Matrix = Matrix(),
@@ -198,8 +197,10 @@ class TransformableState(
 ) {
     // Reference to fling animation that gets set by TransformableContent
     internal var flingStopCallback: (suspend () -> Unit)? = null
+
     // Reused array for matrix value extraction to avoid allocations
     private val matrixValuesCache = FloatArray(9)
+
     // Cached matrix instance for focusOn to avoid allocations
     private val focusMatrix = Matrix()
 
@@ -234,7 +235,7 @@ class TransformableState(
     val offset: Offset get() = transformValues.offset
 
     fun updateContentSize(size: Size) = run { contentSize = size }
-    
+
     suspend fun stopAllAnimations() {
         android.util.Log.d("TransformableState", "stopAllAnimations: stopping all animations")
         // Stop fling animation first
@@ -297,23 +298,23 @@ class TransformableState(
         // Convert padding from Dp to pixels
         val paddingPx = density?.run { padding.toPx() } ?: 0f
         val doublePadding = paddingPx * 2f // Padding on both sides
-        
+
         // Calculate available screen space after reserving padding
         val availableWidth = contentSize.width - doublePadding
         val availableHeight = contentSize.height - doublePadding
-        
+
         // Ensure we have minimum space (prevent division by zero or negative values)
         // Use very minimal constraint to allow tight padding - just 1px more than content
         val safeAvailableWidth = availableWidth.coerceAtLeast(bounds.width + 1f)
         val safeAvailableHeight = availableHeight.coerceAtLeast(bounds.height + 1f)
-        
+
         // Calculate zoom to fit content within available space
         val zoomX = safeAvailableWidth / bounds.width
         val zoomY = safeAvailableHeight / bounds.height
         val rawZoom = min(zoomX, zoomY)
-        
-        android.util.Log.d("TransformableState", "calculateZoomToFit: bounds=${bounds.size}, available=${availableWidth}x${availableHeight}, zoomX=$zoomX, zoomY=$zoomY, rawZoom=$rawZoom")
-        
+
+        android.util.Log.d("TransformableState", "calculateZoomToFit: bounds=${bounds.size}, available=${availableWidth}x$availableHeight, zoomX=$zoomX, zoomY=$zoomY, rawZoom=$rawZoom")
+
         // Additional safety: prevent extreme zoom values that could cause animation issues
         return rawZoom.coerceIn(0.01f, 100f)
     }
@@ -367,7 +368,7 @@ fun TransformableContent(
     content: @Composable () -> Unit
 ) {
     val density = LocalDensity.current
-    
+
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         LaunchedEffect(this.constraints) {
             state.updateContentSize(
@@ -380,11 +381,11 @@ fun TransformableContent(
         }
 
         val coroutineScope = rememberCoroutineScope()
-        
+
         // Fling animation for pan offset only - this tracks pan velocity and provides smooth deceleration
         val panFlingAnimatable = remember { Animatable(Offset.Zero, Offset.VectorConverter) }
         val decay = remember { splineBasedDecay<Offset>(density) }
-        
+
         // Set up fling stop callback for the state
         LaunchedEffect(state) {
             state.flingStopCallback = {
@@ -392,7 +393,7 @@ fun TransformableContent(
                 panFlingAnimatable.stop()
             }
         }
-        
+
         Box(
             modifier = Modifier.transformableGestures(
                 state = state,

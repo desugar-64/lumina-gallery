@@ -1,0 +1,1743 @@
+
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/BitmapPool.kt</file>
+  <line>29</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.data</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.BitmapPool BitmapPool(dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager smartMemoryManager)" />
+  <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+  <description>Property &quot;smartMemoryManager&quot; is never used</description>
+  <highlighted_element>smartMemoryManager</highlighted_element>
+  <language>kotlin</language>
+  <offset>16</offset>
+  <length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/BitmapPool.kt</file>
+<line>212</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.BitmapPool dev.serhiiyaremych.lumina.data.BitmapPool.PoolStats getStats()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getStats&quot; is never used</description>
+<highlighted_element>getStats</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>8</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/PhotoScaler.kt</file>
+<line>203</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.PhotoScaler android.graphics.Bitmap downscale(android.graphics.Bitmap source, float scaleFactor)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;downscale&quot; is never used</description>
+<highlighted_element>downscale</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>9</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/PhotoScaler.kt</file>
+<line>236</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.PhotoScaler android.graphics.Bitmap createThumbnail(android.graphics.Bitmap source, int maxDimension, dev.serhiiyaremych.lumina.data.ScaleStrategy strategy)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;createThumbnail&quot; is never used</description>
+<highlighted_element>createThumbnail</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>15</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/PhotoScaler.kt</file>
+<line>266</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.PhotoScaler void releaseBitmap(android.graphics.Bitmap bitmap)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;releaseBitmap&quot; is never used</description>
+<highlighted_element>releaseBitmap</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>13</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/datasource/FakeMediaDataSource.kt</file>
+<line>14</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data.datasource</package>
+<entry_point TYPE="class" FQNAME="dev.serhiiyaremych.lumina.data.datasource.FakeMediaDataSource" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Class &quot;FakeMediaDataSource&quot; is never used</description>
+<highlighted_element>FakeMediaDataSource</highlighted_element>
+<language>kotlin</language>
+<offset>6</offset>
+<length>19</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MediaMetadataRepository.kt</file>
+<line>39</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data.metadata</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.data.metadata.MediaMetadataRepository metadataStates" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;metadataStates&quot; is never used</description>
+<highlighted_element>metadataStates</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>14</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MediaMetadataRepository.kt</file>
+<line>45</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data.metadata</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.metadata.MediaMetadataRepository java.lang.Object getMetadata(dev.serhiiyaremych.lumina.domain.model.Media media, dev.serhiiyaremych.lumina.data.metadata.MetadataLoadLevel loadLevel, kotlin.coroutines.Continuation&lt;? super dev.serhiiyaremych.lumina.domain.model.MediaMetadata&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getMetadata&quot; is never used</description>
+<highlighted_element>getMetadata</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>11</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MediaMetadataRepository.kt</file>
+<line>71</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data.metadata</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.metadata.MediaMetadataRepository void prefetchCellMetadata(dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia cell, dev.serhiiyaremych.lumina.data.metadata.MetadataLoadLevel loadLevel)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;prefetchCellMetadata&quot; is never used</description>
+<highlighted_element>prefetchCellMetadata</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>20</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MediaMetadataRepository.kt</file>
+<line>100</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data.metadata</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.metadata.MediaMetadataRepository void prefetchActiveCell(dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia cell, java.lang.Long selectedMediaId, dev.serhiiyaremych.lumina.data.metadata.MetadataLoadLevel loadLevel)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;prefetchActiveCell&quot; is never used</description>
+<highlighted_element>prefetchActiveCell</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MediaMetadataRepository.kt</file>
+<line>187</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data.metadata</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.metadata.MediaMetadataRepository void cancelAllJobs()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;cancelAllJobs&quot; is never used</description>
+<highlighted_element>cancelAllJobs</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>13</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MediaMetadataRepository.kt</file>
+<line>195</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data.metadata</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.metadata.MediaMetadataRepository java.lang.Object clearCache(kotlin.coroutines.Continuation&lt;? super kotlin.Unit&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;clearCache&quot; is never used</description>
+<highlighted_element>clearCache</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>10</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MediaMetadataRepository.kt</file>
+<line>203</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data.metadata</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.metadata.MediaMetadataRepository void clearMemoryCache()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;clearMemoryCache&quot; is never used</description>
+<highlighted_element>clearMemoryCache</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>16</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MediaMetadataRepository.kt</file>
+<line>210</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data.metadata</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.metadata.MediaMetadataRepository dev.serhiiyaremych.lumina.data.metadata.CacheStats getCacheStats()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getCacheStats&quot; is never used</description>
+<highlighted_element>getCacheStats</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>13</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MediaMetadataRepository.kt</file>
+<line>217</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data.metadata</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.metadata.MediaMetadataRepository dev.serhiiyaremych.lumina.domain.model.MetadataLoadingState getMetadataState(java.lang.String mediaId)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getMetadataState&quot; is never used</description>
+<highlighted_element>getMetadataState</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>16</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MediaMetadataRepository.kt</file>
+<line>224</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data.metadata</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.metadata.MediaMetadataRepository java.lang.Object preloadHighPriorityMetadata(dev.serhiiyaremych.lumina.domain.model.Media media, dev.serhiiyaremych.lumina.data.metadata.MetadataLoadLevel loadLevel, kotlin.coroutines.Continuation&lt;? super kotlin.Unit&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;preloadHighPriorityMetadata&quot; is never used</description>
+<highlighted_element>preloadHighPriorityMetadata</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>27</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MetadataCache.kt</file>
+<line>87</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data.metadata</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.metadata.MetadataCache java.lang.Object removeMetadata(java.lang.String mediaId, kotlin.coroutines.Continuation&lt;? super kotlin.Unit&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;removeMetadata&quot; is never used</description>
+<highlighted_element>removeMetadata</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>14</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MetadataCache.kt</file>
+<line>129</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data.metadata</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.metadata.MetadataCache java.lang.Object prefetchMetadata(java.util.List&lt;java.lang.String&gt; mediaIds, kotlin.coroutines.Continuation&lt;? super kotlin.Unit&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;prefetchMetadata&quot; is never used</description>
+<highlighted_element>prefetchMetadata</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>16</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/data/metadata/MetadataCache.kt</file>
+<line>161</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.data.metadata</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.data.metadata.CacheStats float getMemoryHitRate()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;memoryHitRate&quot; is never used</description>
+<highlighted_element>memoryHitRate</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>13</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/bucket/AtlasBucket.kt</file>
+<line>30</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.bucket</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.bucket.AtlasBucket java.lang.Object addAtlas(dev.serhiiyaremych.lumina.domain.model.TextureAtlas atlas, kotlin.coroutines.Continuation&lt;? super kotlin.Unit&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;addAtlas&quot; is never used</description>
+<highlighted_element>addAtlas</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>8</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/bucket/AtlasBucket.kt</file>
+<line>74</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.bucket</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.bucket.AtlasBucket java.lang.Object getAtlasForPhoto(android.net.Uri uri, kotlin.coroutines.Continuation&lt;? super dev.serhiiyaremych.lumina.domain.model.TextureAtlas&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getAtlasForPhoto&quot; is never used</description>
+<highlighted_element>getAtlasForPhoto</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>16</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/bucket/AtlasBucketManager.kt</file>
+<line>105</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.bucket</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.bucket.AtlasBucketManager java.lang.Object getFocusLODForPhoto(android.net.Uri uri, kotlin.coroutines.Continuation&lt;? super dev.serhiiyaremych.lumina.domain.model.LODLevel&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getFocusLODForPhoto&quot; is never used</description>
+<highlighted_element>getFocusLODForPhoto</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>19</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/bucket/AtlasBucketManager.kt</file>
+<line>115</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.bucket</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.bucket.AtlasBucketManager java.lang.Object hasFocusPhotoAtLOD(android.net.Uri uri, dev.serhiiyaremych.lumina.domain.model.LODLevel minLODLevel, kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;hasFocusPhotoAtLOD&quot; is never used</description>
+<highlighted_element>hasFocusPhotoAtLOD</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/AtlasOptimizationConfig.kt</file>
+<line>83</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.AtlasOptimizationConfig.Companion dev.serhiiyaremych.lumina.domain.model.AtlasOptimizationConfig withZoomThreshold(float threshold)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;withZoomThreshold&quot; is never used</description>
+<highlighted_element>withZoomThreshold</highlighted_element>
+<language>kotlin</language>
+<offset>12</offset>
+<length>17</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/AtlasPriority.kt</file>
+<line>131</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.TypeSafeLODPriority dev.serhiiyaremych.lumina.domain.model.LODLevel calculateEffectiveLOD(dev.serhiiyaremych.lumina.domain.model.LODLevel requestedLOD)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;calculateEffectiveLOD&quot; is never used</description>
+<highlighted_element>calculateEffectiveLOD</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>21</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/AtlasPriority.kt</file>
+<line>138</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.TypeSafeLODPriority java.lang.String getFullDescription()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;fullDescription&quot; is never used</description>
+<highlighted_element>fullDescription</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>15</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/HexCellWithMedia.kt</file>
+<line>42</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.MediaWithPosition&gt; getVisibleMedia(androidx.compose.ui.geometry.Rect viewport)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getVisibleMedia&quot; is never used</description>
+<highlighted_element>getVisibleMedia</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>15</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/HexCellWithMedia.kt</file>
+<line>71</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.domain.model.MediaWithPosition aspectRatio" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;aspectRatio&quot; is never used</description>
+<highlighted_element>aspectRatio</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>11</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/HexCellWithMedia.kt</file>
+<line>102</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.HexGridLayout java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia&gt; getVisibleHexCells(androidx.compose.ui.geometry.Rect viewport, float margin)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getVisibleHexCells&quot; is never used</description>
+<highlighted_element>getVisibleHexCells</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/HexCellWithMedia.kt</file>
+<line>112</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.HexGridLayout dev.serhiiyaremych.lumina.domain.model.Media getMediaAtPosition(long position)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getMediaAtPosition&quot; is never used</description>
+<highlighted_element>getMediaAtPosition</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/HexCellWithMedia.kt</file>
+<line>125</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.HexGridLayout dev.serhiiyaremych.lumina.domain.model.HexCell getHexCellAtPosition(long position)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getHexCellAtPosition&quot; is never used</description>
+<highlighted_element>getHexCellAtPosition</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>20</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/HexGrid.kt</file>
+<line>58</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.HexGridKt java.lang.String debugString(dev.serhiiyaremych.lumina.domain.model.HexGrid $this$debugString)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;debugString&quot; is never used</description>
+<highlighted_element>debugString</highlighted_element>
+<language>kotlin</language>
+<offset>12</offset>
+<length>11</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/HexGridGenerator.kt</file>
+<line>12</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="class" FQNAME="dev.serhiiyaremych.lumina.domain.model.HexGridGenerator" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Class &quot;HexGridGenerator&quot; is never used</description>
+<highlighted_element>HexGridGenerator</highlighted_element>
+<language>kotlin</language>
+<offset>6</offset>
+<length>16</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/HexGridGenerator.kt</file>
+<line>13</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.HexGridGenerator dev.serhiiyaremych.lumina.domain.model.HexGrid generateGrid(int gridSize, float cellSizeDp, androidx.compose.ui.unit.Density density, float cellSpacingDp)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;generateGrid&quot; is never used</description>
+<highlighted_element>generateGrid</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>12</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/LODLevel.kt</file>
+<line>80</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.LODLevel.Companion dev.serhiiyaremych.lumina.domain.model.LODLevel fromLevel(int level)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;fromLevel&quot; is never used</description>
+<highlighted_element>fromLevel</highlighted_element>
+<language>kotlin</language>
+<offset>12</offset>
+<length>9</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/MediaMetadata.kt</file>
+<line>80</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.SerializableLocation.Companion dev.serhiiyaremych.lumina.domain.model.SerializableLocation fromLocation(android.location.Location location)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;fromLocation&quot; is never used</description>
+<highlighted_element>fromLocation</highlighted_element>
+<language>kotlin</language>
+<offset>12</offset>
+<length>12</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/MediaMetadata.kt</file>
+<line>89</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.SerializableLocation android.location.Location toLocation()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;toLocation&quot; is never used</description>
+<highlighted_element>toLocation</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>10</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/TextureAtlas.kt</file>
+<line>40</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.TextureAtlas long getMemoryUsage()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;memoryUsage&quot; is never used</description>
+<highlighted_element>memoryUsage</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>11</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/TextureAtlas.kt</file>
+<line>56</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.TextureAtlas int getPhotoCount()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;photoCount&quot; is never used</description>
+<highlighted_element>photoCount</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>10</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/TextureAtlas.kt</file>
+<line>61</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.TextureAtlas dev.serhiiyaremych.lumina.domain.model.AtlasRegion getRegion(android.net.Uri photoId)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getRegion&quot; is never used</description>
+<highlighted_element>getRegion</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>9</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/model/TextureAtlas.kt</file>
+<line>66</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.model</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.model.TextureAtlas boolean containsPhoto(android.net.Uri photoId)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;containsPhoto&quot; is never used</description>
+<highlighted_element>containsPhoto</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>13</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/AtlasManager.kt</file>
+<line>152</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.AtlasManager java.lang.Object getCurrentAtlases(kotlin.coroutines.Continuation&lt;? super java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.TextureAtlas&gt;&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getCurrentAtlases&quot; is never used</description>
+<highlighted_element>getCurrentAtlases</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>17</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/AtlasManager.kt</file>
+<line>158</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.AtlasManager java.lang.Object getPhotoRegion(android.net.Uri photoId, kotlin.coroutines.Continuation&lt;? super dev.serhiiyaremych.lumina.domain.model.AtlasRegion&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getPhotoRegion&quot; is never used</description>
+<highlighted_element>getPhotoRegion</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>14</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/AtlasManager.kt</file>
+<line>166</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.AtlasManager java.lang.Object getPhotoAtlasAndRegion(android.net.Uri photoId, kotlin.coroutines.Continuation&lt;? super kotlin.Pair&lt;dev.serhiiyaremych.lumina.domain.model.TextureAtlas,dev.serhiiyaremych.lumina.domain.model.AtlasRegion&gt;&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getPhotoAtlasAndRegion&quot; is never used</description>
+<highlighted_element>getPhotoAtlasAndRegion</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>22</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/AtlasManager.kt</file>
+<line>176</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.AtlasManager java.lang.Object hasAtlas(kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;hasAtlas&quot; is never used</description>
+<highlighted_element>hasAtlas</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>8</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/AtlasManager.kt</file>
+<line>198</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.AtlasManager java.lang.Object shouldRegenerateAtlas(java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia&gt; visibleCells, float currentZoom, int marginRings, kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;shouldRegenerateAtlas&quot; is never used</description>
+<highlighted_element>shouldRegenerateAtlas</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>21</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/AtlasManager.kt</file>
+<line>227</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.AtlasManager java.lang.Object updateFocusedCell(dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia focusedCell, float currentZoom, kotlin.coroutines.Continuation&lt;? super kotlin.Unit&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;updateFocusedCell&quot; is never used</description>
+<highlighted_element>updateFocusedCell</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>17</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/AtlasManager.kt</file>
+<line>282</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.AtlasManager java.lang.Object clearAtlases(kotlin.coroutines.Continuation&lt;? super kotlin.Unit&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;clearAtlases&quot; is never used</description>
+<highlighted_element>clearAtlases</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>12</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/AtlasManager.kt</file>
+<line>463</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.AtlasManager java.lang.Object protectCurrentAtlasesFromCleanup(kotlin.coroutines.Continuation&lt;? super kotlin.Unit&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;protectCurrentAtlasesFromCleanup&quot; is never used</description>
+<highlighted_element>protectCurrentAtlasesFromCleanup</highlighted_element>
+<language>kotlin</language>
+<offset>24</offset>
+<length>32</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/BitmapAtlasPool.kt</file>
+<line>60</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.BitmapAtlasPool java.lang.Object acquire(int width, int height, android.graphics.Bitmap.Config config, kotlin.coroutines.Continuation&lt;? super android.graphics.Bitmap&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;acquire&quot; is never used</description>
+<highlighted_element>acquire</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>7</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/BitmapAtlasPool.kt</file>
+<line>110</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.BitmapAtlasPool java.lang.Object release(android.graphics.Bitmap bitmap, kotlin.coroutines.Continuation&lt;? super kotlin.Unit&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;release&quot; is never used</description>
+<highlighted_element>release</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>7</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/BitmapAtlasPool.kt</file>
+<line>136</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.BitmapAtlasPool java.lang.Object clearAllPools(kotlin.coroutines.Continuation&lt;? super java.lang.Integer&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;clearAllPools&quot; is never used</description>
+<highlighted_element>clearAllPools</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>13</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/BitmapAtlasPool.kt</file>
+<line>155</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.BitmapAtlasPool java.lang.Object clearPoolForSize(int atlasSize, kotlin.coroutines.Continuation&lt;? super java.lang.Integer&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;clearPoolForSize&quot; is never used</description>
+<highlighted_element>clearPoolForSize</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>16</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/BitmapAtlasPool.kt</file>
+<line>173</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.BitmapAtlasPool java.lang.Object getPoolStatistics(kotlin.coroutines.Continuation&lt;? super dev.serhiiyaremych.lumina.domain.usecase.PoolStatistics&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getPoolStatistics&quot; is never used</description>
+<highlighted_element>getPoolStatistics</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>17</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/DeviceCapabilities.kt</file>
+<line>35</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities MEMORY_TIER_MINIMAL" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;MEMORY_TIER_MINIMAL&quot; is never used</description>
+<highlighted_element>MEMORY_TIER_MINIMAL</highlighted_element>
+<language>kotlin</language>
+<offset>26</offset>
+<length>19</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/DeviceCapabilities.kt</file>
+<line>171</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities boolean supportsAtlasSize(long atlasSize)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;supportsAtlasSize&quot; is never used</description>
+<highlighted_element>supportsAtlasSize</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>17</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/DeviceCapabilities.kt</file>
+<line>205</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities.MemoryInfo float getMemoryPressure()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;memoryPressure&quot; is never used</description>
+<highlighted_element>memoryPressure</highlighted_element>
+<language>kotlin</language>
+<offset>12</offset>
+<length>14</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/DynamicAtlasPool.kt</file>
+<line>60</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.DynamicAtlasPool void updateZoomThreshold(float threshold)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;updateZoomThreshold&quot; is never used</description>
+<highlighted_element>updateZoomThreshold</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>19</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/DynamicAtlasPool.kt</file>
+<line>72</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.DynamicAtlasPool ATLAS_8K" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;ATLAS_8K&quot; is never used</description>
+<highlighted_element>ATLAS_8K</highlighted_element>
+<language>kotlin</language>
+<offset>26</offset>
+<length>8</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/DynamicAtlasPool.kt</file>
+<line>128</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.DynamicAtlasPool.MultiAtlasResult float getSuccessRate()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;successRate&quot; is never used</description>
+<highlighted_element>successRate</highlighted_element>
+<language>kotlin</language>
+<offset>12</offset>
+<length>11</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/DynamicAtlasPool.kt</file>
+<line>129</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.DynamicAtlasPool.MultiAtlasResult float getAverageUtilization()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;averageUtilization&quot; is never used</description>
+<highlighted_element>averageUtilization</highlighted_element>
+<language>kotlin</language>
+<offset>12</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/DynamicAtlasPool.kt</file>
+<line>883</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.DynamicAtlasPool void releaseAtlasBitmap(android.graphics.Bitmap atlasBitmap)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;releaseAtlasBitmap&quot; is never used</description>
+<highlighted_element>releaseAtlasBitmap</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/EnhancedAtlasGenerator.kt</file>
+<line>30</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.EnhancedAtlasGenerator EnhancedAtlasGenerator(dev.serhiiyaremych.lumina.domain.usecase.DynamicAtlasPool dynamicAtlasPool, dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager smartMemoryManager, dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities deviceCapabilities)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;deviceCapabilities&quot; is never used</description>
+<highlighted_element>deviceCapabilities</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/EnhancedAtlasGenerator.kt</file>
+<line>34</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.EnhancedAtlasGenerator optimizationConfig" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;optimizationConfig&quot; is never used</description>
+<highlighted_element>optimizationConfig</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/EnhancedAtlasGenerator.kt</file>
+<line>38</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.EnhancedAtlasGenerator DEFAULT_ATLAS_SIZE" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;DEFAULT_ATLAS_SIZE&quot; is never used</description>
+<highlighted_element>DEFAULT_ATLAS_SIZE</highlighted_element>
+<language>kotlin</language>
+<offset>26</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/GenerateHexGridLayoutUseCase.kt</file>
+<line>94</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.GenerateHexGridLayoutUseCase java.lang.Object execute(dev.serhiiyaremych.lumina.domain.model.HexGrid hexGrid, java.util.Map&lt;java.time.LocalDate,? extends java.util.List&lt;? extends dev.serhiiyaremych.lumina.domain.model.Media&gt;&gt; groupedMedia, float thumbnailSizeFactor, kotlin.coroutines.Continuation&lt;? super dev.serhiiyaremych.lumina.domain.model.HexGridLayout&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;execute&quot; is never used</description>
+<highlighted_element>execute</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>7</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/GenerateHexGridLayoutUseCase.kt</file>
+<line>598</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="class" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.HexLayoutConfig" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Class &quot;HexLayoutConfig&quot; is never used</description>
+<highlighted_element>HexLayoutConfig</highlighted_element>
+<language>kotlin</language>
+<offset>11</offset>
+<length>15</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/PhotoLODProcessor.kt</file>
+<line>37</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.PhotoLODProcessor PhotoLODProcessor(android.content.ContentResolver contentResolver, dev.serhiiyaremych.lumina.data.PhotoScaler photoScaler, dev.serhiiyaremych.lumina.data.BitmapPool bitmapPool)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;photoScaler&quot; is never used</description>
+<highlighted_element>photoScaler</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>11</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/PhotoLODProcessor.kt</file>
+<line>38</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.PhotoLODProcessor PhotoLODProcessor(android.content.ContentResolver contentResolver, dev.serhiiyaremych.lumina.data.PhotoScaler photoScaler, dev.serhiiyaremych.lumina.data.BitmapPool bitmapPool)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;bitmapPool&quot; is never used</description>
+<highlighted_element>bitmapPool</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>10</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/PhotoLODProcessor.kt</file>
+<line>323</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.PhotoLODProcessor java.lang.Object applyExifOrientation(android.graphics.Bitmap bitmap, android.net.Uri uri, kotlin.coroutines.Continuation&lt;? super android.graphics.Bitmap&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;applyExifOrientation&quot; is never used</description>
+<highlighted_element>applyExifOrientation</highlighted_element>
+<language>kotlin</language>
+<offset>24</offset>
+<length>20</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/PhotoLODProcessor.kt</file>
+<line>343</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.PhotoLODProcessor long calculateTargetSize(long originalSize, int lodResolution, dev.serhiiyaremych.lumina.data.ScaleStrategy strategy)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;calculateTargetSize&quot; is never used</description>
+<highlighted_element>calculateTargetSize</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>19</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/SmartMemoryManager.kt</file>
+<line>51</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager EMERGENCY_THRESHOLD" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;EMERGENCY_THRESHOLD&quot; is never used</description>
+<highlighted_element>EMERGENCY_THRESHOLD</highlighted_element>
+<language>kotlin</language>
+<offset>26</offset>
+<length>19</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/SmartMemoryManager.kt</file>
+<line>195</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager.AllocationResult requestAtlasMemory(long requiredMemoryBytes, dev.serhiiyaremych.lumina.domain.model.LODLevel lodLevel, long atlasSize, float priority)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;requestAtlasMemory&quot; is never used</description>
+<highlighted_element>requestAtlasMemory</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/SmartMemoryManager.kt</file>
+<line>291</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager void touchAtlas(dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager.AtlasKey key)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;touchAtlas&quot; is never used</description>
+<highlighted_element>touchAtlas</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>10</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/SmartMemoryManager.kt</file>
+<line>319</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager.PreAllocationResult preAllocateCheck(java.util.List&lt;? extends android.net.Uri&gt; photoUris, dev.serhiiyaremych.lumina.domain.model.LODLevel lodLevel)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;preAllocateCheck&quot; is never used</description>
+<highlighted_element>preAllocateCheck</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>16</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/StreamingAtlasManager.kt</file>
+<line>54</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.StreamingAtlasManager StreamingAtlasManager(dev.serhiiyaremych.lumina.domain.usecase.LODSpecificGenerator lodSpecificGenerator, dev.serhiiyaremych.lumina.domain.usecase.BitmapAtlasPool bitmapAtlasPool, dev.serhiiyaremych.lumina.domain.bucket.AtlasBucketManager atlasBucketManager)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;bitmapAtlasPool&quot; is never used</description>
+<highlighted_element>bitmapAtlasPool</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>15</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/StreamingAtlasManager.kt</file>
+<line>59</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.StreamingAtlasManager DEBOUNCE_DELAY_MS" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;DEBOUNCE_DELAY_MS&quot; is never used</description>
+<highlighted_element>DEBOUNCE_DELAY_MS</highlighted_element>
+<language>kotlin</language>
+<offset>26</offset>
+<length>17</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/StreamingAtlasManager.kt</file>
+<line>72</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.StreamingAtlasManager java.lang.Object updateFocusedCell(dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia focusedCell, float currentZoom, kotlin.coroutines.Continuation&lt;? super kotlin.Unit&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;updateFocusedCell&quot; is never used</description>
+<highlighted_element>updateFocusedCell</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>17</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/StreamingAtlasManager.kt</file>
+<line>523</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.StreamingAtlasManager java.lang.Object getAllCurrentAtlases(kotlin.coroutines.Continuation&lt;? super java.util.Map&lt;dev.serhiiyaremych.lumina.domain.model.LODLevel,? extends java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.TextureAtlas&gt;&gt;&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getAllCurrentAtlases&quot; is never used</description>
+<highlighted_element>getAllCurrentAtlases</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>20</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/StreamingAtlasManager.kt</file>
+<line>556</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.domain.usecase</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.StreamingAtlasManager java.lang.Object getPhotoRegion(android.net.Uri photoId, dev.serhiiyaremych.lumina.domain.model.LODLevel preferredLOD, kotlin.coroutines.Continuation&lt;? super dev.serhiiyaremych.lumina.domain.model.AtlasRegion&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getPhotoRegion&quot; is never used</description>
+<highlighted_element>getPhotoRegion</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>14</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/CoordinateTransformUtils.kt</file>
+<line>5</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui</package>
+<entry_point TYPE="class" FQNAME="dev.serhiiyaremych.lumina.ui.CoordinateTransformUtils" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Object &quot;CoordinateTransformUtils&quot; is never used</description>
+<highlighted_element>CoordinateTransformUtils</highlighted_element>
+<language>kotlin</language>
+<offset>7</offset>
+<length>24</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/CoordinateTransformUtils.kt</file>
+<line>9</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.CoordinateTransformUtils long transformScreenToContent(long screenPos, float zoom, long offset)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;transformScreenToContent&quot; is never used</description>
+<highlighted_element>transformScreenToContent</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>24</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/CoordinateTransformUtils.kt</file>
+<line>28</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.CoordinateTransformUtils long transformContentToScreen(long contentPos, float zoom, long offset)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;transformContentToScreen&quot; is never used</description>
+<highlighted_element>transformContentToScreen</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>24</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/GeometryReader.kt</file>
+<line>15</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.ui.DebugMode HIT_TESTING" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Class &quot;HIT_TESTING&quot; is never used</description>
+<highlighted_element>HIT_TESTING</highlighted_element>
+<language>kotlin</language>
+<offset>4</offset>
+<length>11</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/GeometryReader.kt</file>
+<line>16</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.ui.DebugMode PERFORMANCE" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Class &quot;PERFORMANCE&quot; is never used</description>
+<highlighted_element>PERFORMANCE</highlighted_element>
+<language>kotlin</language>
+<offset>4</offset>
+<length>11</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/GeometryReader.kt</file>
+<line>38</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.GeometryReader dev.serhiiyaremych.lumina.domain.model.Media getMediaAtPosition(long position)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getMediaAtPosition&quot; is never used</description>
+<highlighted_element>getMediaAtPosition</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/GridRenderer.kt</file>
+<line>13</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui</package>
+<entry_point TYPE="field" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/GridRenderer.kt OPTIMAL_SPACING_DP" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;OPTIMAL_SPACING_DP&quot; is never used</description>
+<highlighted_element>OPTIMAL_SPACING_DP</highlighted_element>
+<language>kotlin</language>
+<offset>10</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/GridRenderer.kt</file>
+<line>177</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.GridRenderer void invalidateCache()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;invalidateCache&quot; is never used</description>
+<highlighted_element>invalidateCache</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>15</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/HexGridRenderer.kt</file>
+<line>273</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.HexGridRenderer void clearCache()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;clearCache&quot; is never used</description>
+<highlighted_element>clearCache</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>10</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/HexGridRenderer.kt</file>
+<line>277</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.HexGridRenderer dev.serhiiyaremych.lumina.domain.model.HexCell getGridAtPosition(dev.serhiiyaremych.lumina.domain.model.HexGrid hexGrid, long position, float zoom, long offset)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getGridAtPosition&quot; is never used</description>
+<highlighted_element>getGridAtPosition</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>17</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/MediaLayerRendering.kt</file>
+<line>35</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui</package>
+<entry_point TYPE="class" FQNAME="dev.serhiiyaremych.lumina.ui.MediaLayerConfig" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Class &quot;MediaLayerConfig&quot; is never used</description>
+<highlighted_element>MediaLayerConfig</highlighted_element>
+<language>kotlin</language>
+<offset>11</offset>
+<length>16</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/OffscreenIndicatorManager.kt</file>
+<line>120</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.OffscreenIndicatorManager long findClosestPointOnRect(long point, androidx.compose.ui.geometry.Rect rect)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;findClosestPointOnRect&quot; is never used</description>
+<highlighted_element>findClosestPointOnRect</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>22</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/OffscreenIndicatorManager.kt</file>
+<line>144</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.OffscreenIndicatorManager dev.serhiiyaremych.lumina.ui.ViewportEdge determineEdgeFromAngle(float angle)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;determineEdgeFromAngle&quot; is never used</description>
+<highlighted_element>determineEdgeFromAngle</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>22</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/animation/HexCellBounceAnimationManager.kt</file>
+<line>121</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.animation</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.animation.HexCellBounceAnimationManager void resetAll()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;resetAll&quot; is never used</description>
+<highlighted_element>resetAll</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>8</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/animation/RevealAnimationSystem.kt</file>
+<line>85</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.animation</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaItem float getCurrentZIndex()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;currentZIndex&quot; is never used</description>
+<highlighted_element>currentZIndex</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>13</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/animation/RevealAnimationSystem.kt</file>
+<line>149</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.animation</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaManager dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaItem getAnimatable(dev.serhiiyaremych.lumina.domain.model.Media media)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getAnimatable&quot; is never used</description>
+<highlighted_element>getAnimatable</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>13</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/animation/RevealAnimationSystem.kt</file>
+<line>155</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.animation</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaManager boolean hasAnimations()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;hasAnimations&quot; is never used</description>
+<highlighted_element>hasAnimations</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>13</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/animation/RevealAnimationSystem.kt</file>
+<line>157</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.animation</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.animation.AnimatableMediaManager void updateSelection(dev.serhiiyaremych.lumina.domain.model.Media selectedMedia)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;updateSelection&quot; is never used</description>
+<highlighted_element>updateSelection</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>15</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/animation/RevealAnimationSystem.kt</file>
+<line>170</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.animation</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.ui.animation.PileShuffleRevealStrategy ALPHA_FADE_VALUE" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;ALPHA_FADE_VALUE&quot; is never used</description>
+<highlighted_element>ALPHA_FADE_VALUE</highlighted_element>
+<language>kotlin</language>
+<offset>26</offset>
+<length>16</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/animation/RevealAnimationSystem.kt</file>
+<line>246</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.animation</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.animation.RevealAnimationSystemKt long normalized(long $this$normalized)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;normalized&quot; is never used</description>
+<highlighted_element>normalized</highlighted_element>
+<language>kotlin</language>
+<offset>19</offset>
+<length>10</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/components/MediaPermissionManager.kt</file>
+<line>137</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.components</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.components.MediaPermissionManager java.lang.String[] getOptionalPermissions()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getOptionalPermissions&quot; is never used</description>
+<highlighted_element>getOptionalPermissions</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>22</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryUiState.kt</file>
+<line>62</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryUiState.Companion dev.serhiiyaremych.lumina.ui.gallery.GalleryUiState loading()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;loading&quot; is never used</description>
+<highlighted_element>loading</highlighted_element>
+<language>kotlin</language>
+<offset>12</offset>
+<length>7</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryUiState.kt</file>
+<line>86</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryUiState boolean getShowAtlasProgress()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;showAtlasProgress&quot; is never used</description>
+<highlighted_element>showAtlasProgress</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>17</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryUiState.kt</file>
+<line>104</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryUiState boolean getHasAtlases()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;hasAtlases&quot; is never used</description>
+<highlighted_element>hasAtlases</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>10</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryUiState.kt</file>
+<line>110</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryUiState boolean getShowFocusedCellPanel()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;showFocusedCellPanel&quot; is never used</description>
+<highlighted_element>showFocusedCellPanel</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>20</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryUiState.kt</file>
+<line>116</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryUiState java.lang.String getAtlasStateSummary()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;atlasStateSummary&quot; is never used</description>
+<highlighted_element>atlasStateSummary</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>17</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryViewModel.kt</file>
+<line>46</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel mediaState" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;mediaState&quot; is never used</description>
+<highlighted_element>mediaState</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>10</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryViewModel.kt</file>
+<line>49</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel groupedMediaState" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;groupedMediaState&quot; is never used</description>
+<highlighted_element>groupedMediaState</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>17</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryViewModel.kt</file>
+<line>52</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel hexGridLayoutState" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;hexGridLayoutState&quot; is never used</description>
+<highlighted_element>hexGridLayoutState</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryViewModel.kt</file>
+<line>55</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel atlasState" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;atlasState&quot; is never used</description>
+<highlighted_element>atlasState</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>10</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryViewModel.kt</file>
+<line>59</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel isAtlasGenerating" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;isAtlasGenerating&quot; is never used</description>
+<highlighted_element>isAtlasGenerating</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>17</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryViewModel.kt</file>
+<line>62</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel memoryStatus" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;memoryStatus&quot; is never used</description>
+<highlighted_element>memoryStatus</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>12</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryViewModel.kt</file>
+<line>65</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel atlasGenerationJob" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;atlasGenerationJob&quot; is never used</description>
+<highlighted_element>atlasGenerationJob</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryViewModel.kt</file>
+<line>161</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel void generateHexGridLayout(androidx.compose.ui.unit.Density density, long canvasSize)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;generateHexGridLayout&quot; is never used</description>
+<highlighted_element>generateHexGridLayout</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>21</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryViewModel.kt</file>
+<line>177</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel void onVisibleCellsChanged(java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia&gt; visibleCells, float currentZoom, dev.serhiiyaremych.lumina.domain.model.Media selectedMedia, dev.serhiiyaremych.lumina.ui.SelectionMode selectionMode)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;onVisibleCellsChanged&quot; is never used</description>
+<highlighted_element>onVisibleCellsChanged</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>21</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryViewModel.kt</file>
+<line>200</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel void refreshMemoryStatus()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;refreshMemoryStatus&quot; is never used</description>
+<highlighted_element>refreshMemoryStatus</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>19</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryViewModel.kt</file>
+<line>207</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel dev.serhiiyaremych.lumina.domain.usecase.AtlasManager getAtlasManager()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getAtlasManager&quot; is never used</description>
+<highlighted_element>getAtlasManager</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>15</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryViewModel.kt</file>
+<line>212</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager getSmartMemoryManager()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getSmartMemoryManager&quot; is never used</description>
+<highlighted_element>getSmartMemoryManager</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>21</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/GalleryViewModel.kt</file>
+<line>217</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.GalleryViewModel dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities getDeviceCapabilities()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getDeviceCapabilities&quot; is never used</description>
+<highlighted_element>getDeviceCapabilities</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>21</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/StreamingGalleryViewModel.kt</file>
+<line>89</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.StreamingGalleryViewModel void setupAtlasStreaming()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;setupAtlasStreaming&quot; is never used</description>
+<highlighted_element>setupAtlasStreaming</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>19</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/StreamingGalleryViewModel.kt</file>
+<line>414</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.StreamingGalleryViewModel java.lang.Object getCurrentAtlases(dev.serhiiyaremych.lumina.domain.model.LODLevel lodLevel, kotlin.coroutines.Continuation&lt;? super java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.TextureAtlas&gt;&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getCurrentAtlases&quot; is never used</description>
+<highlighted_element>getCurrentAtlases</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>17</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/StreamingGalleryViewModel.kt</file>
+<line>421</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.StreamingGalleryViewModel java.lang.Object getBestPhotoRegion(android.net.Uri photoUri, kotlin.coroutines.Continuation&lt;? super kotlin.Pair&lt;dev.serhiiyaremych.lumina.domain.model.TextureAtlas,dev.serhiiyaremych.lumina.domain.model.AtlasRegion&gt;&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getBestPhotoRegion&quot; is never used</description>
+<highlighted_element>getBestPhotoRegion</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/StreamingGalleryViewModel.kt</file>
+<line>426</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.StreamingGalleryViewModel java.lang.Object getPersistentCache(kotlin.coroutines.Continuation&lt;? super java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.TextureAtlas&gt;&gt; $completion)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getPersistentCache&quot; is never used</description>
+<highlighted_element>getPersistentCache</highlighted_element>
+<language>kotlin</language>
+<offset>16</offset>
+<length>18</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/StreamingGalleryViewModel.kt</file>
+<line>431</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.gallery</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.gallery.StreamingGalleryViewModel void refreshPersistentCache()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;refreshPersistentCache&quot; is never used</description>
+<highlighted_element>refreshPersistentCache</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>22</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/selection/PhotoSelectionState.kt</file>
+<line>36</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.selection</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.selection.PhotoSelectionState int getCurrentPhotoPosition()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;currentPhotoPosition&quot; is never used</description>
+<highlighted_element>currentPhotoPosition</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>20</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/selection/PhotoSelectionState.kt</file>
+<line>42</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.selection</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.selection.PhotoSelectionState boolean getShouldShowOverlay()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;shouldShowOverlay&quot; is never used</description>
+<highlighted_element>shouldShowOverlay</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>17</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/selection/PhotoSelectionState.kt</file>
+<line>48</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.selection</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.selection.PhotoSelectionState boolean getShouldShowNavigation()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;shouldShowNavigation&quot; is never used</description>
+<highlighted_element>shouldShowNavigation</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>20</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/selection/PhotoSelectionState.kt</file>
+<line>54</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.selection</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.selection.PhotoSelectionState java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.MediaWithPosition&gt; getCellMediaItems()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Property &quot;cellMediaItems&quot; is never used</description>
+<highlighted_element>cellMediaItems</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>14</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/selection/PhotoSelectionState.kt</file>
+<line>92</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.selection</package>
+<entry_point TYPE="field" FQNAME="dev.serhiiyaremych.lumina.ui.selection.SelectionMode OVERLAY_ACTIVE" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Class &quot;OVERLAY_ACTIVE&quot; is never used</description>
+<highlighted_element>OVERLAY_ACTIVE</highlighted_element>
+<language>kotlin</language>
+<offset>4</offset>
+<length>14</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/selection/SelectionStateManager.kt</file>
+<line>172</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.selection</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.selection.SelectionStateManager void updateConfig(dev.serhiiyaremych.lumina.ui.selection.PhotoSelectionConfig config)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;updateConfig&quot; is never used</description>
+<highlighted_element>updateConfig</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>12</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/selection/SelectionStateManager.kt</file>
+<line>179</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.selection</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.selection.SelectionStateManager void selectPhoto(dev.serhiiyaremych.lumina.domain.model.Media media, java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia&gt; cells, dev.serhiiyaremych.lumina.ui.selection.SelectionMode mode)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;selectPhoto&quot; is never used</description>
+<highlighted_element>selectPhoto</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>11</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/selection/SelectionStateManager.kt</file>
+<line>206</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.selection</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.selection.SelectionStateManager boolean isSelected(dev.serhiiyaremych.lumina.domain.model.Media media)" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;isSelected&quot; is never used</description>
+<highlighted_element>isSelected</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>10</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/selection/SelectionStateManager.kt</file>
+<line>213</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.selection</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.selection.SelectionStateManager dev.serhiiyaremych.lumina.ui.selection.PhotoSelectionState getCurrentState()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getCurrentState&quot; is never used</description>
+<highlighted_element>getCurrentState</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>15</length>
+</problem>
+<problem>
+<file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/selection/SelectionStateManager.kt</file>
+<line>218</line>
+<module>Lumina_Gallery.app.main</module>
+<package>dev.serhiiyaremych.lumina.ui.selection</package>
+<entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.selection.SelectionStateManager dev.serhiiyaremych.lumina.ui.selection.PhotoSelectionConfig getCurrentConfig()" />
+<problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+<description>Function &quot;getCurrentConfig&quot; is never used</description>
+<highlighted_element>getCurrentConfig</highlighted_element>
+<language>kotlin</language>
+<offset>8</offset>
+<length>16</length>
+</problem>

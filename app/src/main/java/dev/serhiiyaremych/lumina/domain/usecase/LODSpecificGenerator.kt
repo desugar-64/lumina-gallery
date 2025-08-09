@@ -9,10 +9,10 @@ import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.domain.model.PhotoPriority
 import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
 import dev.serhiiyaremych.lumina.domain.model.TypeSafeLODPriority
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 /**
  * LOD-Specific Generator - Generates atlas for individual LOD levels
@@ -42,8 +42,7 @@ class LODSpecificGenerator @Inject constructor(
         lodLevel: LODLevel,
         currentZoom: Float,
         priority: TypeSafeLODPriority
-    ): LODGenerationResult = trace("${BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS}_${lodLevel}") {
-        
+    ): LODGenerationResult = trace("${BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS}_$lodLevel") {
         if (photos.isEmpty()) {
             Log.w(TAG, "No photos provided for LOD $lodLevel generation")
             return@trace LODGenerationResult.Failed(
@@ -54,12 +53,12 @@ class LODSpecificGenerator @Inject constructor(
 
         try {
             currentCoroutineContext().ensureActive()
-            
+
             Log.d(TAG, "Generating LOD $lodLevel: ${photos.size} photos, priority=${priority.priority::class.simpleName} (${priority.reason})")
 
             // Create priority mapping based on type-safe LOD priority context
             val priorityMapping = createTypeSafePriorityMapping(photos, priority)
-            
+
             // Use existing enhanced atlas generator with specific LOD
             val result = enhancedAtlasGenerator.generateAtlasEnhanced(
                 photoUris = photos,
@@ -74,7 +73,7 @@ class LODSpecificGenerator @Inject constructor(
             when {
                 result.hasResults -> {
                     Log.d(TAG, "LOD $lodLevel generation successful: ${result.allAtlases.size} atlases, ${result.packedPhotos} photos packed")
-                    
+
                     LODGenerationResult.Success(
                         atlases = result.allAtlases,
                         packedPhotos = result.packedPhotos,
@@ -82,27 +81,25 @@ class LODSpecificGenerator @Inject constructor(
                         utilization = result.averageUtilization
                     )
                 }
-                
+
                 else -> {
                     Log.w(TAG, "LOD $lodLevel generation failed: no atlases generated from ${photos.size} photos")
-                    
+
                     LODGenerationResult.Failed(
                         error = "No atlases generated from ${photos.size} photos",
                         retryable = true
                     )
                 }
             }
-
         } catch (e: Exception) {
             Log.e(TAG, "Exception during LOD $lodLevel generation", e)
-            
+
             LODGenerationResult.Failed(
                 error = e.message ?: "Unknown generation error",
                 retryable = true
             )
         }
     }
-    
 
     /**
      * Create type-safe priority mapping based on AtlasPriority context
@@ -115,20 +112,17 @@ class LODSpecificGenerator @Inject constructor(
         return priority.createPriorityMapping()
     }
 
-    
     /**
      * Get SmartMemoryManager for debug overlay and memory status
      */
-    fun getSmartMemoryManager(): SmartMemoryManager {
-        return enhancedAtlasGenerator.getSmartMemoryManager()
-    }
+    fun getSmartMemoryManager(): SmartMemoryManager = enhancedAtlasGenerator.getSmartMemoryManager()
 }
 
 /**
  * LOD generation result
  */
 sealed class LODGenerationResult {
-    
+
     /**
      * Successful LOD generation
      */
@@ -138,7 +132,7 @@ sealed class LODGenerationResult {
         val failedPhotos: List<Uri>,
         val utilization: Float
     ) : LODGenerationResult()
-    
+
     /**
      * Failed LOD generation
      */

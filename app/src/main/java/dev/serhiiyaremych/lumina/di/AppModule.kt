@@ -18,9 +18,9 @@ import dev.serhiiyaremych.lumina.domain.usecase.EnhancedAtlasGenerator
 import dev.serhiiyaremych.lumina.domain.usecase.GetMediaUseCase
 import dev.serhiiyaremych.lumina.domain.usecase.PhotoLODProcessor
 import dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import javax.inject.Singleton
 
 @Module(includes = [StreamingAtlasModule::class])
 @InstallIn(SingletonComponent::class)
@@ -35,8 +35,7 @@ object AppModule {
     fun provideMediaDataSource(
         @ApplicationContext context: Context,
         dispatcher: CoroutineDispatcher
-    ): MediaDataSource =
-        MediaStoreDataSource(context.contentResolver, dispatcher)
+    ): MediaDataSource = MediaStoreDataSource(context.contentResolver, dispatcher)
 
     @Singleton
     @Provides
@@ -48,8 +47,7 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideBitmapPool(): BitmapPool =
-        BitmapPool()
+    fun provideBitmapPool(): BitmapPool = BitmapPool()
 
     @Singleton
     @Provides

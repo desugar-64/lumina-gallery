@@ -10,14 +10,14 @@ import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
 import dev.serhiiyaremych.lumina.ui.SelectionMode
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.measureTimedValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /**
  * Atlas Manager - Ultra Atlas System Implementation
@@ -117,7 +117,7 @@ class AtlasManager @Inject constructor(
 
                     RegenerationDecision.SELECTIVE_REGENERATION -> {
                         Log.d(TAG, "Selective regeneration: generating high-priority atlas for selected photo only")
-                        val (selectiveResult, duration) = trace(BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS) {
+                        val (selectiveResult, _) = trace(BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS) {
                             measureTimedValue { generateSelectiveAtlas(selectedMedia, currentZoom, selectionMode) }
                         }
                         return@withContext handleSelectiveAtlasResult(selectiveResult, requestSequence, selectedMedia)
@@ -125,13 +125,12 @@ class AtlasManager @Inject constructor(
 
                     RegenerationDecision.FULL_REGENERATION -> {
                         Log.d(TAG, "Full regeneration: generating atlases for ${expandedCells.size} cells at $lodLevel")
-                        val (enhancedResult, duration) = trace(BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS) {
+                        val (enhancedResult, _) = trace(BenchmarkLabels.ATLAS_MANAGER_GENERATE_ATLAS) {
                             measureTimedValue { generateAtlasForCells(expandedCells, lodLevel, currentZoom, selectedMedia, selectionMode) }
                         }
                         return@withContext handleFullAtlasResult(enhancedResult, requestSequence, lodLevel, currentZoom, selectedMedia, cellSetKey)
                     }
                 }
-
                 // This should never be reached, but provide fallback
                 MultiAtlasUpdateResult.GenerationFailed("Unknown regeneration decision", requestSequence, lodLevel)
             }.fold(
@@ -155,9 +154,7 @@ class AtlasManager @Inject constructor(
      * Get atlas region for a specific photo.
      * Searches across all current atlases to find the photo.
      */
-    suspend fun getPhotoRegion(photoId: Uri): AtlasRegion? {
-        return atlasBucketManager.getBestRegion(photoId)
-    }
+    suspend fun getPhotoRegion(photoId: Uri): AtlasRegion? = atlasBucketManager.getBestRegion(photoId)
 
     /**
      * Get atlas and region for a specific photo.
@@ -181,16 +178,12 @@ class AtlasManager @Inject constructor(
     /**
      * Get current memory status from the smart memory manager.
      */
-    fun getMemoryStatus(): SmartMemoryManager.MemoryStatus {
-        return smartMemoryManager.getMemoryStatus()
-    }
+    fun getMemoryStatus(): SmartMemoryManager.MemoryStatus = smartMemoryManager.getMemoryStatus()
 
     /**
      * Get smart memory manager instance for advanced debugging.
      */
-    fun getSmartMemoryManager(): SmartMemoryManager {
-        return smartMemoryManager
-    }
+    fun getSmartMemoryManager(): SmartMemoryManager = smartMemoryManager
 
     /**
      * Check if atlas regeneration is needed (suspend version).
@@ -199,9 +192,7 @@ class AtlasManager @Inject constructor(
         visibleCells: List<HexCellWithMedia>,
         currentZoom: Float,
         marginRings: Int = DEFAULT_MARGIN_RINGS
-    ): Boolean {
-        return shouldRegenerateAtlas(visibleCells, currentZoom, marginRings, null)
-    }
+    ): Boolean = shouldRegenerateAtlas(visibleCells, currentZoom, marginRings, null)
 
     /**
      * Check if atlas regeneration is needed, considering selected media (suspend version).
@@ -231,36 +222,36 @@ class AtlasManager @Inject constructor(
                     Log.d(TAG, "Focused cell unchanged, skipping update")
                     return@withLock
                 }
-                
+
                 currentFocusedCell = focusedCell
-                
+
                 if (focusedCell == null) {
                     Log.d(TAG, "Clearing focused cell")
                     atlasBucketManager.clearFocus()
                     return@withLock
                 }
-                
+
                 Log.d(TAG, "Updating focused cell: ${focusedCell.hexCell.q},${focusedCell.hexCell.r}")
-                
+
                 // Generate atlas for focused cell at +1 LOD level
                 val currentLOD = selectOptimalLODLevel(listOf(focusedCell), currentZoom)
                 val higherLOD = getHigherLOD(currentLOD)
-                
+
                 // Extract photos from focused cell
                 val photoUris = focusedCell.mediaItems
                     .mapNotNull { it.media as? Media.Image }
                     .map { it.uri }
-                
+
                 if (photoUris.isNotEmpty()) {
                     Log.d(TAG, "Generating focus atlas: ${photoUris.size} photos at $higherLOD (+1 from $currentLOD)")
-                    
+
                     val focusResult = enhancedAtlasGenerator.generateAtlasEnhanced(
                         photoUris = photoUris,
                         lodLevel = higherLOD,
                         currentZoom = currentZoom,
                         priorityMapping = emptyMap()
                     )
-                    
+
                     if (focusResult.hasResults) {
                         atlasBucketManager.replaceFocus(focusResult.allAtlases)
                         Log.d(TAG, "Focus atlas generated: ${focusResult.allAtlases.size} atlases")
@@ -275,24 +266,23 @@ class AtlasManager @Inject constructor(
             }
         }
     }
-    
+
     /**
      * Clear current atlases and free memory.
      */
     suspend fun clearAtlases() = atlasMutex.withLock {
         val currentAtlases = atlasBucketManager.snapshotAll()
         Log.d(TAG, "Clearing ${currentAtlases.size} current atlases via bucket manager")
-        
+
         // Clear all transient buckets (keeps L0 base)
         atlasBucketManager.clearTransient()
-        
+
         currentCellIds = emptySet()
         currentSelectedMedia = null
         currentFocusedCell = null
     }
 
     // Private helper methods
-
 
     /**
      * Selects optimal LOD level based on zoom factor using predefined zoom ranges.
@@ -318,10 +308,8 @@ class AtlasManager @Inject constructor(
     private fun generateCellSetKey(
         cells: List<HexCellWithMedia>,
         lodLevel: LODLevel
-    ): Set<String> {
-        return cells.map { "${it.hexCell.q},${it.hexCell.r}-${lodLevel.name}" }.toSet()
-    }
-    
+    ): Set<String> = cells.map { "${it.hexCell.q},${it.hexCell.r}-${lodLevel.name}" }.toSet()
+
     /**
      * Get higher LOD level for focus bucket (+1 from current)
      */
@@ -378,9 +366,9 @@ class AtlasManager @Inject constructor(
      * Decision for atlas regeneration strategy
      */
     private enum class RegenerationDecision {
-        NO_REGENERATION,        // Use existing atlases
+        NO_REGENERATION, // Use existing atlases
         SELECTIVE_REGENERATION, // Only regenerate high-priority photo, preserve others
-        FULL_REGENERATION      // Regenerate all atlases
+        FULL_REGENERATION // Regenerate all atlases
     }
 
     private suspend fun generateAtlasForCells(
@@ -407,7 +395,8 @@ class AtlasManager @Inject constructor(
             if (selectedMedia != null &&
                 selectedMedia is Media.Image &&
                 selectedMedia.uri == uri &&
-                selectionMode == dev.serhiiyaremych.lumina.ui.SelectionMode.PHOTO_MODE) {
+                selectionMode == dev.serhiiyaremych.lumina.ui.SelectionMode.PHOTO_MODE
+            ) {
                 dev.serhiiyaremych.lumina.domain.model.PhotoPriority.HIGH
             } else {
                 dev.serhiiyaremych.lumina.domain.model.PhotoPriority.NORMAL
@@ -428,7 +417,7 @@ class AtlasManager @Inject constructor(
         Log.d(TAG, "  - Selected media: ${selectedMedia?.let { "${it.displayName} (${it.javaClass.simpleName}) URI=${it.uri}" } ?: "none"}")
         Log.d(TAG, "  - Selection mode: $selectionMode")
         Log.d(TAG, "  - Photo URIs: ${photoUris.take(5)}...")
-        
+
         if (highPriorityCount > 0) {
             val highPriorityUris = priorityMapping.filterValues { it == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.HIGH }.keys
             Log.d(TAG, "  - High priority URIs: ${highPriorityUris.take(3)}")
@@ -554,7 +543,7 @@ class AtlasManager @Inject constructor(
 
         // Replace highlight bucket with new high-priority atlases
         atlasBucketManager.replaceHighlight(selectiveResult.allAtlases)
-        
+
         // Update state
         currentSelectedMedia = selectedMedia
 
@@ -596,7 +585,7 @@ class AtlasManager @Inject constructor(
             } else {
                 atlasBucketManager.addToRolling(enhancedResult.allAtlases)
             }
-            
+
             // Update state
             currentCellIds = cellSetKey
             currentLODLevel = lodLevel

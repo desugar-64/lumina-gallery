@@ -4,10 +4,10 @@ import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.ui.unit.IntSize
 import androidx.core.graphics.createBitmap
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Bitmap Atlas Pool - Efficient Atlas Texture Reuse System
@@ -25,15 +25,15 @@ import javax.inject.Singleton
  */
 @Singleton
 class BitmapAtlasPool @Inject constructor() {
-    
+
     companion object {
         private const val TAG = "BitmapAtlasPool"
-        
+
         // Pool configuration
-        private const val MAX_POOL_SIZE_2K = 4  // 2K atlases: ~16MB each
-        private const val MAX_POOL_SIZE_4K = 2  // 4K atlases: ~64MB each  
-        private const val MAX_POOL_SIZE_8K = 1  // 8K atlases: ~256MB each
-        
+        private const val MAX_POOL_SIZE_2K = 4 // 2K atlases: ~16MB each
+        private const val MAX_POOL_SIZE_4K = 2 // 4K atlases: ~64MB each
+        private const val MAX_POOL_SIZE_8K = 1 // 8K atlases: ~256MB each
+
         // Atlas size constants
         private const val ATLAS_2K = 2048
         private const val ATLAS_4K = 4096
@@ -44,10 +44,10 @@ class BitmapAtlasPool @Inject constructor() {
     private val pool2K = mutableListOf<Bitmap>()
     private val pool4K = mutableListOf<Bitmap>()
     private val pool8K = mutableListOf<Bitmap>()
-    
+
     // Mutex for thread-safe operations
     private val poolMutex = Mutex()
-    
+
     // Pool statistics
     private var acquireCount = 0
     private var releaseCount = 0
@@ -58,33 +58,32 @@ class BitmapAtlasPool @Inject constructor() {
      * Acquire bitmap from pool or create new one
      */
     suspend fun acquire(
-        width: Int, 
-        height: Int, 
+        width: Int,
+        height: Int,
         config: Bitmap.Config
     ): Bitmap = poolMutex.withLock {
         acquireCount++
-        
+
         val atlasSize = getAtlasSize(width, height)
         val pool = getPoolForSize(atlasSize)
-        val maxPoolSize = getMaxPoolSize(atlasSize)
-        
+
         // Try to find reusable bitmap in pool
         val iterator = pool.iterator()
         while (iterator.hasNext()) {
             val bitmap = iterator.next()
-            
+
             // Validate bitmap is still usable
-            if (!bitmap.isRecycled && 
-                bitmap.width == width && 
-                bitmap.height == height && 
-                bitmap.config == config) {
-                
+            if (!bitmap.isRecycled &&
+                bitmap.width == width &&
+                bitmap.height == height &&
+                bitmap.config == config
+            ) {
                 iterator.remove()
                 hitCount++
-                
+
                 // Clear bitmap for reuse
                 bitmap.eraseColor(android.graphics.Color.TRANSPARENT)
-                
+
                 Log.d(TAG, "Pool HIT: ${atlasSize}K bitmap acquired (pool size: ${pool.size})")
                 return@withLock bitmap
             } else {
@@ -95,11 +94,11 @@ class BitmapAtlasPool @Inject constructor() {
                 }
             }
         }
-        
+
         // Pool miss - create new bitmap
         missCount++
         val newBitmap = createBitmap(width, height, config)
-        
+
         Log.d(TAG, "Pool MISS: Created new ${atlasSize}K bitmap (pool size: ${pool.size})")
         return@withLock newBitmap
     }
@@ -112,13 +111,13 @@ class BitmapAtlasPool @Inject constructor() {
             Log.w(TAG, "Attempted to release recycled bitmap")
             return@withLock
         }
-        
+
         releaseCount++
-        
+
         val atlasSize = getAtlasSize(bitmap.width, bitmap.height)
         val pool = getPoolForSize(atlasSize)
         val maxPoolSize = getMaxPoolSize(atlasSize)
-        
+
         // Add to pool if not full
         if (pool.size < maxPoolSize) {
             pool.add(bitmap)
@@ -135,7 +134,7 @@ class BitmapAtlasPool @Inject constructor() {
      */
     suspend fun clearAllPools() = poolMutex.withLock {
         var recycledCount = 0
-        
+
         listOf(pool2K, pool4K, pool8K).forEach { pool ->
             pool.forEach { bitmap ->
                 if (!bitmap.isRecycled) {
@@ -145,7 +144,7 @@ class BitmapAtlasPool @Inject constructor() {
             }
             pool.clear()
         }
-        
+
         Log.d(TAG, "Cleared all pools - recycled $recycledCount bitmaps")
     }
 
@@ -155,7 +154,7 @@ class BitmapAtlasPool @Inject constructor() {
     suspend fun clearPoolForSize(atlasSize: Int) = poolMutex.withLock {
         val pool = getPoolForSize(atlasSize)
         var recycledCount = 0
-        
+
         pool.forEach { bitmap ->
             if (!bitmap.isRecycled) {
                 bitmap.recycle()
@@ -163,7 +162,7 @@ class BitmapAtlasPool @Inject constructor() {
             }
         }
         pool.clear()
-        
+
         Log.d(TAG, "Cleared ${atlasSize}K pool - recycled $recycledCount bitmaps")
     }
 
@@ -186,30 +185,24 @@ class BitmapAtlasPool @Inject constructor() {
 
     // Helper methods
 
-    private fun getAtlasSize(width: Int, height: Int): Int {
-        return when {
-            width <= ATLAS_2K && height <= ATLAS_2K -> ATLAS_2K
-            width <= ATLAS_4K && height <= ATLAS_4K -> ATLAS_4K
-            else -> ATLAS_8K
-        }
+    private fun getAtlasSize(width: Int, height: Int): Int = when {
+        width <= ATLAS_2K && height <= ATLAS_2K -> ATLAS_2K
+        width <= ATLAS_4K && height <= ATLAS_4K -> ATLAS_4K
+        else -> ATLAS_8K
     }
 
-    private fun getPoolForSize(atlasSize: Int): MutableList<Bitmap> {
-        return when (atlasSize) {
-            ATLAS_2K -> pool2K
-            ATLAS_4K -> pool4K
-            ATLAS_8K -> pool8K
-            else -> pool2K // Fallback
-        }
+    private fun getPoolForSize(atlasSize: Int): MutableList<Bitmap> = when (atlasSize) {
+        ATLAS_2K -> pool2K
+        ATLAS_4K -> pool4K
+        ATLAS_8K -> pool8K
+        else -> pool2K // Fallback
     }
 
-    private fun getMaxPoolSize(atlasSize: Int): Int {
-        return when (atlasSize) {
-            ATLAS_2K -> MAX_POOL_SIZE_2K
-            ATLAS_4K -> MAX_POOL_SIZE_4K
-            ATLAS_8K -> MAX_POOL_SIZE_8K
-            else -> MAX_POOL_SIZE_2K // Fallback
-        }
+    private fun getMaxPoolSize(atlasSize: Int): Int = when (atlasSize) {
+        ATLAS_2K -> MAX_POOL_SIZE_2K
+        ATLAS_4K -> MAX_POOL_SIZE_4K
+        ATLAS_8K -> MAX_POOL_SIZE_8K
+        else -> MAX_POOL_SIZE_2K // Fallback
     }
 }
 
@@ -227,9 +220,7 @@ data class PoolStatistics(
     val pool8KSize: Int,
     val totalPoolSize: Int
 ) {
-    override fun toString(): String {
-        return "PoolStats(acquire=$acquireCount, release=$releaseCount, " +
-                "hit=$hitCount, miss=$missCount, hitRate=${String.format(java.util.Locale.US, "%.1f", hitRate * 100)}%, " +
-                "pools=[2K:$pool2KSize, 4K:$pool4KSize, 8K:$pool8KSize], total=$totalPoolSize)"
-    }
+    override fun toString(): String = "PoolStats(acquire=$acquireCount, release=$releaseCount, " +
+        "hit=$hitCount, miss=$missCount, hitRate=${String.format(java.util.Locale.US, "%.1f", hitRate * 100)}%, " +
+        "pools=[2K:$pool2KSize, 4K:$pool4KSize, 8K:$pool8KSize], total=$totalPoolSize)"
 }

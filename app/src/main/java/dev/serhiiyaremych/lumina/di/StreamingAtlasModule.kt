@@ -24,17 +24,13 @@ object StreamingAtlasModule {
 
     @Singleton
     @Provides
-    fun provideBitmapAtlasPool(): BitmapAtlasPool {
-        return BitmapAtlasPool()
-    }
+    fun provideBitmapAtlasPool(): BitmapAtlasPool = BitmapAtlasPool()
 
     @Singleton
     @Provides
     fun provideLODSpecificGenerator(
         enhancedAtlasGenerator: EnhancedAtlasGenerator
-    ): LODSpecificGenerator {
-        return LODSpecificGenerator(enhancedAtlasGenerator)
-    }
+    ): LODSpecificGenerator = LODSpecificGenerator(enhancedAtlasGenerator)
 
     @Singleton
     @Provides
@@ -42,8 +38,5 @@ object StreamingAtlasModule {
         lodSpecificGenerator: LODSpecificGenerator,
         bitmapAtlasPool: BitmapAtlasPool,
         atlasBucketManager: dev.serhiiyaremych.lumina.domain.bucket.AtlasBucketManager
-    ): StreamingAtlasManager {
-        return StreamingAtlasManager(lodSpecificGenerator, bitmapAtlasPool, atlasBucketManager)
-    }
-
+    ): StreamingAtlasManager = StreamingAtlasManager(lodSpecificGenerator, bitmapAtlasPool, atlasBucketManager)
 }

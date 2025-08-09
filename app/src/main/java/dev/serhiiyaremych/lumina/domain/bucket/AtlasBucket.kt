@@ -1,11 +1,11 @@
 package dev.serhiiyaremych.lumina.domain.bucket
 
 import android.net.Uri
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
 import dev.serhiiyaremych.lumina.domain.model.AtlasRegion
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
+import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Thread-safe container that groups TextureAtlases by LOD level and provides
@@ -26,8 +26,6 @@ open class AtlasBucket {
 
     /**  Quick lookup from photo -> atlas  */
     private val index: MutableMap<Uri, TextureAtlas> = hashMapOf()
-
-    
 
     suspend fun addAll(atlases: Collection<TextureAtlas>) {
         lock.withLock {
@@ -95,4 +93,3 @@ open class AtlasBucket {
     /** Current total atlases (all LODs) */
     suspend fun size(): Int = lock.withLock { index.size }
 }
-

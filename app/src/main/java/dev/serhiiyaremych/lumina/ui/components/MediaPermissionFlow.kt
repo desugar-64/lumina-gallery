@@ -247,5 +247,3 @@ private fun PermissionDeniedContent(
         }
     }
 }
-
-
