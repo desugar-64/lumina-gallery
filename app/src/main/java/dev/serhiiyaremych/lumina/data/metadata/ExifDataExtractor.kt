@@ -1,7 +1,6 @@
 package dev.serhiiyaremych.lumina.data.metadata
 
 import android.content.Context
-import android.location.Location
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
 import dev.serhiiyaremych.lumina.domain.model.MediaMetadata
@@ -71,7 +70,7 @@ class ExifDataExtractor @Inject constructor(
     private fun extractTechnicalMetadata(exif: ExifInterface): MediaMetadata.TechnicalMetadata {
         return MediaMetadata.TechnicalMetadata(
             aperture = exif.getAttribute(ExifInterface.TAG_APERTURE_VALUE)?.let { "f/$it" },
-            iso = exif.getAttribute(ExifInterface.TAG_ISO_SPEED_RATINGS),
+            iso = exif.getAttribute(ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY),
             focalLength = exif.getAttribute(ExifInterface.TAG_FOCAL_LENGTH)?.let { "${it}mm" },
             exposureTime = exif.getAttribute(ExifInterface.TAG_EXPOSURE_TIME)?.let { "${it}s" },
             whiteBalance = exif.getAttribute(ExifInterface.TAG_WHITE_BALANCE)?.let { mapWhiteBalance(it) },

@@ -146,6 +146,34 @@ gemini -p "@app/src/main/java/dev/serhiiyaremych/lumina/ui/ Are there any perfor
 gemini -p "@app/src/ How are media permissions handled? Show the complete permission flow implementation"
 ```
 
+### Advanced Code Quality Analysis
+```bash
+# Find deprecated APIs and code issues with Kotlin compiler warnings
+./gradlew clean compileDebugKotlin 2>&1 | grep "^w:" | head -20
+
+# Count total compiler warnings
+./gradlew clean compileDebugKotlin 2>&1 | grep "^w:" | wc -l
+
+# Run comprehensive lint analysis with detailed reports
+./gradlew lintDebug --stacktrace
+
+# Auto-fix safe lint issues
+./gradlew lintFix
+
+# Check for dependency issues and conflicts
+./gradlew analyzeDebugDependencies
+
+# Find duplicate classes in classpath
+./gradlew checkDebugDuplicateClasses
+
+# View detailed lint reports (generated after lintDebug)
+cat app/build/reports/lint-results-debug.txt
+open app/build/reports/lint-results-debug.html
+
+# Enable all Gradle warnings during build
+./gradlew --info assembleDebug 2>&1 | grep -E "(warning|deprecated|unused)"
+```
+
 ## Project Structure
 
 ### Key File Locations

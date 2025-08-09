@@ -7,8 +7,6 @@ import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_SCALER_SCALE
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_SCALER_CREATE_SCALED_BITMAP
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_SCALER_CREATE_CROPPED_BITMAP
 import dev.serhiiyaremych.lumina.common.BenchmarkLabels.PHOTO_SCALER_CALCULATE_DIMENSIONS
-import dev.serhiiyaremych.lumina.common.BenchmarkLabels.ATLAS_MEMORY_BITMAP_ALLOCATE
-import dev.serhiiyaremych.lumina.common.BenchmarkLabels.ATLAS_MEMORY_BITMAP_RECYCLE
 import javax.inject.Inject
 import javax.inject.Singleton
 

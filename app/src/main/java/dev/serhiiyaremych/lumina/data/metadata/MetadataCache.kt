@@ -4,10 +4,8 @@ import android.content.Context
 import android.util.LruCache
 import androidx.core.content.edit
 import dev.serhiiyaremych.lumina.domain.model.MediaMetadata
-import dev.serhiiyaremych.lumina.domain.model.MetadataLoadingState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton

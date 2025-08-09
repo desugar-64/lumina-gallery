@@ -14,8 +14,6 @@ import dev.serhiiyaremych.lumina.data.repository.MediaRepositoryImpl
 import dev.serhiiyaremych.lumina.domain.bucket.AtlasBucketManager
 import dev.serhiiyaremych.lumina.domain.repository.MediaRepository
 import dev.serhiiyaremych.lumina.domain.usecase.AtlasManager
-import dev.serhiiyaremych.lumina.domain.usecase.DeviceCapabilities
-import dev.serhiiyaremych.lumina.domain.usecase.DynamicAtlasPool
 import dev.serhiiyaremych.lumina.domain.usecase.EnhancedAtlasGenerator
 import dev.serhiiyaremych.lumina.domain.usecase.GetMediaUseCase
 import dev.serhiiyaremych.lumina.domain.usecase.PhotoLODProcessor

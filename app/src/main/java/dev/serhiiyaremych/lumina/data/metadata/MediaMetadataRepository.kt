@@ -1,10 +1,8 @@
 package dev.serhiiyaremych.lumina.data.metadata
 
-import android.net.Uri
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.model.MediaMetadata
-import dev.serhiiyaremych.lumina.domain.model.MediaWithPosition
 import dev.serhiiyaremych.lumina.domain.model.MetadataLoadingState
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
