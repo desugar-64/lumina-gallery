@@ -20,7 +20,7 @@ ktlint_standard_function-signature = enabled
 ktlint_standard_if-else-wrapping = enabled
 ktlint_standard_import-ordering = enabled
 ktlint_standard_indent = enabled
-ktlint_standard_max-line-length = 120
+ktlint_standard_max-line-length = 180
 ktlint_standard_modifier-order = enabled
 ktlint_standard_no-blank-line-before-rbrace = enabled
 ktlint_standard_no-consecutive-blank-lines = enabled
@@ -78,7 +78,7 @@ ktlint_code_style = android_studio
 # ktlint_compose_some-custom-compose-rule = enabled
 
 # Maximum line length (already set in standard, but can be reiterated or adjusted)
-max_line_length = 120
+max_line_length = 180
 
 # Indentation size
 indent_size = 4

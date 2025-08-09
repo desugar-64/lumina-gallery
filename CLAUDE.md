@@ -88,6 +88,12 @@ LuminaGallery is a modern Android Compose application focused on advanced image 
 # Run lint checks
 ./gradlew -q lint
 
+# Code formatting with ktlint
+./gradlew ktlintCheck          # Check code style
+./gradlew ktlintFormat         # Auto-fix formatting issues
+ktlint "**/*.kt"              # System-wide ktlint check
+ktlint -F "**/*.kt"           # System-wide auto-fix
+
 # Start app on connected device (assumes debug build installed)
 adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity
 
@@ -542,10 +548,52 @@ Think hard to understand the true nature of a problem, not just to find a soluti
 ### Development Workflow
 
 **IMPORTANT**: After implementing any feature or making code changes, always:
-1. **Build the project** to verify it compiles: `./gradlew -q assembleDebug`
-2. **Ask the user** if they want to launch the application to test the changes: `./gradlew -q installDebug && adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity`
+1. **Format code** to ensure consistent style: `./gradlew ktlintFormat`
+2. **Check code style** for any remaining issues: `./gradlew ktlintCheck`
+3. **Build the project** to verify it compiles: `./gradlew -q assembleDebug`
+4. **Ask the user** if they want to launch the application to test the changes: `./gradlew -q installDebug && adb shell am start -n dev.serhiiyaremych.lumina/.MainActivity`
 
-This ensures that all modifications compile correctly and gives the user the option to immediately test the implementation.
+This ensures code follows project standards, compiles correctly, and gives the user the option to immediately test the implementation.
+
+### Code Formatting Standards
+
+**ktlint Configuration**: This project uses ktlint v1.7.1 with comprehensive Android/Compose rules configured via:
+- **`.editorconfig`**: Main configuration with 40+ rules for consistent formatting
+- **Gradle integration**: System-wide ktlint applied to all modules
+- **Compose support**: PascalCase allowed for `@Composable` functions
+- **Android Studio style**: Uses `android_studio` code style by default
+
+**Quick ktlint Commands**:
+```bash
+# Check all Kotlin files
+ktlint
+
+# Check specific paths
+ktlint "app/src/main/java/"
+ktlint "**/*.kt"
+
+# Auto-fix formatting
+ktlint -F "**/*.kt"
+
+# Gradle integration
+./gradlew ktlintCheck          # Check all modules
+./gradlew ktlintFormat         # Auto-fix all modules
+./gradlew :app:ktlintCheck     # Check specific module
+```
+
+**IDE Integration**:
+- **Android Studio**: ktlint plugin available in marketplace
+- **VS Code**: ktlint extension with auto-format on save
+- **Configuration**: Uses `.editorconfig` for consistent rules across editors
+
+**Key Rules Enabled**:
+- **180 character line length** (generous for modern wide screens)
+- **PascalCase for @Composable functions** via `ktlint_function_naming_ignore_when_annotated_with = Composable`
+- **Trailing commas** for cleaner git diffs
+- **Wildcard imports allowed** (disabled `no-wildcard-imports` for cleaner code organization)
+- **Property naming relaxed** (disabled for Compose patterns like `object Colors`)
+- **Import ordering and spacing** with consistent formatting
+- **Android Studio code style** compliance with experimental rules enabled
 
 ## Benchmarking Workflow
 
