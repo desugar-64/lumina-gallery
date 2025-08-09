@@ -1,5 +1,87 @@
 # CRUSH.md
 
+## 🚀 Rapid Development with OpenCode Subagents
+
+**CRUSH** methodology for ultra-fast, high-quality development using specialized subagents.
+
+### ⚡ Quick Agent Reference
+
+| Task | Agent | Command |
+|------|-------|---------|
+| **@Composable review** | `@compose-guardian` | `@compose-guardian "Review this UI component"` |
+| **Thread safety** | `@coroutines-auditor` | `@coroutines-auditor "Check concurrency issues"` |
+| **Performance** | `@graphics-performance` | `@graphics-performance "Optimize for 300ms target"` |
+| **Architecture** | `@architecture-workflow` | `@architecture-workflow "Verify Clean Architecture"` |
+| **Simplify code** | `@functional-purist` | `@functional-purist "Eliminate unnecessary classes"` |
+
+### 🎯 CRUSH Workflow (60-Second Code Quality)
+
+#### **🔥 Ultra-Fast Review (15 seconds)**
+```bash
+# One-liner for immediate feedback on any code change
+@functional-purist "Quick purity check" && @compose-guardian "Quick Compose check"
+```
+
+#### **⚡ Performance-Critical Path (30 seconds)**
+```bash
+# For graphics/atlas performance work
+@graphics-performance "Analyze bottlenecks" && @coroutines-auditor "Check thread safety"
+```
+
+#### **🛡️ Pre-Commit Shield (45 seconds)**
+```bash
+# Before any commit - bulletproof quality check
+@architecture-workflow "Build workflow check" && @compose-guardian "Final Compose review"
+```
+
+### 🎪 Agent Personality Quick Guide
+
+| Agent | Personality | Best For |
+|-------|------------|----------|
+| `@compose-guardian` | **Strict API enforcer** | Catching Compose violations |
+| `@coroutines-auditor` | **Paranoid thread safety expert** | Race conditions, memory leaks |
+| `@graphics-performance` | **300ms optimization fanatic** | Atlas performance, bitmap memory |
+| `@architecture-workflow` | **Workflow disciplinarian** | Build process, ktlint, architecture |
+| `@functional-purist` | **OOP elimination extremist** | Pure functions, stateless design |
+
+### 🚄 Speed-Optimized Usage Patterns
+
+#### **New Feature (2-minute quality gate)**
+```bash
+# Step 1: Design check (30s)
+@functional-purist "Review domain logic for purity"
+
+# Step 2: Implementation check (60s) 
+@compose-guardian "Review UI components" && @architecture-workflow "Check architecture"
+
+# Step 3: Concurrency check (30s)
+@coroutines-auditor "Quick thread safety check"
+```
+
+#### **Bug Fix (1-minute verification)**
+```bash
+# Quick domain expert consultation based on bug area
+@graphics-performance "Check performance impact of fix"  # OR
+@coroutines-auditor "Verify fix doesn't introduce race conditions"  # OR
+@compose-guardian "Ensure fix follows Compose patterns"
+```
+
+#### **Performance Work (90-second optimization cycle)**
+```bash
+# Step 1: Identify (30s)
+@graphics-performance "Find bottlenecks"
+
+# Step 2: Optimize (45s)
+@functional-purist "Ensure pure optimized functions"
+
+# Step 3: Verify (15s)
+@coroutines-auditor "Check optimized threading"
+```
+
+---
+
+## Legacy Development Workflow
+
 This file contains the project's build, lint, test commands, and code style guidelines.
 These instructions are now located in CLAUDE.md which serves as the authoritative source for all project documentation.
 

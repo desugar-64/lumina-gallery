@@ -1,5 +1,157 @@
 # AGENTS.md
 
+## OpenCode Specialized Subagents
+
+This project uses **5 specialized OpenCode subagents** with local LLM models for domain-expert code review. Each agent is designed for specific expertise areas using optimally matched models from your local LMStudio setup.
+
+### Agent Overview & Model Assignments
+
+| Agent | Model | Expertise | Primary Use Cases |
+|-------|-------|-----------|-------------------|
+| `@compose-guardian` | Qwen3 Code Q4 | Jetpack Compose API patterns | @Composable review, side effects, state management |
+| `@coroutines-auditor` | QWQ 32b Q4 | Concurrency & threading | Race conditions, scope management, Flow patterns |
+| `@graphics-performance` | Qwen3 Code Q4 | Graphics optimization | Atlas performance, bitmap memory, Canvas optimization |
+| `@architecture-workflow` | GPT OSS 20b | Clean Architecture & workflows | Build processes, ktlint, dependency injection |
+| `@functional-purist` | QWQ 32b Q4 | Functional programming | Pure functions, OOP elimination, stateless design |
+
+### Detailed Agent Capabilities
+
+#### 1. **Compose Standards Guardian** (`@compose-guardian`)
+**When to Use:**
+- Reviewing any @Composable function for API compliance
+- Checking LaunchedEffect/DisposableEffect key patterns
+- Validating state hoisting and recomposition optimization
+- Enforcing official Jetpack Compose naming conventions
+- Side effect isolation and lifecycle management
+
+**Examples:**
+```bash
+@compose-guardian "Review MediaHexVisualization for proper Compose patterns"
+@compose-guardian "Check LaunchedEffect keys in this ViewModel integration"
+@compose-guardian "Validate state hoisting in this UI component"
+```
+
+#### 2. **Coroutines Concurrency Auditor** (`@coroutines-auditor`)
+**When to Use:**
+- Any code using coroutines, Flow, or threading
+- Reviewing ViewModels for scope management
+- Checking data repositories for race conditions
+- Validating exception handling in coroutines
+- Ensuring proper dispatcher injection
+
+**Examples:**
+```bash
+@coroutines-auditor "Review StreamingAtlasManager for thread safety"
+@coroutines-auditor "Check this Repository for proper coroutine scope"
+@coroutines-auditor "Validate Flow collection patterns in ViewModel"
+```
+
+#### 3. **Android Graphics Performance Engineer** (`@graphics-performance`)
+**When to Use:**
+- Any atlas system or graphics performance work
+- Bitmap memory management and recycling
+- Canvas operations and hardware acceleration
+- Performance optimization targeting 300ms goals
+- Graphics-related benchmarking and profiling
+
+**Examples:**
+```bash
+@graphics-performance "Optimize PhotoLODProcessor for 300ms target"
+@graphics-performance "Review Canvas operations in MediaRenderer"
+@graphics-performance "Analyze bitmap memory usage in TexturePacker"
+```
+
+#### 4. **Architecture & Workflow Quality Guardian** (`@architecture-workflow`)
+**When to Use:**
+- Before committing any changes (workflow enforcement)
+- Reviewing new features for Clean Architecture compliance
+- Checking ktlint violations (especially parameter comments)
+- Validating Hilt dependency injection patterns
+- Ensuring proper build→format→lint workflow
+
+**Examples:**
+```bash
+@architecture-workflow "Check build workflow compliance before commit"
+@architecture-workflow "Verify Clean Architecture in new feature"
+@architecture-workflow "Review Hilt modules for proper injection"
+```
+
+#### 5. **Functional Programming Purist** (`@functional-purist`)
+**When to Use:**
+- Reviewing domain logic for functional purity
+- Eliminating unnecessary classes in favor of functions
+- Checking @Composables for internal state management
+- Converting imperative loops to functional operations
+- Simplifying OOP hierarchies
+
+**Examples:**
+```bash
+@functional-purist "Review this class - can it be simplified to functions?"
+@functional-purist "Check domain logic for pure function compliance"
+@functional-purist "Eliminate stateful patterns in this Composable"
+```
+
+### Common Usage Workflows
+
+#### **New Feature Development**
+```bash
+# 1. Design phase - ensure functional approach
+@functional-purist "Review domain logic design for purity"
+
+# 2. Implementation phase - check architecture
+@architecture-workflow "Verify Clean Architecture compliance"
+
+# 3. UI implementation - check Compose patterns  
+@compose-guardian "Review Composables for API compliance"
+
+# 4. Concurrent operations - check thread safety
+@coroutines-auditor "Review async operations for safety"
+```
+
+#### **Performance Optimization**
+```bash
+# 1. Identify bottlenecks
+@graphics-performance "Analyze performance bottlenecks in atlas system"
+
+# 2. Check concurrent access patterns
+@coroutines-auditor "Review threading in performance-critical code"
+
+# 3. Verify functional approach
+@functional-purist "Ensure pure functions in performance code"
+```
+
+#### **Pre-Commit Review**
+```bash
+# 1. Mandatory workflow check
+@architecture-workflow "Run complete build workflow verification"
+
+# 2. Final Compose review
+@compose-guardian "Final review of Compose patterns"
+
+# 3. Functional compliance check
+@functional-purist "Final purity and simplicity review"
+```
+
+### Agent Selection Guidelines
+
+**Choose by Code Type:**
+- **@Composable functions** → `@compose-guardian`
+- **Coroutines/Flow/async** → `@coroutines-auditor` 
+- **Graphics/Canvas/bitmap** → `@graphics-performance`
+- **Classes/architecture** → `@architecture-workflow` or `@functional-purist`
+- **Domain logic** → `@functional-purist`
+
+**Choose by Task:**
+- **Code review** → Specific domain expert
+- **Performance** → `@graphics-performance` + `@coroutines-auditor`
+- **Architecture** → `@architecture-workflow`
+- **Simplification** → `@functional-purist`
+- **Pre-commit** → `@architecture-workflow`
+
+---
+
+## Legacy Documentation Notice
+
 This file contains the project's build, lint, test commands, and code style guidelines.
 These instructions are now located in CLAUDE.md which serves as the authoritative source for all project documentation.
 

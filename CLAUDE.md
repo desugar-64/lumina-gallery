@@ -27,6 +27,103 @@ LuminaGallery is a modern Android Compose application focused on advanced image 
 - **Java Version:** 11
 - **Namespace:** `dev.serhiiyaremych.lumina`
 
+## OpenCode Specialized Subagents
+
+This project uses **5 specialized OpenCode subagents** for domain-expert code review and optimization. Each agent is optimized for specific aspects of the codebase and uses appropriate local models.
+
+### Available Subagents
+
+#### 1. **Compose Standards Guardian** (`@compose-guardian`)
+- **Model**: Qwen3 Code Q4 (precise API knowledge)
+- **Expertise**: Official Jetpack Compose API guidelines, side effects, state management
+- **Use When**: 
+  - Reviewing @Composable functions for API compliance
+  - Checking LaunchedEffect/DisposableEffect patterns
+  - Validating state hoisting and recomposition optimization
+  - Enforcing PascalCase naming and Modifier parameters
+
+```bash
+@compose-guardian "Check this MediaHexVisualization for proper Compose patterns"
+@compose-guardian "Review LaunchedEffect usage in this ViewModel integration"
+```
+
+#### 2. **Coroutines Concurrency Auditor** (`@coroutines-auditor`)
+- **Model**: QWQ 32b Q4 (deep reasoning for concurrency analysis)
+- **Expertise**: Android coroutines best practices, race conditions, scope management
+- **Use When**:
+  - Reviewing coroutine usage and scope selection
+  - Checking for race conditions and thread safety
+  - Validating Flow patterns and exception handling
+  - Ensuring proper dispatcher injection
+
+```bash
+@coroutines-auditor "Review StreamingAtlasManager for thread safety issues"
+@coroutines-auditor "Check this ViewModel for proper coroutine scope usage"
+```
+
+#### 3. **Android Graphics Performance Engineer** (`@graphics-performance`)
+- **Model**: Qwen3 Code Q4 (active code optimization)
+- **Expertise**: Atlas optimization, bitmap memory, Canvas performance, 300ms targets
+- **Use When**:
+  - Optimizing atlas generation performance
+  - Reviewing bitmap memory management
+  - Analyzing Canvas drawing operations
+  - Targeting the 300ms atlas generation goal
+
+```bash
+@graphics-performance "Optimize PhotoLODProcessor for 300ms target"
+@graphics-performance "Review Canvas operations for hardware acceleration"
+```
+
+#### 4. **Architecture & Workflow Quality Guardian** (`@architecture-workflow`)
+- **Model**: GPT OSS 20b (planning and workflow enforcement)
+- **Expertise**: Clean Architecture, mandatory build workflows, ktlint compliance
+- **Use When**:
+  - Verifying Clean Architecture boundaries
+  - Enforcing build→format→lint workflow
+  - Checking ktlint compliance (especially parameter comments)
+  - Validating Hilt dependency injection
+
+```bash
+@architecture-workflow "Verify Clean Architecture in this new feature"
+@architecture-workflow "Check build workflow compliance before commit"
+```
+
+#### 5. **Functional Programming Purist** (`@functional-purist`)
+- **Model**: QWQ 32b Q4 (logical reasoning to eliminate complexity)
+- **Expertise**: Pure functions, stateless design, OOP complexity elimination
+- **Use When**:
+  - Eliminating unnecessary classes in favor of functions
+  - Enforcing stateless @Composable components
+  - Replacing imperative loops with functional operations
+  - Reviewing domain logic for purity
+
+```bash
+@functional-purist "Review this class hierarchy - can it be simplified?"
+@functional-purist "Check this Composable for internal state violations"
+```
+
+### Usage Patterns
+
+**For New Features:**
+```bash
+@functional-purist "Design pure functions for domain logic"
+@compose-guardian "Review UI components for API compliance"
+@architecture-workflow "Verify Clean Architecture integration"
+```
+
+**For Performance Work:**
+```bash
+@graphics-performance "Optimize atlas generation bottlenecks"
+@coroutines-auditor "Check concurrent operations for safety"
+```
+
+**Before Commits:**
+```bash
+@architecture-workflow "Run build workflow check"
+@compose-guardian "Final Compose patterns review"
+```
+
 ## Essential Commands
 
 ### Building and Running
