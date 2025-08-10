@@ -13,13 +13,11 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -39,7 +37,6 @@ import dev.serhiiyaremych.lumina.ui.components.MediaPermissionFlow
 import dev.serhiiyaremych.lumina.ui.debug.EnhancedDebugOverlay
 import dev.serhiiyaremych.lumina.ui.gallery.StreamingGalleryViewModel
 import dev.serhiiyaremych.lumina.ui.theme.LuminaGalleryTheme
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 /**
@@ -154,20 +151,16 @@ fun App(
             }
         }
 
-        // Unified viewport state manager - single source of truth for all viewport decisions
+// Viewport configuration
+        val viewportConfig = remember { SimpleViewportConfig() }
         val viewportPaddingPx = with(density) { 32.dp.toPx() }
-        val viewportStateManager = remember(viewportPaddingPx) {
-            ViewportStateManager(
-                offscreenIndicatorManager = OffscreenIndicatorManager(
-                    OffscreenIndicatorConfig(
-                        viewportPadding = viewportPaddingPx
-                    )
+        val offscreenIndicatorManager = remember(viewportPaddingPx) {
+            OffscreenIndicatorManager(
+                OffscreenIndicatorConfig(
+                    viewportPadding = viewportPaddingPx
                 )
             )
         }
-
-        // State to track if content is out of viewport bounds
-        var showCenterButton by remember { mutableStateOf(false) }
 
         // Create media hex state for streaming system
         val mediaHexState = uiState.hexGridLayout?.let { layout ->
@@ -208,48 +201,65 @@ fun App(
                     val zoomProvider = rememberUpdatedState { transformableState.zoom }
                     val offsetProvider = rememberUpdatedState { transformableState.offset }
 
-                    LaunchedEffect(canvasSize, uiState.hexGridLayout) {
-                        snapshotFlow {
-                            Triple(zoomProvider.value(), offsetProvider.value(), uiState.hexGridLayout)
-                        }
-                            .distinctUntilChanged()
-                            .collect { (currentZoom, currentOffset, layout) ->
-                                // Calculate viewport state once and reuse
-                                val viewportState = viewportStateManager.calculateViewportState(
+                    // Single source of truth for viewport state using derivedStateOf
+                    val simpleViewportState by remember(uiState.hexGridLayout, canvasSize, zoomProvider.value(), offsetProvider.value()) {
+                        derivedStateOf {
+                            uiState.hexGridLayout?.let { layout ->
+                                SimpleViewportState(
+                                    viewportRect = calculateSimpleViewportRect(canvasSize, zoomProvider.value(), offsetProvider.value()),
                                     canvasSize = canvasSize,
-                                    zoom = currentZoom,
-                                    offset = currentOffset,
+                                    zoom = zoomProvider.value(),
+                                    offset = offsetProvider.value(),
                                     focusedCell = uiState.focusedCellWithMedia,
                                     selectedMedia = uiState.selectedMedia,
-                                    currentSelectionMode = uiState.selectionMode,
+                                    selectionMode = uiState.selectionMode,
                                     gridBounds = layout?.bounds
                                 )
-
-                                // Update center button visibility - show when grid is outside viewport bounds
-                                layout?.let { hexLayout ->
-                                    val viewportRect = viewportState.viewportRect
-                                    val gridBounds = hexLayout.bounds
-
-                                    // Use Rect.overlaps for efficient intersection check
-                                    val hasOverlap = viewportRect.overlaps(gridBounds)
-
-                                    // Show center button only when grid content is outside viewport bounds (no overlap)
-                                    showCenterButton = !hasOverlap
-                                }
-
-                                // Apply selection mode changes
-                                if (viewportState.suggestedSelectionMode != uiState.selectionMode) {
-                                    streamingGalleryViewModel.updateSelectionMode(viewportState.suggestedSelectionMode)
-                                    Log.d("StreamingApp", "Selection mode changed: ${viewportState.suggestedSelectionMode} (viewport-based)")
-                                }
-
-                                // Apply media deselection when out of viewport
-                                if (viewportState.shouldDeselectMedia && uiState.selectedMedia != null) {
-                                    streamingGalleryViewModel.updateSelectedMedia(null)
-                                    streamingGalleryViewModel.updateSelectionMode(SelectionMode.CELL_MODE)
-                                    Log.d("StreamingApp", "Media deselected: out of viewport")
-                                }
                             }
+                        }
+                    }
+
+                    // Derived state for center button visibility
+                    val showCenterButton by remember(simpleViewportState) {
+                        derivedStateOf {
+                            simpleViewportState?.let { state ->
+                                state.gridBounds?.let { gridBounds ->
+                                    !state.viewportRect.overlaps(gridBounds)
+                                } ?: false
+                            } ?: false
+                        }
+                    }
+
+                    LaunchedEffect(simpleViewportState) {
+                        simpleViewportState?.let { state ->
+                            // Apply selection mode changes
+                            val suggestedMode = determineSuggestedSelectionMode(
+                                cell = state.focusedCell,
+                                canvasSize = state.canvasSize,
+                                zoom = state.zoom,
+                                offset = state.offset,
+                                currentMode = uiState.selectionMode,
+                                hasSelectedMedia = state.selectedMedia != null,
+                                config = viewportConfig
+                            )
+                            if (suggestedMode != uiState.selectionMode) {
+                                streamingGalleryViewModel.updateSelectionMode(suggestedMode)
+                                Log.d("StreamingApp", "Selection mode changed: $suggestedMode (viewport-based)")
+                            }
+
+                            // Apply media deselection when out of viewport
+                            val shouldDeselect = shouldDeselectMedia(
+                                cell = state.focusedCell,
+                                selectedMedia = state.selectedMedia,
+                                viewportRect = state.viewportRect,
+                                config = viewportConfig
+                            )
+                            if (shouldDeselect && uiState.selectedMedia != null) {
+                                streamingGalleryViewModel.updateSelectedMedia(null)
+                                streamingGalleryViewModel.updateSelectionMode(SelectionMode.CELL_MODE)
+                                Log.d("StreamingApp", "Media deselected: out of viewport")
+                            }
+                        }
                     }
 
                     // Generate hex grid layout when canvas size is available
@@ -445,33 +455,20 @@ fun App(
                         }
                     }
 
-                    // Store current viewport state for indicator access
-                    val currentViewportState = remember { mutableStateOf<ViewportState?>(null) }
-
-                    LaunchedEffect(canvasSize, uiState.hexGridLayout) {
-                        snapshotFlow {
-                            Triple(zoomProvider.value(), offsetProvider.value(), uiState.hexGridLayout)
+// Directional indicators for offscreen content
+                    simpleViewportState?.let { state ->
+                        val indicators = if (state.gridBounds != null) {
+                            offscreenIndicatorManager.calculateIndicators(
+                                viewportRect = state.viewportRect,
+                                canvasSize = state.canvasSize,
+                                gridBounds = state.gridBounds
+                            )
+                        } else {
+                            emptyList()
                         }
-                            .distinctUntilChanged()
-                            .collect { (currentZoom, currentOffset, layout) ->
-                                if (layout != null) {
-                                    currentViewportState.value = viewportStateManager.calculateViewportState(
-                                        canvasSize = canvasSize,
-                                        zoom = currentZoom,
-                                        offset = currentOffset,
-                                        focusedCell = uiState.focusedCellWithMedia,
-                                        selectedMedia = uiState.selectedMedia,
-                                        currentSelectionMode = uiState.selectionMode,
-                                        gridBounds = layout.bounds
-                                    )
-                                }
-                            }
-                    }
 
-                    // Directional indicators for offscreen content
-                    currentViewportState.value?.let { viewportState ->
                         DirectionalIndicatorOverlay(
-                            indicators = viewportState.offscreenIndicators,
+                            indicators = indicators,
                             onIndicatorClick = { indicator ->
                                 Log.d("DirectionalIndicator", "Indicator clicked for bounds: ${indicator.contentBounds}")
                                 // Close panel first to avoid conflicts
