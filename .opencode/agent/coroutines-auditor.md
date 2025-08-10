@@ -1,7 +1,7 @@
 ---
 description: Coroutines and concurrency bug detection specialist - identifies race conditions, scope misuse, and threading issues
 mode: subagent
-model: lmstudio/qwen/qwq-32b
+model: openrouter/qwen/qwen3-coder:free
 temperature: 0.1
 tools:
   bash: false
@@ -49,7 +49,7 @@ class LatestNewsViewModel : ViewModel() {
 class LatestNewsViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(LatestNewsUiState.Loading)
     val uiState = _uiState.asStateFlow()
-    
+
     fun loadNews() {
         viewModelScope.launch {
             val latestNews = getLatestNewsWithAuthors()
@@ -130,7 +130,7 @@ You identify shared mutable state issues:
 // ❌ BAD: Race condition - multiple coroutines modifying shared state
 class UserRepository {
     private var cachedUsers = mutableListOf<User>()
-    
+
     suspend fun addUser(user: User) {
         // RACE CONDITION! Multiple coroutines can modify this
         cachedUsers.add(user)
@@ -141,7 +141,7 @@ class UserRepository {
 class UserRepository {
     private val _cachedUsers = MutableStateFlow<List<User>>(emptyList())
     val cachedUsers = _cachedUsers.asStateFlow()
-    
+
     suspend fun addUser(user: User) {
         _cachedUsers.update { currentList ->
             currentList + user // Immutable update
@@ -152,7 +152,7 @@ class UserRepository {
 // ✅ ALTERNATIVE: Using thread-safe collections
 class UserRepository {
     private val cachedUsers = Collections.synchronizedList(mutableListOf<User>())
-    
+
     suspend fun addUser(user: User) {
         cachedUsers.add(user)
     }
@@ -164,7 +164,7 @@ class UserRepository {
 // ❌ BAD: Non-atomic increment
 class Counter {
     private var count = 0
-    
+
     suspend fun increment() {
         count++ // NOT THREAD-SAFE!
     }
@@ -173,7 +173,7 @@ class Counter {
 // ✅ GOOD: Thread-safe counter
 class Counter {
     private val count = AtomicInteger(0)
-    
+
     suspend fun increment() {
         count.incrementAndGet()
     }
@@ -328,11 +328,11 @@ class MyViewModel(
     private val someService: SomeService
 ) : ViewModel() {
     private val callback = MyCallback()
-    
+
     init {
         someService.registerCallback(callback)
     }
-    
+
     override fun onCleared() {
         someService.unregisterCallback(callback)
         super.onCleared()
@@ -404,10 +404,10 @@ suspend fun fetchDataConcurrently() = coroutineScope {
 
 // ✅ GOOD: Using supervisorScope for independent failures
 suspend fun fetchDataConcurrently() = supervisorScope {
-    val data1 = async { 
+    val data1 = async {
         try { repository1.getData() } catch (e: Exception) { null }
     }
-    val data2 = async { 
+    val data2 = async {
         try { repository2.getData() } catch (e: Exception) { null }
     }
     Pair(data1.await(), data2.await())

@@ -1,7 +1,7 @@
 ---
 description: Clean Architecture and development workflow quality guardian - enforces architectural boundaries, build processes, and code quality standards
 mode: subagent
-model: lmstudio/openai/gpt-oss-20b
+model: openrouter/qwen/qwen3-coder:free
 temperature: 0.1
 tools:
   bash: true
@@ -27,7 +27,7 @@ fun MediaGrid() {
 }
 
 // ✅ GOOD: Proper dependency flow through use cases
-@Composable  
+@Composable
 fun MediaGrid(viewModel: GalleryViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     // ViewModel uses GetMediaUseCase -> MediaRepository -> DataSource
@@ -69,7 +69,7 @@ interface MediaRepository {
 class MediaRepositoryImpl(
     private val mediaStoreDataSource: MediaStoreDataSource
 ) : MediaRepository {
-    override suspend fun getMedia(): Flow<List<Media>> = 
+    override suspend fun getMedia(): Flow<List<Media>> =
         mediaStoreDataSource.getMediaFlow()
 }
 ```
@@ -127,7 +127,7 @@ You enforce the MANDATORY build workflow described in CLAUDE.md:
 # 3. Check for remaining style issues
 ./gradlew ktlintCheck
 
-# 4. Check for lint issues  
+# 4. Check for lint issues
 ./gradlew -q lint
 
 # 5. If tests exist, run them
@@ -155,7 +155,7 @@ fun processPhoto(
 fun processPhoto(
     // Source photo to process
     photo: Media,
-    // Target size in pixels  
+    // Target size in pixels
     targetSize: Int = 512
 ): ProcessedPhoto
 
@@ -199,10 +199,10 @@ fun `when media loaded, should generate hex grid`() = runTest {
     // Given
     val fakeMediaRepository = FakeMediaRepository()
     val viewModel = GalleryViewModel(getMediaUseCase, generateHexGridUseCase)
-    
+
     // When
     viewModel.loadMedia()
-    
+
     // Then
     val uiState = viewModel.uiState.value
     assert(uiState.hexGrid.cells.isNotEmpty())
@@ -212,15 +212,15 @@ fun `when media loaded, should generate hex grid`() = runTest {
 **Use Case Testing:**
 ```kotlin
 // ✅ GOOD: Pure domain logic testing
-@Test  
+@Test
 fun `generateHexGrid should create appropriate cell count for screen size`() {
     // Given
     val useCase = GenerateHexGridUseCase(fakeDeviceCapabilities)
     val screenSize = Size(1080f, 2340f)
-    
+
     // When
     val result = useCase.execute(screenSize)
-    
+
     // Then
     assert(result.cells.size > 0)
     assert(result.rings >= 1)
@@ -251,7 +251,7 @@ You enforce proper file structure according to CLAUDE.md:
 ```kotlin
 // ✅ GOOD: Proper package organization by feature
 package dev.serhiiyaremych.lumina.domain.usecase
-package dev.serhiiyaremych.lumina.data.repository  
+package dev.serhiiyaremych.lumina.data.repository
 package dev.serhiiyaremych.lumina.ui.gallery
 
 // ❌ BAD: Organization by layer (avoid this)
@@ -264,7 +264,7 @@ You enforce the "No Legacy Code" policy:
 
 **Legacy Code Detection:**
 - **@Deprecated annotations** - Remove entirely, don't deprecate
-- **Unused code paths** - Delete immediately  
+- **Unused code paths** - Delete immediately
 - **Multiple implementations** - Keep only the current/modern one
 - **Dead imports** - Clean up after code removal
 

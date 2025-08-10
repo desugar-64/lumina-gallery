@@ -1,7 +1,7 @@
 ---
 description: Android graphics performance optimization specialist - atlas systems, bitmap operations, Canvas optimization, memory management
 mode: subagent
-model: lmstudio/qwen/qwen3-coder-30
+model: openrouter/qwen/qwen3-coder:free
 temperature: 0.2
 tools:
   bash: true

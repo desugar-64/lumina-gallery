@@ -1,7 +1,7 @@
 ---
 description: Jetpack Compose technical standards guardian - enforces side effects, state management, and recomposition best practices
 mode: subagent
-model: lmstudio/qwen/qwen3-coder-30
+model: openrouter/qwen/qwen3-coder:free
 temperature: 0.1
 tools:
   bash: false
