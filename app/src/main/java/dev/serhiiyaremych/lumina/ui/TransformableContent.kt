@@ -483,13 +483,14 @@ private fun handleGestureEnd(
     val minFlingVelocity = 300f // pixels per second threshold - reduced sensitivity
     if (velocity.getDistance() > minFlingVelocity && !state.isAnimating) {
         coroutineScope.launch {
+            val animationScope = this // Capture scope for use in animation callback
             var previousValue = panFlingAnimatable.value
             panFlingAnimatable.animateDecay(velocity, decay) {
                 // Apply the fling delta incrementally to the matrix
                 val flingDelta = value - previousValue
                 if (flingDelta != Offset.Zero) {
-                    // Apply fling movement using runBlocking since we're in animation callback
-                    kotlinx.coroutines.runBlocking {
+                    // Apply fling movement asynchronously to avoid blocking animation callback
+                    animationScope.launch {
                         state.updateMatrix {
                             postTranslate(flingDelta.x, flingDelta.y)
                         }

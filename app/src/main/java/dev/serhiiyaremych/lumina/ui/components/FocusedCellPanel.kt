@@ -30,6 +30,7 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -355,9 +356,10 @@ private fun PhotoPreviewGrid(
                 items = mediaItems,
                 key = { it.media.uri }
             ) { mediaWithPosition ->
-                val isSelected = selectedMedia == mediaWithPosition.media
+                val isSelected by remember {
+                    derivedStateOf { selectedMedia == mediaWithPosition.media }
+                }
                 val itemIndex = mediaItems.indexOf(mediaWithPosition)
-
                 StaggeredPhotoPreviewItem(
                     itemIndex = itemIndex,
                     media = mediaWithPosition.media,
