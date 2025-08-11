@@ -12,6 +12,7 @@ import dev.serhiiyaremych.lumina.ui.TransformableState
 import dev.serhiiyaremych.lumina.ui.calculateCellFocusBounds
 import dev.serhiiyaremych.lumina.ui.gallery.StreamingGalleryViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.collectAsState
 
 /**
  * Data class representing cell focus events
@@ -38,7 +39,7 @@ fun HandleCellFocusEffects(
     onEventsHandled: () -> Unit = {}
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val uiState = streamingGalleryViewModel.uiState.value
+    val uiState = streamingGalleryViewModel.uiState.collectAsState().value
 
     LaunchedEffect(cellFocusEvents) {
         cellFocusEvents.forEach { event ->

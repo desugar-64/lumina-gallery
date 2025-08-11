@@ -26,7 +26,7 @@ jetbrainsKotlinJvm = "2.2.0"
 exifinterface = "1.4.1"
 material3Adaptive = "1.2.0-alpha10"
 graphicsShapes = "1.0.1"
-ktlintGradle = "12.1.1"
+ktlintGradle = "13.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

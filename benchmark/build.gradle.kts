@@ -158,7 +158,7 @@ fun executeOptimizationTracker(
 
     println("🔧 Executing: ${cmdArgs.joinToString(" ")}")
 
-    exec {
+    providers.exec {
         workingDir = project.rootProject.projectDir
         commandLine = cmdArgs
     }
