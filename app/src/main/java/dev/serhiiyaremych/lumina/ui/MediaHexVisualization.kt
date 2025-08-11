@@ -154,7 +154,6 @@ fun MediaHexVisualization(
                 selectedAnimatableItem = selectedAnimatableItem,
                 streamingAtlases = streamingAtlases,
                 zoom = zoom,
-                clickedHexCell = state.clickedHexCell,
                 bounceAnimationManager = state.bounceAnimationManager,
                 significantCells = significantCells
             )
@@ -186,7 +185,7 @@ fun MediaHexVisualization(
             state.ripplePosition?.let {
                 val color = when {
                     state.clickedMedia != null -> Color.Yellow
-                    state.clickedHexCell != null -> Color.Green
+                    false -> Color.Green // No longer used
                     else -> Color.Gray
                 }
                 drawCircle(

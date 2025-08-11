@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -21,13 +22,11 @@ import dev.serhiiyaremych.lumina.ui.rememberGridCanvasState
 import dev.serhiiyaremych.lumina.ui.rememberMediaHexState
 import dev.serhiiyaremych.lumina.ui.rememberTransformableState
 import dev.serhiiyaremych.lumina.ui.animation.AnimationConstants
-import dev.serhiiyaremych.lumina.ui.calculateCellFocusBounds
 import dev.serhiiyaremych.lumina.ui.CellFocusHandler
 import dev.serhiiyaremych.lumina.ui.CellFocusListener
 import dev.serhiiyaremych.lumina.ui.HexGridRenderer
 import dev.serhiiyaremych.lumina.ui.gallery.GalleryUiState
 import dev.serhiiyaremych.lumina.ui.gallery.StreamingGalleryViewModel
-import kotlinx.coroutines.launch
 
 @Composable
 fun GalleryContent(
@@ -46,46 +45,20 @@ fun GalleryContent(
     val hexGridRenderer = remember { HexGridRenderer() }
     val coroutineScope = rememberCoroutineScope()
 
+    // State for cell focus events
+    val cellFocusEvents = remember { mutableStateListOf<CellFocusEvent>() }
+
     // Unified cell focus handler for both clicks and automatic detection
     val cellFocusHandler = remember(coroutineScope, transformableState) {
         object : CellFocusHandler {
             override fun onCellFocused(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia, coverage: Float) {
-                val isManualClick = coverage >= 1.0f // Manual clicks have max coverage (1.0f)
-                Log.d("CellFocus", "Cell FOCUSED: (${hexCellWithMedia.hexCell.q}, ${hexCellWithMedia.hexCell.r}) coverage=${String.format("%.2f", coverage)} manual=$isManualClick")
-
-                // Update selected cell - this should replace any previous selection
-                streamingGalleryViewModel.updateSelectedCell(hexCellWithMedia.hexCell)
-
-                // Clear selected media and set cell mode
-                streamingGalleryViewModel.updateSelectedMedia(null)
-                streamingGalleryViewModel.updateSelectionMode(dev.serhiiyaremych.lumina.ui.SelectionMode.CELL_MODE)
-                Log.d("CellFocus", "Selection mode: CELL_MODE (focused cell, manual=$isManualClick)")
-
-                // Show focused cell panel
-                streamingGalleryViewModel.updateFocusedCell(hexCellWithMedia)
-
-                // Trigger focus animation for both manual clicks AND auto-detection
-                val cellBounds = calculateCellFocusBounds(hexCellWithMedia.hexCell)
-                Log.d("CellFocus", "Triggering focus animation to bounds: $cellBounds (${if (isManualClick) "manual click" else "auto-detection"})")
-                coroutineScope.launch {
-                    // Cell focus uses larger padding for comfortable cell viewing
-                    transformableState.focusOn(cellBounds, padding = 64.dp)
-                }
+                // Add focus event to be handled by effect handler
+                cellFocusEvents.add(CellFocusEvent(CellFocusEventType.CELL_FOCUSED, hexCellWithMedia, coverage))
             }
 
             override fun onCellUnfocused(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia) {
-                val hexCell = hexCellWithMedia.hexCell
-                Log.d("CellFocus", "Cell UNFOCUSED: (${hexCell.q}, ${hexCell.r})")
-
-                // Clear selected cell if this was the selected cell
-                if (uiState.selectedCell == hexCell) {
-                    streamingGalleryViewModel.updateSelectedCell(null)
-                }
-
-                // Hide focused cell panel if this was the focused cell
-                if (uiState.focusedCellWithMedia?.hexCell == hexCell) {
-                    streamingGalleryViewModel.updateFocusedCell(null)
-                }
+                // Unfocusing is now handled by ViewportStateManager - no event needed
+                Log.d("CellFocus", "Cell unfocus event ignored - handled by ViewportStateManager")
             }
         }
     }
@@ -94,14 +67,24 @@ fun GalleryContent(
     val cellFocusListener = remember(cellFocusHandler) {
         object : CellFocusListener {
             override fun onCellSignificant(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia, coverage: Float) {
+                // Auto-focus events are still needed - only disable unfocus events
                 cellFocusHandler.onCellFocused(hexCellWithMedia, coverage)
             }
 
             override fun onCellInsignificant(hexCellWithMedia: dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia) {
-                cellFocusHandler.onCellUnfocused(hexCellWithMedia)
+                // Unfocusing is now handled by ViewportStateManager - no need to call handler
+                Log.d("CellFocus", "Cell insignificant event ignored - handled by ViewportStateManager")
             }
         }
     }
+
+    // Handle cell focus effects
+    HandleCellFocusEffects(
+        cellFocusEvents = cellFocusEvents.toList(),
+        streamingGalleryViewModel = streamingGalleryViewModel,
+        transformableState = transformableState,
+        onEventsHandled = { cellFocusEvents.clear() }
+    )
 
     // Viewport configuration
     val viewportConfig = remember { SimpleViewportConfig() }
@@ -129,7 +112,7 @@ fun GalleryContent(
                         currentZoom = transformableState.zoom,
                         selectedMedia = uiState.selectedMedia,
                         selectionMode = uiState.selectionMode,
-                        activeCell = uiState.focusedCellWithMedia
+                        activeCell = uiState.selectedCellWithMedia
                     )
                 },
                 provideZoom = { transformableState.zoom },
@@ -148,6 +131,10 @@ fun GalleryContent(
             onMediaDeselected = {
                 streamingGalleryViewModel.updateSelectedMedia(null)
                 streamingGalleryViewModel.updateSelectionMode(SelectionMode.CELL_MODE)
+            },
+            onCellUnfocused = {
+                // Clear selected cell when viewport unfocuses (unified state)
+                streamingGalleryViewModel.updateSelectedCellWithMedia(null)
             }
         )
 
@@ -201,7 +188,7 @@ fun GalleryContent(
                     currentZoom = transformableState.zoom,
                     selectedMedia = uiState.selectedMedia,
                     selectionMode = uiState.selectionMode,
-                    activeCell = uiState.focusedCellWithMedia
+                    activeCell = uiState.selectedCellWithMedia
                 )
             }
         )

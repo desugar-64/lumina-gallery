@@ -40,7 +40,7 @@ fun GalleryDirectionalIndicators(
             onIndicatorClick = { indicator ->
                 Log.d("DirectionalIndicator", "Indicator clicked for bounds: ${indicator.contentBounds}")
                 // Close panel first to avoid conflicts
-                streamingGalleryViewModel.updateFocusedCell(null)
+                streamingGalleryViewModel.updateSelectedCellWithMedia(null)
 
                 // Navigate to the offscreen content
                 if (!transformableState.isAnimating) {

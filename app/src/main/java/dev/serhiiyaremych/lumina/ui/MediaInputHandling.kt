@@ -33,7 +33,6 @@ data class MediaInputConfig(
     val onFocusRequested: (Rect) -> Unit = {},
     val onRipplePosition: (Offset?) -> Unit = {},
     val onClickedMedia: (Media?) -> Unit = {},
-    val onClickedHexCell: (HexCell?) -> Unit = {},
     val onRevealAnimationTarget: (AnimatableMediaItem?) -> Unit = {},
     val cellFocusManager: CellFocusManager? = null,
     val bounceAnimationManager: HexCellBounceAnimationManager? = null
@@ -101,7 +100,6 @@ private fun handleMediaTap(
     // Call the callbacks to update selection state
     config.onMediaClicked(media)
     config.onClickedMedia(media)
-    config.onClickedHexCell(null)
 
     // Notify cell focus manager of media click
     config.cellFocusManager?.let { focusManager ->
@@ -181,7 +179,6 @@ private fun handleHexCellTap(
 ) {
     config.geometryReader.getHexCellAtPosition(transformedPos)?.let { cell ->
         config.onHexCellClicked(cell)
-        config.onClickedHexCell(cell)
         config.onClickedMedia(null)
 
         // Notify cell focus manager of hex cell click

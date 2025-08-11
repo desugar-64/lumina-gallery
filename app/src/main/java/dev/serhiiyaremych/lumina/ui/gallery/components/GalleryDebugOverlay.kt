@@ -22,7 +22,7 @@ fun GalleryDebugOverlay(
         memoryStatus = null, // TODO: Get memory status from streaming manager
         smartMemoryManager = streamingGalleryViewModel.getStreamingAtlasManager().getSmartMemoryManager(),
         deviceCapabilities = null, // TODO: Add device capabilities to streaming system
-        significantCells = uiState.selectedCell?.let { setOf(it) } ?: emptySet(),
+        significantCells = uiState.selectedCellWithMedia?.let { setOf(it.hexCell) } ?: emptySet(),
         streamingAtlases = uiState.availableAtlases,
         modifier = modifier.fillMaxSize()
     )

@@ -25,14 +25,14 @@ fun GalleryFocusedCellPanel(
     mediaHexState: MediaHexState?,
     modifier: Modifier = Modifier
 ) {
-    uiState.focusedCellWithMedia?.let { cellWithMedia ->
+    uiState.selectedCellWithMedia?.let { cellWithMedia ->
         mediaHexState?.let { state ->
             FocusedCellPanel(
                 hexCellWithMedia = cellWithMedia,
                 level0Atlases = uiState.availableAtlases[LODLevel.LEVEL_0],
                 selectionMode = uiState.selectionMode,
                 selectedMedia = uiState.selectedMedia,
-                onDismiss = { streamingGalleryViewModel.updateFocusedCell(null) },
+                onDismiss = { streamingGalleryViewModel.updateSelectedCellWithMedia(null) },
                 onMediaSelected = { media ->
                     streamingGalleryViewModel.updateSelectedMedia(media)
                     // Panel selections preserve current mode - don't change it

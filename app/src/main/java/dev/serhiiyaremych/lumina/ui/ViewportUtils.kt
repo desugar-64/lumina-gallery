@@ -1,5 +1,6 @@
 package dev.serhiiyaremych.lumina.ui
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -12,9 +13,10 @@ import dev.serhiiyaremych.lumina.domain.model.Media
  */
 @Stable
 data class SimpleViewportConfig(
-    val cellSignificanceThreshold: Float = 0.25f, // 25% viewport coverage for cell focus
+    val cellSignificanceThreshold: Float = 0.35f, // 35% viewport coverage for cell focus (higher than unfocus threshold)
+    val cellUnfocusThreshold: Float = 0.1f, // 10% threshold - unfocus when cell is mostly out of viewport
     val modeTransitionThreshold: Float = 1.2f, // 120% viewport size for photo mode
-    val minViewportCoverage: Float = 0.1f, // 10% minimum coverage to stay selected
+    val minViewportCoverage: Float = 0.4f, // 40% minimum coverage to stay selected
     val gestureDelayMs: Long = 200L, // Debounce gesture updates
     // 15% coverage to show panel
     val panelVisibilityThreshold: Float = 0.15f
@@ -136,7 +138,7 @@ fun shouldDeselectMedia(
 ): Boolean {
     if (selectedMedia == null) return false
 
-    // Deselect if cell is out of viewport
+    // Deselect if cell is out of viewport (use configured threshold for deselection)
     if (cell != null) {
         val coverage = calculateCellCoverage(cell, viewportRect)
         if (coverage <= config.minViewportCoverage) {
@@ -148,6 +150,21 @@ fun shouldDeselectMedia(
 }
 
 /**
+ * Determine if focused cell should be unfocused due to viewport constraints
+ */
+fun shouldUnfocusCell(
+    cell: HexCellWithMedia?,
+    viewportRect: Rect,
+    config: SimpleViewportConfig
+): Boolean {
+    if (cell == null) return false
+
+    // Unfocus if cell coverage is too low
+    val coverage = calculateCellCoverage(cell, viewportRect)
+    return coverage <= config.cellUnfocusThreshold
+}
+
+/**
  * Determine if panel should be shown based on cell coverage
  */
 fun shouldShowPanel(coverage: Float, config: SimpleViewportConfig): Boolean = coverage >= config.panelVisibilityThreshold
@@ -156,7 +173,7 @@ fun shouldShowPanel(coverage: Float, config: SimpleViewportConfig): Boolean = co
  * Simplified viewport state that contains only the essential information
  * Derived properties are calculated on-demand using Compose's derivedStateOf
  */
-@Stable
+@Immutable
 data class SimpleViewportState(
     val viewportRect: Rect,
     val canvasSize: Size,

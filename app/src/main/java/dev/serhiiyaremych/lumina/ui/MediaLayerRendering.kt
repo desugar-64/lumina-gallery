@@ -39,8 +39,7 @@ data class MediaLayerConfig(
     val geometryReader: GeometryReader,
     val selectedMedia: Media?,
     val atlasState: MultiAtlasUpdateResult?,
-    val zoom: Float,
-    val clickedHexCell: dev.serhiiyaremych.lumina.domain.model.HexCell? = null
+    val zoom: Float
 )
 
 /**
@@ -55,7 +54,6 @@ data class StreamingMediaLayerConfig(
     val selectedAnimatableItem: AnimatableMediaItem?, // Pre-resolved for performance
     val streamingAtlases: Map<dev.serhiiyaremych.lumina.domain.model.LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>?,
     val zoom: Float,
-    val clickedHexCell: dev.serhiiyaremych.lumina.domain.model.HexCell? = null,
     val bounceAnimationManager: dev.serhiiyaremych.lumina.ui.animation.HexCellBounceAnimationManager? = null,
     val significantCells: Set<dev.serhiiyaremych.lumina.domain.model.HexCell> = emptySet()
 )
@@ -331,7 +329,7 @@ class MediaLayerManager(
             }) {
                 // Calculate hex cell states based on selected media and clicked hex cells
                 val effectiveSelectedMedia = getEffectiveSelectedMedia(config.selectedMedia)
-                val cellStates = calculateHexCellStates(config.hexGridLayout, effectiveSelectedMedia, config.clickedHexCell, config.significantCells)
+                val cellStates = calculateHexCellStates(config.hexGridLayout, effectiveSelectedMedia, config.significantCells)
 
                 // Calculate cell scales for bounce animations using the bounce animation manager
                 val cellScales = config.bounceAnimationManager?.let { bounceManager ->
@@ -568,7 +566,6 @@ class MediaLayerManager(
     private fun calculateHexCellStates(
         hexGridLayout: dev.serhiiyaremych.lumina.domain.model.HexGridLayout,
         selectedMedia: Media?,
-        clickedHexCell: dev.serhiiyaremych.lumina.domain.model.HexCell? = null,
         significantCells: Set<dev.serhiiyaremych.lumina.domain.model.HexCell> = emptySet()
     ): Map<dev.serhiiyaremych.lumina.domain.model.HexCell, HexCellState> {
         val cellStates = mutableMapOf<dev.serhiiyaremych.lumina.domain.model.HexCell, HexCellState>()
@@ -579,27 +576,8 @@ class MediaLayerManager(
         }
 
         // UNIFIED APPROACH: Use significantCells for SELECTED state (both manual clicks and auto-detection)
-        // This replaces the separate clickedHexCell logic for unified state management
         significantCells.forEach { hexCell ->
             cellStates[hexCell] = HexCellState.SELECTED
-        }
-
-        // Legacy support: If no significantCells but we have clickedHexCell, use it
-        if (significantCells.isEmpty() && clickedHexCell != null) {
-            cellStates[clickedHexCell] = HexCellState.SELECTED
-        } else if (significantCells.isEmpty()) {
-            // Only use selectedMedia for cell states when no hex cell is explicitly clicked
-            if (selectedMedia != null) {
-                hexGridLayout.hexCellsWithMedia.forEach { hexCellWithMedia ->
-                    val containsSelectedMedia = hexCellWithMedia.mediaItems.any { mediaWithPosition ->
-                        mediaWithPosition.media == selectedMedia
-                    }
-
-                    if (containsSelectedMedia) {
-                        cellStates[hexCellWithMedia.hexCell] = HexCellState.SELECTED
-                    }
-                }
-            }
         }
 
         return cellStates

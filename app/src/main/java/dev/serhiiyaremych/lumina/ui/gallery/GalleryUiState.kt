@@ -38,8 +38,7 @@ data class GalleryUiState(
     // Selection State
     val selectedMedia: Media? = null,
     val selectionMode: SelectionMode = SelectionMode.CELL_MODE,
-    val focusedCellWithMedia: HexCellWithMedia? = null,
-    val selectedCell: dev.serhiiyaremych.lumina.domain.model.HexCell? = null,
+    val selectedCellWithMedia: HexCellWithMedia? = null,
 
     // Permission State
     val permissionGranted: Boolean = false,
@@ -108,7 +107,7 @@ data class GalleryUiState(
      * Whether focused cell panel should be shown
      */
     val showFocusedCellPanel: Boolean
-        get() = focusedCellWithMedia != null && isContentReady
+        get() = selectedCellWithMedia != null && isContentReady
 
     /**
      * Summary text for current atlas state (for debugging)

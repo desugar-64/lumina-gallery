@@ -42,7 +42,7 @@ fun GalleryNavigationControls(
                         // Safety check to ensure we have valid bounds and no animation is in progress
                         if (!gridBounds.isEmpty && !transformableState.isAnimating) {
                             // Close panel first to avoid conflicts
-                            streamingGalleryViewModel.updateFocusedCell(null)
+                            streamingGalleryViewModel.updateSelectedCellWithMedia(null)
 
                             // Use focusOn with padding to center and fit the entire grid
                             coroutineScope.launch {

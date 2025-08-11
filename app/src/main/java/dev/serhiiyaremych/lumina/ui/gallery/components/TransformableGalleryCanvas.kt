@@ -111,15 +111,19 @@ fun TransformableGalleryCanvas(
                                 currentZoom = transformableState.zoom,
                                 selectedMedia = uiState.selectedMedia,
                                 selectionMode = uiState.selectionMode,
-                                activeCell = uiState.focusedCellWithMedia
+                                activeCell = uiState.selectedCellWithMedia
                             )
                         },
                         cellFocusListener = cellFocusListener,
+                        cellFocusConfig = dev.serhiiyaremych.lumina.ui.CellFocusConfig(
+                            significanceThreshold = 0.35f, // Match viewport config threshold
+                            debugLogging = true
+                        ),
                         onClearClickedMedia = {
                             Log.d("CellFocus", "Clearing clicked media state for red outline")
                         },
                         externalState = state,
-                        significantCells = uiState.selectedCell?.let { setOf(it) } ?: emptySet()
+                        significantCells = uiState.selectedCellWithMedia?.let { setOf(it.hexCell) } ?: emptySet()
                     )
                 }
             }

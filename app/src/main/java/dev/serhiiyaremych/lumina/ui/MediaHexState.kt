@@ -28,12 +28,10 @@ data class MediaHexState(
     val animationManager: AnimatableMediaManager,
     val geometryReader: GeometryReader,
     val clickedMedia: Media?,
-    val clickedHexCell: HexCell?,
     val ripplePosition: Offset?,
     val revealAnimationTarget: AnimatableMediaItem?,
     val bounceAnimationManager: HexCellBounceAnimationManager,
     val setClickedMedia: (Media?) -> Unit,
-    val setClickedHexCell: (HexCell?) -> Unit,
     val setRipplePosition: (Offset?) -> Unit,
     val setRevealAnimationTarget: (AnimatableMediaItem?) -> Unit
 )
@@ -52,7 +50,6 @@ fun rememberMediaHexState(
 ): MediaHexState {
     val geometryReader = remember { GeometryReader() }
     var clickedMedia by remember { mutableStateOf<Media?>(null) }
-    var clickedHexCell by remember { mutableStateOf<HexCell?>(null) }
     var ripplePosition by remember { mutableStateOf<Offset?>(null) }
     var revealAnimationTarget by remember { mutableStateOf<AnimatableMediaItem?>(null) }
 
@@ -73,12 +70,10 @@ fun rememberMediaHexState(
             animationManager = animationManager,
             geometryReader = geometryReader,
             clickedMedia = null,
-            clickedHexCell = null,
             ripplePosition = null,
             revealAnimationTarget = null,
             bounceAnimationManager = bounceAnimationManager,
             setClickedMedia = { clickedMedia = it },
-            setClickedHexCell = { clickedHexCell = it },
             setRipplePosition = { ripplePosition = it },
             setRevealAnimationTarget = { revealAnimationTarget = it }
         )
@@ -129,7 +124,6 @@ fun rememberMediaHexState(
     LaunchedEffect(hexGridLayout) {
         geometryReader.clear()
         clickedMedia = null
-        clickedHexCell = null
 
         // Clean up reveal animation immediately on layout change
         if (revealAnimationTarget != null) {
@@ -166,12 +160,10 @@ fun rememberMediaHexState(
         animationManager = animationManager,
         geometryReader = geometryReader,
         clickedMedia = clickedMedia,
-        clickedHexCell = clickedHexCell,
         ripplePosition = ripplePosition,
         revealAnimationTarget = revealAnimationTarget,
         bounceAnimationManager = bounceAnimationManager,
         setClickedMedia = { clickedMedia = it },
-        setClickedHexCell = { clickedHexCell = it },
         setRipplePosition = { ripplePosition = it },
         setRevealAnimationTarget = { revealAnimationTarget = it }
     )
@@ -216,7 +208,6 @@ fun MediaHexState.toInputConfig(
     onFocusRequested = onFocusRequested,
     onRipplePosition = setRipplePosition,
     onClickedMedia = setClickedMedia,
-    onClickedHexCell = setClickedHexCell,
     onRevealAnimationTarget = setRevealAnimationTarget,
     cellFocusManager = cellFocusManager,
     bounceAnimationManager = bounceAnimationManager

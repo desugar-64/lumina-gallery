@@ -1,5 +1,6 @@
 package dev.serhiiyaremych.lumina.ui.gallery
 
+import android.util.Log
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Density
 import androidx.lifecycle.ViewModel
@@ -358,10 +359,12 @@ class StreamingGalleryViewModel @Inject constructor(
      * Update selected media from UI
      */
     fun updateSelectedMedia(media: Media?) {
+        Log.d("StreamingGalleryVM", "updateSelectedMedia called with: ${media?.displayName ?: "null"}")
         updateUiState { it.copy(selectedMedia = media) }
 
         // Clear highlight bucket when media is deselected
         if (media == null) {
+            Log.d("StreamingGalleryVM", "Clearing highlight bucket due to media deselection")
             viewModelScope.launch {
                 streamingAtlasManager.updateSelectedMedia(null, 1.0f, SelectionMode.CELL_MODE)
             }
@@ -372,21 +375,15 @@ class StreamingGalleryViewModel @Inject constructor(
      * Update selection mode from UI
      */
     fun updateSelectionMode(mode: SelectionMode) {
+        Log.d("StreamingGalleryVM", "updateSelectionMode called with: $mode")
         updateUiState { it.copy(selectionMode = mode) }
     }
 
     /**
-     * Update focused cell from UI
+     * Update selected cell with media (unified state for both visual selection and panel display)
      */
-    fun updateFocusedCell(cellWithMedia: HexCellWithMedia?) {
-        updateUiState { it.copy(focusedCellWithMedia = cellWithMedia) }
-    }
-
-    /**
-     * Update selected cell from UI
-     */
-    fun updateSelectedCell(cell: dev.serhiiyaremych.lumina.domain.model.HexCell?) {
-        updateUiState { it.copy(selectedCell = cell) }
+    fun updateSelectedCellWithMedia(cellWithMedia: HexCellWithMedia?) {
+        updateUiState { it.copy(selectedCellWithMedia = cellWithMedia) }
     }
 
     /**

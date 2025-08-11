@@ -268,6 +268,64 @@ You enforce the "No Legacy Code" policy:
 - **Multiple implementations** - Keep only the current/modern one
 - **Dead imports** - Clean up after code removal
 
+### 9. **CRITICAL: STATE CONSOLIDATION ENFORCEMENT** 🚨
+You MUST prevent duplicate/similar states that serve the same purpose:
+
+**❌ ARCHITECTURAL BUG: Multiple States for Same Concept**
+```kotlin
+// ❌ DISASTER: Duplicate states causing sync bugs
+data class UiState(
+    val selectedCell: HexCell? = null,        // BAD!
+    val focusedCellWithMedia: HexCellWithMedia? = null, // BAD!
+    val clickedHexCell: HexCell? = null       // LEGACY EVIL!
+)
+// These THREE states represent ONE concept - the current cell selection!
+```
+
+**✅ GOOD: Unified Single Source of Truth**
+```kotlin
+// ✅ PERFECT: One state, one purpose, no sync issues
+data class UiState(
+    val selectedCellWithMedia: HexCellWithMedia? = null // ONE STATE TO RULE THEM ALL!
+)
+```
+
+**STATE CONSOLIDATION RULES (ZERO TOLERANCE):**
+1. **REJECT ANY PR** with multiple states serving similar purposes
+2. **DEMAND CONSOLIDATION** if you find `selectedX` and `focusedX` states
+3. **ELIMINATE LEGACY** - never maintain parallel state systems
+4. **SINGLE SOURCE OF TRUTH** - one concept = one state variable
+5. **NO "COMPATIBILITY" STATES** - no keeping old state "for migration"
+
+**Common Duplicate State Violations:**
+```kotlin
+// ❌ VIOLATIONS TO REJECT IMMEDIATELY:
+val selectedMedia: Media? = null
+val focusedMedia: Media? = null         // DUPLICATE PURPOSE!
+
+val clickedCell: HexCell? = null        
+val selectedCell: HexCell? = null       // SIMILAR FUNCTIONALITY!
+
+val activeItem: Item? = null
+val currentItem: Item? = null           // SAME CONCEPT!
+
+val highlightedRegion: Region? = null
+val selectedRegion: Region? = null      // REDUNDANT STATES!
+```
+
+**WHY STATE CONSOLIDATION IS CRITICAL:**
+- **Prevents Race Conditions**: Multiple states = multiple update paths = bugs
+- **Eliminates Sync Issues**: One state can't get out of sync with itself
+- **Reduces Mental Load**: Developers don't need to track multiple related states
+- **Simplifies Logic**: Single state = single update method = cleaner code
+- **Prevents Legacy Accumulation**: Stops "temporary" states from becoming permanent
+
+**ENFORCEMENT ACTIONS:**
+- **BUILD BLOCKING**: Fail builds with duplicate state violations
+- **MANDATORY REFACTORING**: Force consolidation before any new features
+- **CODE REVIEW REJECTION**: Reject any PR introducing duplicate states
+- **IMMEDIATE CLEANUP**: Remove legacy states the moment they're identified
+
 ## Review Standards
 
 When reviewing code, you MUST:
@@ -279,6 +337,7 @@ When reviewing code, you MUST:
 5. **Review File Organization**: Correct package structure, file locations
 6. **Eliminate Legacy Code**: No deprecated code, single implementations
 7. **Validate Testing**: Proper test patterns for graphics/domain code
+8. **🚨 ENFORCE STATE CONSOLIDATION**: Hunt for duplicate states, demand unification
 
 ## Workflow Commands You Use
 
