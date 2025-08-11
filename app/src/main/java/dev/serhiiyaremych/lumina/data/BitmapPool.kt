@@ -68,20 +68,6 @@ class BitmapPool @Inject constructor() {
         val createdAt: Long = System.currentTimeMillis()
     )
 
-    /**
-     * Pool statistics for monitoring
-     */
-    data class PoolStats(
-        val smallPoolSize: Int,
-        val mediumPoolSize: Int,
-        val largePoolSize: Int,
-        val xlargePoolSize: Int,
-        val totalMemoryUsed: Long,
-        val hitRate: Float,
-        val totalRequests: Int,
-        val totalHits: Int
-    )
-
     // LRU caches for each bucket size
     private val smallPool = LruCache<String, PoolEntry>(SMALL_POOL_SIZE)
     private val mediumPool = LruCache<String, PoolEntry>(MEDIUM_POOL_SIZE)
@@ -255,19 +241,6 @@ class BitmapPool @Inject constructor() {
 
         pool.snapshot().values.forEach { entry ->
             totalMemory += entry.memorySize
-        }
-
-        return totalMemory
-    }
-
-    /**
-     * Calculate total memory used by all pools
-     */
-    private fun calculateTotalMemoryUsed(): Long {
-        var totalMemory = 0L
-
-        BucketSize.values().forEach { bucket ->
-            totalMemory += calculateBucketMemoryUsed(bucket)
         }
 
         return totalMemory

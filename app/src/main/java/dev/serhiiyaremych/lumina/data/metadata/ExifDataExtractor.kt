@@ -22,44 +22,6 @@ class ExifDataExtractor @Inject constructor(
     private val context: Context
 ) {
 
-    /**
-     * Extracts metadata from a media file using progressive loading.
-     */
-    suspend fun extractMetadata(
-        uri: Uri,
-        fileSize: Long,
-        loadLevel: MetadataLoadLevel = MetadataLoadLevel.ESSENTIAL
-    ): MediaMetadata? = withContext(Dispatchers.IO) {
-        try {
-            val inputStream = context.contentResolver.openInputStream(uri)
-            inputStream?.use { stream ->
-                val exif = ExifInterface(stream)
-
-                val essential = extractEssentialMetadata(exif, fileSize)
-                val technical = if (loadLevel >= MetadataLoadLevel.TECHNICAL) {
-                    extractTechnicalMetadata(exif)
-                } else {
-                    null
-                }
-                val advanced = if (loadLevel >= MetadataLoadLevel.ADVANCED) {
-                    extractAdvancedMetadata(exif)
-                } else {
-                    null
-                }
-
-                MediaMetadata(
-                    essential = essential,
-                    technical = technical,
-                    advanced = advanced
-                )
-            }
-        } catch (e: IOException) {
-            null
-        } catch (e: SecurityException) {
-            null
-        }
-    }
-
     private fun extractEssentialMetadata(exif: ExifInterface, fileSize: Long): MediaMetadata.EssentialMetadata = MediaMetadata.EssentialMetadata(
         cameraMake = exif.getAttribute(ExifInterface.TAG_MAKE),
         cameraModel = exif.getAttribute(ExifInterface.TAG_MODEL),

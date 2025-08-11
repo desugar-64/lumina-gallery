@@ -24,35 +24,6 @@ class PhotoScaler @Inject constructor(
     private val bitmapPool: BitmapPool
 ) {
 
-    /**
-     * Scales a bitmap to the target size using hardware-accelerated bilinear filtering
-     */
-    fun scale(
-        source: Bitmap,
-        targetSize: IntSize,
-        strategy: ScaleStrategy = ScaleStrategy.FIT_CENTER
-    ): Bitmap {
-        return trace(PHOTO_SCALER_SCALE) {
-            // Return original if already correct size
-            if (source.width == targetSize.width && source.height == targetSize.height) {
-                return@trace source
-            }
-
-            val scaledSize = trace(PHOTO_SCALER_CALCULATE_DIMENSIONS) {
-                calculateScaledSize(
-                    originalSize = IntSize(source.width, source.height),
-                    targetSize = targetSize,
-                    strategy = strategy
-                )
-            }
-
-            when (strategy) {
-                ScaleStrategy.FIT_CENTER -> scaleWithAspectRatio(source, scaledSize)
-                ScaleStrategy.CENTER_CROP -> scaleAndCrop(source, targetSize)
-            }
-        }
-    }
-
     private fun scaleWithAspectRatio(source: Bitmap, targetSize: IntSize): Bitmap = trace(PHOTO_SCALER_CREATE_SCALED_BITMAP) {
         // Try to get bitmap from pool first
         val pooledBitmap = bitmapPool.acquire(
