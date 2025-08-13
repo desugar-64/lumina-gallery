@@ -12,11 +12,12 @@
 
 ## 🎥 Demo
 
-|            Hexagonal Grid Visualization             |                        Permissions System                        |
-|:---------------------------------------------------:|:----------------------------------------------------------------:|
-|   ![Hex Grid Visual](image/hex_grid_visual.apng)    |         ![Permissions Demo](image/permissions_demo.apng)         |
-| *Dynamic, zoomable hexagonal grid layout for media* | *Modern Android 14+ permission flow with Limited Access support* |
-|                ![](image/demo3.apng)                |                      ![](image/demo3.apng)                       |
+|            Hexagonal Grid Visualization             |                           Permissions System                           |
+|:---------------------------------------------------:|:----------------------------------------------------------------------:|
+|   ![Hex Grid Visual](image/hex_grid_visual.apng)    | ![LOD system for managing large numbers of previews](image/demo3.apng) |
+| *Dynamic, zoomable hexagonal grid layout for media* |          *LOD system for managing large numbers of previews*           |
+|      ![Smooth image viewing](image/demo4.apng)      |            ![Permissions Demo](image/permissions_demo.apng)            |
+|               *Smooth image viewing*                |    *Modern Android 14+ permission flow with Limited Access support*    |
 
 <div align="center">
   <img src="image/demo0.png" height="600" />
