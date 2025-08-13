@@ -1,5 +1,6 @@
 package dev.serhiiyaremych.lumina.ui.components
 
+import android.graphics.Camera
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -21,16 +22,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.GenericShape
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,7 +46,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.asImageBitmap
@@ -246,8 +243,7 @@ private fun FocusedCellPanelContent(
     getMediaBounds: (Media) -> Rect?,
     modifier: Modifier = Modifier
 ) {
-    // Use same focused cell color as hex grid renderer for visual consistency - vibrant and energetic
-    val cellColor = MaterialTheme.colorScheme.tertiary // Same as hex grid SELECTED cells
+    val cellColor = MaterialTheme.colorScheme.tertiary
 
     // Create panel background with cell color tint using compositeOver for proper blending
     val panelColor = cellColor.copy(alpha = 0.12f)
@@ -261,10 +257,9 @@ private fun FocusedCellPanelContent(
         color = panelColor,
         shadowElevation = 0.dp
     ) {
-        PhotoPreviewGrid(
+        MediaPreviewCarousel(
             mediaItems = hexCellWithMedia.mediaItems,
             level0Atlases = level0Atlases,
-            selectionMode = selectionMode,
             selectedMedia = selectedMedia,
             panelVisible = isVisible,
             onMediaClick = createMediaClickHandler(
@@ -303,10 +298,9 @@ private fun createMediaClickHandler(
  * Handles the LazyRow layout and staggered animations.
  */
 @Composable
-private fun PhotoPreviewGrid(
+private fun MediaPreviewCarousel(
     mediaItems: List<MediaWithPosition>,
     level0Atlases: List<TextureAtlas>?,
-    selectionMode: SelectionMode,
     selectedMedia: Media?,
     panelVisible: Boolean,
     onMediaClick: (Media) -> Unit,
@@ -320,27 +314,25 @@ private fun PhotoPreviewGrid(
             }
             .drawWithCache {
                 val fadeWidth = 16.dp.toPx()
+                val leftHorizontalGradient = Brush.horizontalGradient(
+                    colors = listOf(Color.Black, Color.Transparent),
+                    startX = 0f,
+                    endX = fadeWidth
+                )
+                val rightHorizontalGradient = Brush.horizontalGradient(
+                    colors = listOf(Color.Transparent, Color.Black),
+                    startX = size.width - fadeWidth,
+                    endX = size.width
+                )
                 onDrawWithContent {
                     drawContent()
-
-                    // Left fade-out
                     drawRect(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(Color.Black, Color.Transparent),
-                            startX = 0f,
-                            endX = fadeWidth
-                        ),
+                        brush = leftHorizontalGradient,
                         size = Size(fadeWidth, size.height),
                         blendMode = BlendMode.DstOut
                     )
-
-                    // Right fade-out
                     drawRect(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(Color.Transparent, Color.Black),
-                            startX = size.width - fadeWidth,
-                            endX = size.width
-                        ),
+                        brush = rightHorizontalGradient,
                         topLeft = Offset(size.width - fadeWidth, 0f),
                         size = Size(fadeWidth, size.height),
                         blendMode = BlendMode.DstOut
@@ -352,19 +344,15 @@ private fun PhotoPreviewGrid(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.padding(vertical = 4.dp)
         ) {
-            items(
+            itemsIndexed(
                 items = mediaItems,
-                key = { it.media.uri }
-            ) { mediaWithPosition ->
-                val isSelected by remember {
-                    derivedStateOf { selectedMedia == mediaWithPosition.media }
-                }
-                val itemIndex = mediaItems.indexOf(mediaWithPosition)
-                StaggeredPhotoPreviewItem(
-                    itemIndex = itemIndex,
+                key = { _, item -> item.media.uri }
+            ) { index, mediaWithPosition ->
+                AnimatedPhotoPreview(
+                    itemIndex = index,
                     media = mediaWithPosition.media,
                     level0Atlases = level0Atlases,
-                    isSelected = isSelected,
+                    isSelected = selectedMedia == mediaWithPosition.media,
                     panelVisible = panelVisible,
                     onClick = { onMediaClick(mediaWithPosition.media) },
                     modifier = Modifier.size(44.dp)
@@ -379,7 +367,7 @@ private fun PhotoPreviewGrid(
  * Uses simple alpha/scale animation that doesn't interfere with LazyRow's built-in animations.
  */
 @Composable
-private fun StaggeredPhotoPreviewItem(
+private fun AnimatedPhotoPreview(
     itemIndex: Int,
     media: Media,
     level0Atlases: List<TextureAtlas>?,
@@ -499,20 +487,19 @@ private fun PhotoPreviewItem(
         label = "shapeMorph"
     )
 
-    // Create polygons for morphing: rounded rectangle to hexagon
     val startShape = remember {
         RoundedPolygon(
-            numVertices = 4, // Rectangle (4 vertices)
+            numVertices = 4,
             radius = 1f,
-            rounding = CornerRounding(0.3f) // Rounded corners
+            rounding = CornerRounding(0.3f)
         )
     }
 
     val endShape = remember {
         RoundedPolygon(
-            numVertices = 6, // Hexagon (6 vertices) - matches app's design language
+            numVertices = 6,
             radius = 1f,
-            rounding = CornerRounding(0.2f) // ~1dp equivalent corner rounding for softer hexagon
+            rounding = CornerRounding(0.2f)
         )
     }
 
@@ -524,19 +511,18 @@ private fun PhotoPreviewItem(
         MorphPolygonShape(morph, animatedMorphProgress)
     }
 
-    // Use custom interaction source with no indication - shape morphing provides feedback
-    val interactionSource = remember { MutableInteractionSource() }
-
-    // Material 3 outline for photo visibility protection
     val outlineColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f) // Subtle outline
     val outlineWidth = 0.5.dp // Thin border for minimal visual impact
+
+
 
     Box(
         modifier = modifier
             .clickable(
-                interactionSource = interactionSource,
-                indication = null // Disable ripple - shape morphing provides visual feedback
-            ) { onClick() }
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
             .scale(animatedScale)
             .border(
                 width = outlineWidth,
@@ -546,27 +532,21 @@ private fun PhotoPreviewItem(
             .clip(morphShape)
             .drawWithCache {
                 val bounds = androidx.compose.ui.geometry.Rect(Offset.Zero, size)
+                val photoId = media.uri
+                val atlasAndRegion = level0Atlases?.firstNotNullOfOrNull { atlas ->
+                    atlas.regions[photoId]?.let { region -> atlas to region }
+                }
 
                 onDrawBehind {
                     when {
                         level0Atlases != null && level0Atlases.isNotEmpty() -> {
-                            // Search in L0 atlases for this photo (simple and direct)
-                            val photoId = media.uri
-                            val atlasAndRegion = level0Atlases.firstNotNullOfOrNull { atlas ->
-                                atlas.regions[photoId]?.let { region ->
-                                    atlas to region
-                                }
-                            }
-
                             if (atlasAndRegion != null && !atlasAndRegion.first.bitmap.isRecycled) {
                                 val (foundAtlas, foundRegion) = atlasAndRegion
 
-                                // Calculate aspect-aware bounds to avoid stretching
                                 val srcAspectRatio = foundRegion.atlasRect.width / foundRegion.atlasRect.height
                                 val dstAspectRatio = bounds.width / bounds.height
 
                                 val aspectAwareBounds = if (srcAspectRatio > dstAspectRatio) {
-                                    // Source is wider, fit height and center horizontally
                                     val newWidth = bounds.height * srcAspectRatio
                                     val offsetX = (bounds.width - newWidth) / 2
                                     androidx.compose.ui.geometry.Rect(

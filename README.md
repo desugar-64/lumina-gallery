@@ -16,6 +16,7 @@
 |:---------------------------------------------------:|:----------------------------------------------------------------:|
 |   ![Hex Grid Visual](image/hex_grid_visual.apng)    |         ![Permissions Demo](image/permissions_demo.apng)         |
 | *Dynamic, zoomable hexagonal grid layout for media* | *Modern Android 14+ permission flow with Limited Access support* |
+|                ![](image/demo3.apng)                |                      ![](image/demo3.apng)                       |
 
 <div align="center">
   <img src="image/demo0.png" height="600" />

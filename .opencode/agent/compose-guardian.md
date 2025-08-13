@@ -112,13 +112,31 @@ val result = remember(items) {
     items.filter { it.isActive }.sortedBy { it.priority }
 }
 
-// ✅ GOOD: Use derivedStateOf for derived state
+// ✅ GOOD: Use derivedStateOf for expensive derived state
 val result by remember {
     derivedStateOf {
         items.filter { it.isActive }.sortedBy { it.priority }
     }
 }
+
+// ❌ BAD: derivedStateOf for simple comparisons (overkill!)
+val isSelected by remember {
+    derivedStateOf { selectedMedia == media } // Unnecessary complexity!
+}
+
+// ✅ GOOD: Direct comparison for simple state
+val isSelected = selectedMedia == media // Immediate reactivity
+
+// ❌ BAD: derivedStateOf with remember wrapping simple logic
+val isVisible by remember {
+    derivedStateOf { count > 0 && isEnabled } // Too much overhead
+}
+
+// ✅ GOOD: Direct computation for simple boolean logic
+val isVisible = count > 0 && isEnabled
 ```
+
+**derivedStateOf Rule**: Only use `derivedStateOf` for expensive calculations that combine multiple state values. For simple comparisons or boolean logic, use direct computation for immediate reactivity and better performance.
 
 ### 6. Recomposition Optimization
 ```kotlin
