@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
 import dev.serhiiyaremych.lumina.ui.MediaHexState
 import dev.serhiiyaremych.lumina.ui.TransformableState
-import dev.serhiiyaremych.lumina.ui.components.FocusedCellPanel
+import dev.serhiiyaremych.lumina.ui.components.focusedcell.FocusedCellPanel
 import dev.serhiiyaremych.lumina.ui.gallery.GalleryUiState
 import dev.serhiiyaremych.lumina.ui.gallery.StreamingGalleryViewModel
 import kotlinx.coroutines.CoroutineScope

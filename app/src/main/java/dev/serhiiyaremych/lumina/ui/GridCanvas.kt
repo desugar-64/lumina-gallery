@@ -3,6 +3,7 @@ package dev.serhiiyaremych.lumina.ui
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.drawWithContent
@@ -35,12 +36,11 @@ fun GridCanvas(
     state: GridCanvasState = rememberGridCanvasState(),
     content: @Composable () -> Unit
 ) {
-    SideEffect { Log.d("GridCanvas", "GridCanvas: zoom=$zoom") }
     val density = LocalDensity.current
     val gridRenderer = remember { GridRenderer() }
 
-    val majorGridColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f).compositeOver(MaterialTheme.colorScheme.background)
-    val minorGridColor = MaterialTheme.colorScheme.outline // Very subtle minor grid dots
+    val majorGridColor = colorScheme.onSurfaceVariant.copy(alpha = 0.5f).compositeOver(colorScheme.background)
+    val minorGridColor = colorScheme.outline // Very subtle minor grid dots
 
     Box(
         modifier = modifier
