@@ -85,3 +85,4 @@ lint/tmp/
 benchmark_results/
 # CRUSH directory
 .crush/
+lint_reports/
