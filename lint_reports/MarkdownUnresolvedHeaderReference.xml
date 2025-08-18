@@ -1,0 +1,1550 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>2</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Last-updated_March-10_2021</description>
+  <highlighted_element>Last-updated_March-10_2021</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>26</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>3</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor last-updated_march-10_2021</description>
+  <highlighted_element>last-updated_march-10_2021</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>26</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>6</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Who-this-document-is-for</description>
+  <highlighted_element>Who-this-document-is-for</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>24</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>7</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor who-this-document-is-for</description>
+  <highlighted_element>who-this-document-is-for</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>24</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>16</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Jetpack-Compose-framework-development</description>
+  <highlighted_element>Jetpack-Compose-framework-development</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>37</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>17</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor jetpack-compose-framework-development</description>
+  <highlighted_element>jetpack-compose-framework-development</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>37</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>22</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Library-development-based-on-Jetpack-Compose</description>
+  <highlighted_element>Library-development-based-on-Jetpack-Compose</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>44</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>23</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor library-development-based-on-jetpack-compose</description>
+  <highlighted_element>library-development-based-on-jetpack-compose</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>44</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>28</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor App-development-based-on-Jetpack-Compose</description>
+  <highlighted_element>App-development-based-on-Jetpack-Compose</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>40</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>29</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor app-development-based-on-jetpack-compose</description>
+  <highlighted_element>app-development-based-on-jetpack-compose</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>40</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>34</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Kotlin-style</description>
+  <highlighted_element>Kotlin-style</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>12</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>35</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor kotlin-style</description>
+  <highlighted_element>kotlin-style</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>12</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>38</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Baseline-style-guidelines</description>
+  <highlighted_element>Baseline-style-guidelines</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>25</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>39</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor baseline-style-guidelines</description>
+  <highlighted_element>baseline-style-guidelines</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>25</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>46</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Kotlin-style-Baseline-style-guidelines-Why</description>
+  <highlighted_element>Kotlin-style-Baseline-style-guidelines-Why</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>42</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>47</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor kotlin-style-baseline-style-guidelines-why</description>
+  <highlighted_element>kotlin-style-baseline-style-guidelines-why</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>42</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>51</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Singletons_constants_sealed-class-and-enum-class-values</description>
+  <highlighted_element>Singletons_constants_sealed-class-and-enum-class-values</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>55</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>52</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor singletons_constants_sealed-class-and-enum-class-values</description>
+  <highlighted_element>singletons_constants_sealed-class-and-enum-class-values</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>55</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>61</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Kotlin-style-Singletons_constants_sealed-class-and-enum-class-values-Why</description>
+  <highlighted_element>Kotlin-style-Singletons_constants_sealed-class-and-enum-class-values-Why</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>72</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>62</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor kotlin-style-singletons_constants_sealed-class-and-enum-class-values-why</description>
+  <highlighted_element>kotlin-style-singletons_constants_sealed-class-and-enum-class-values-why</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>72</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>68</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Kotlin-style-Singletons_constants_sealed-class-and-enum-class-values-Do</description>
+  <highlighted_element>Kotlin-style-Singletons_constants_sealed-class-and-enum-class-values-Do</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>71</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>69</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor kotlin-style-singletons_constants_sealed-class-and-enum-class-values-do</description>
+  <highlighted_element>kotlin-style-singletons_constants_sealed-class-and-enum-class-values-do</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>71</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>94</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Kotlin-style-Singletons_constants_sealed-class-and-enum-class-values-Don_t</description>
+  <highlighted_element>Kotlin-style-Singletons_constants_sealed-class-and-enum-class-values-Don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>74</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>95</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor kotlin-style-singletons_constants_sealed-class-and-enum-class-values-don_t</description>
+  <highlighted_element>kotlin-style-singletons_constants_sealed-class-and-enum-class-values-don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>74</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>120</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline</description>
+  <highlighted_element>Compose-baseline</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>16</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>121</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline</description>
+  <highlighted_element>compose-baseline</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>16</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>128</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Naming-Unit-Composable-functions-as-entities</description>
+  <highlighted_element>Naming-Unit-Composable-functions-as-entities</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>44</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>129</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor naming-unit-composable-functions-as-entities</description>
+  <highlighted_element>naming-unit-composable-functions-as-entities</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>44</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>136</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Naming-Unit-Composable-functions-as-entities-Why</description>
+  <highlighted_element>Compose-baseline-Naming-Unit-Composable-functions-as-entities-Why</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>65</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>137</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-naming-unit-composable-functions-as-entities-why</description>
+  <highlighted_element>compose-baseline-naming-unit-composable-functions-as-entities-why</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>65</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>141</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Naming-Unit-Composable-functions-as-entities-Do-1</description>
+  <highlighted_element>Compose-baseline-Naming-Unit-Composable-functions-as-entities-Do-1</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>66</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>142</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-naming-unit-composable-functions-as-entities-do-1</description>
+  <highlighted_element>compose-baseline-naming-unit-composable-functions-as-entities-do-1</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>66</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>152</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Naming-Unit-Composable-functions-as-entities-Do-2</description>
+  <highlighted_element>Compose-baseline-Naming-Unit-Composable-functions-as-entities-Do-2</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>66</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>153</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-naming-unit-composable-functions-as-entities-do-2</description>
+  <highlighted_element>compose-baseline-naming-unit-composable-functions-as-entities-do-2</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>66</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>164</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Naming-Unit-Composable-functions-as-entities-Don_t-1</description>
+  <highlighted_element>Compose-baseline-Naming-Unit-Composable-functions-as-entities-Don_t-1</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>69</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>165</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-naming-unit-composable-functions-as-entities-don_t-1</description>
+  <highlighted_element>compose-baseline-naming-unit-composable-functions-as-entities-don_t-1</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>69</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>175</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Naming-Unit-Composable-functions-as-entities-Don_t-2</description>
+  <highlighted_element>Compose-baseline-Naming-Unit-Composable-functions-as-entities-Don_t-2</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>69</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>176</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-naming-unit-composable-functions-as-entities-don_t-2</description>
+  <highlighted_element>compose-baseline-naming-unit-composable-functions-as-entities-don_t-2</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>69</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>186</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Naming-Unit-Composable-functions-as-entities-Don_t-3</description>
+  <highlighted_element>Compose-baseline-Naming-Unit-Composable-functions-as-entities-Don_t-3</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>69</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>187</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-naming-unit-composable-functions-as-entities-don_t-3</description>
+  <highlighted_element>compose-baseline-naming-unit-composable-functions-as-entities-don_t-3</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>69</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>197</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Naming-Composable-functions-that-return-values</description>
+  <highlighted_element>Naming-Composable-functions-that-return-values</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>46</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>198</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor naming-composable-functions-that-return-values</description>
+  <highlighted_element>naming-composable-functions-that-return-values</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>46</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>205</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Naming-Composable-functions-that-return-values-Why</description>
+  <highlighted_element>Compose-baseline-Naming-Composable-functions-that-return-values-Why</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>67</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>206</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-naming-composable-functions-that-return-values-why</description>
+  <highlighted_element>compose-baseline-naming-composable-functions-that-return-values-why</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>67</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>216</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Naming-Composable-functions-that-return-values-Do</description>
+  <highlighted_element>Compose-baseline-Naming-Composable-functions-that-return-values-Do</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>66</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>217</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-naming-composable-functions-that-return-values-do</description>
+  <highlighted_element>compose-baseline-naming-composable-functions-that-return-values-do</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>66</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>228</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Naming-Composable-functions-that-return-values-Don_t</description>
+  <highlighted_element>Compose-baseline-Naming-Composable-functions-that-return-values-Don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>69</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>229</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-naming-composable-functions-that-return-values-don_t</description>
+  <highlighted_element>compose-baseline-naming-composable-functions-that-return-values-don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>69</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>240</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Naming-Composable-functions-that-remember-the-objects-they-return</description>
+  <highlighted_element>Naming-Composable-functions-that-remember-the-objects-they-return</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>65</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>241</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor naming-composable-functions-that-remember-the-objects-they-return</description>
+  <highlighted_element>naming-composable-functions-that-remember-the-objects-they-return</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>65</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>248</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Naming-Composable-functions-that-remember-the-objects-they-return-Why</description>
+  <highlighted_element>Compose-baseline-Naming-Composable-functions-that-remember-the-objects-they-return-Why</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>86</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>249</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-naming-composable-functions-that-remember-the-objects-they-return-why</description>
+  <highlighted_element>compose-baseline-naming-composable-functions-that-remember-the-objects-they-return-why</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>86</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>253</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Naming-Composable-functions-that-remember-the-objects-they-return-Do</description>
+  <highlighted_element>Compose-baseline-Naming-Composable-functions-that-remember-the-objects-they-return-Do</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>85</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>254</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-naming-composable-functions-that-remember-the-objects-they-return-do</description>
+  <highlighted_element>compose-baseline-naming-composable-functions-that-remember-the-objects-they-return-do</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>85</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>266</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Naming-Composable-functions-that-remember-the-objects-they-return-Don_t</description>
+  <highlighted_element>Compose-baseline-Naming-Composable-functions-that-remember-the-objects-they-return-Don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>88</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>267</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-naming-composable-functions-that-remember-the-objects-they-return-don_t</description>
+  <highlighted_element>compose-baseline-naming-composable-functions-that-remember-the-objects-they-return-don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>88</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>281</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Naming-CompositionLocals</description>
+  <highlighted_element>Naming-CompositionLocals</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>24</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>282</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor naming-compositionlocals</description>
+  <highlighted_element>naming-compositionlocals</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>24</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>291</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Naming-CompositionLocals-Do</description>
+  <highlighted_element>Compose-baseline-Naming-CompositionLocals-Do</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>44</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>292</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-naming-compositionlocals-do</description>
+  <highlighted_element>compose-baseline-naming-compositionlocals-do</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>44</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>301</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Naming-CompositionLocals-Don_t</description>
+  <highlighted_element>Compose-baseline-Naming-CompositionLocals-Don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>47</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>302</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-naming-compositionlocals-don_t</description>
+  <highlighted_element>compose-baseline-naming-compositionlocals-don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>47</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>311</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Stable-types</description>
+  <highlighted_element>Stable-types</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>12</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>312</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor stable-types</description>
+  <highlighted_element>stable-types</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>12</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>333</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Stable-types-Why</description>
+  <highlighted_element>Compose-baseline-Stable-types-Why</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>33</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>334</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-stable-types-why</description>
+  <highlighted_element>compose-baseline-stable-types-why</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>33</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>340</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Emit-XOR-return-a-value</description>
+  <highlighted_element>Emit-XOR-return-a-value</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>23</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>341</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor emit-xor-return-a-value</description>
+  <highlighted_element>emit-xor-return-a-value</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>23</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>348</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Emit-XOR-return-a-value-Why</description>
+  <highlighted_element>Compose-baseline-Emit-XOR-return-a-value-Why</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>44</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>349</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-emit-xor-return-a-value-why</description>
+  <highlighted_element>compose-baseline-emit-xor-return-a-value-why</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>44</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>353</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Emit-XOR-return-a-value-Do</description>
+  <highlighted_element>Compose-baseline-Emit-XOR-return-a-value-Do</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>43</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>354</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-emit-xor-return-a-value-do</description>
+  <highlighted_element>compose-baseline-emit-xor-return-a-value-do</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>43</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>373</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-baseline-Emit-XOR-return-a-value-Don_t</description>
+  <highlighted_element>Compose-baseline-Emit-XOR-return-a-value-Don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>46</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>374</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-baseline-emit-xor-return-a-value-don_t</description>
+  <highlighted_element>compose-baseline-emit-xor-return-a-value-don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>46</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>413</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor hoisted-state-types</description>
+  <highlighted_element>hoisted-state-types</highlighted_element>
+  <language>Markdown</language>
+  <offset>81</offset>
+  <length>19</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>415</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-UI-API-structure</description>
+  <highlighted_element>Compose-UI-API-structure</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>24</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>416</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-ui-api-structure</description>
+  <highlighted_element>compose-ui-api-structure</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>24</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>421</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-UI-elements</description>
+  <highlighted_element>Compose-UI-elements</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>19</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>422</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-ui-elements</description>
+  <highlighted_element>compose-ui-elements</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>19</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>443</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Elements-return-Unit</description>
+  <highlighted_element>Elements-return-Unit</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>20</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>444</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor elements-return-unit</description>
+  <highlighted_element>elements-return-unit</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>20</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>448</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-UI-API-structure-Compose-UI-elements-Elements-return-Unit-Why</description>
+  <highlighted_element>Compose-UI-API-structure-Compose-UI-elements-Elements-return-Unit-Why</highlighted_element>
+  <language>Markdown</language>
+  <offset>9</offset>
+  <length>69</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>449</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-ui-api-structure-compose-ui-elements-elements-return-unit-why</description>
+  <highlighted_element>compose-ui-api-structure-compose-ui-elements-elements-return-unit-why</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>69</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>453</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-UI-API-structure-Compose-UI-elements-Elements-return-Unit-Do</description>
+  <highlighted_element>Compose-UI-API-structure-Compose-UI-elements-Elements-return-Unit-Do</highlighted_element>
+  <language>Markdown</language>
+  <offset>9</offset>
+  <length>68</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>454</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-ui-api-structure-compose-ui-elements-elements-return-unit-do</description>
+  <highlighted_element>compose-ui-api-structure-compose-ui-elements-elements-return-unit-do</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>68</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>467</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-UI-API-structure-Compose-UI-elements-Elements-return-Unit-Don_t</description>
+  <highlighted_element>Compose-UI-API-structure-Compose-UI-elements-Elements-return-Unit-Don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>9</offset>
+  <length>71</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>468</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-ui-api-structure-compose-ui-elements-elements-return-unit-don_t</description>
+  <highlighted_element>compose-ui-api-structure-compose-ui-elements-elements-return-unit-don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>71</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>485</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Elements-accept-and-respect-a-Modifier-parameter</description>
+  <highlighted_element>Elements-accept-and-respect-a-Modifier-parameter</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>48</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>486</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor elements-accept-and-respect-a-modifier-parameter</description>
+  <highlighted_element>elements-accept-and-respect-a-modifier-parameter</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>48</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>498</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-UI-API-structure-Compose-UI-elements-Elements-accept-and-respect-a-Modifier-parameter-Why</description>
+  <highlighted_element>Compose-UI-API-structure-Compose-UI-elements-Elements-accept-and-respect-a-Modifier-parameter-Why</highlighted_element>
+  <language>Markdown</language>
+  <offset>9</offset>
+  <length>97</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>499</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-ui-api-structure-compose-ui-elements-elements-accept-and-respect-a-modifier-parameter-why</description>
+  <highlighted_element>compose-ui-api-structure-compose-ui-elements-elements-accept-and-respect-a-modifier-parameter-why</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>97</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>509</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-UI-API-structure-Compose-UI-elements-Elements-accept-and-respect-a-Modifier-parameter-Do</description>
+  <highlighted_element>Compose-UI-API-structure-Compose-UI-elements-Elements-accept-and-respect-a-Modifier-parameter-Do</highlighted_element>
+  <language>Markdown</language>
+  <offset>9</offset>
+  <length>96</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>510</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-ui-api-structure-compose-ui-elements-elements-accept-and-respect-a-modifier-parameter-do</description>
+  <highlighted_element>compose-ui-api-structure-compose-ui-elements-elements-accept-and-respect-a-modifier-parameter-do</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>96</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>528</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-UI-layouts</description>
+  <highlighted_element>Compose-UI-layouts</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>18</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>529</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-ui-layouts</description>
+  <highlighted_element>compose-ui-layouts</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>18</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>556</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-UI-modifiers</description>
+  <highlighted_element>Compose-UI-modifiers</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>20</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>557</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-ui-modifiers</description>
+  <highlighted_element>compose-ui-modifiers</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>20</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>564</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Modifier-factory-functions</description>
+  <highlighted_element>Modifier-factory-functions</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>26</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>565</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor modifier-factory-functions</description>
+  <highlighted_element>modifier-factory-functions</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>26</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>592</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Layout_scoped-modifiers</description>
+  <highlighted_element>Layout_scoped-modifiers</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>23</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>593</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor layout_scoped-modifiers</description>
+  <highlighted_element>layout_scoped-modifiers</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>23</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>599</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-UI-API-structure-Compose-UI-modifiers-Layout_scoped-modifiers-Example</description>
+  <highlighted_element>Compose-UI-API-structure-Compose-UI-modifiers-Layout_scoped-modifiers-Example</highlighted_element>
+  <language>Markdown</language>
+  <offset>9</offset>
+  <length>77</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>600</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-ui-api-structure-compose-ui-modifiers-layout_scoped-modifiers-example</description>
+  <highlighted_element>compose-ui-api-structure-compose-ui-modifiers-layout_scoped-modifiers-example</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>77</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>626</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-API-design-patterns</description>
+  <highlighted_element>Compose-API-design-patterns</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>27</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>627</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-api-design-patterns</description>
+  <highlighted_element>compose-api-design-patterns</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>27</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>632</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Prefer-stateless-and-controlled-Composable-functions</description>
+  <highlighted_element>Prefer-stateless-and-controlled-Composable-functions</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>52</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>633</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor prefer-stateless-and-controlled-composable-functions</description>
+  <highlighted_element>prefer-stateless-and-controlled-composable-functions</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>52</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>638</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-API-design-patterns-Prefer-stateless-and-controlled-Composable-functions-Do</description>
+  <highlighted_element>Compose-API-design-patterns-Prefer-stateless-and-controlled-Composable-functions-Do</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>83</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>639</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-api-design-patterns-prefer-stateless-and-controlled-composable-functions-do</description>
+  <highlighted_element>compose-api-design-patterns-prefer-stateless-and-controlled-composable-functions-do</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>83</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>658</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-API-design-patterns-Prefer-stateless-and-controlled-Composable-functions-Don_t</description>
+  <highlighted_element>Compose-API-design-patterns-Prefer-stateless-and-controlled-Composable-functions-Don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>86</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>659</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-api-design-patterns-prefer-stateless-and-controlled-composable-functions-don_t</description>
+  <highlighted_element>compose-api-design-patterns-prefer-stateless-and-controlled-composable-functions-don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>86</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>677</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Separate-state-and-events</description>
+  <highlighted_element>Separate-state-and-events</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>25</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>678</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor separate-state-and-events</description>
+  <highlighted_element>separate-state-and-events</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>25</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>689</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Hoisted-state-types</description>
+  <highlighted_element>Hoisted-state-types</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>19</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>690</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor hoisted-state-types</description>
+  <highlighted_element>hoisted-state-types</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>19</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>695</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Before</description>
+  <highlighted_element>Before</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>6</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>696</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor before</description>
+  <highlighted_element>before</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>6</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>710</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor After</description>
+  <highlighted_element>After</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>5</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>711</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor after</description>
+  <highlighted_element>after</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>5</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>736</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Default-policies-through-hoisted-state-objects</description>
+  <highlighted_element>Default-policies-through-hoisted-state-objects</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>46</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>737</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor default-policies-through-hoisted-state-objects</description>
+  <highlighted_element>default-policies-through-hoisted-state-objects</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>46</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>742</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-API-design-patterns-Default-policies-through-hoisted-state-objects-Example</description>
+  <highlighted_element>Compose-API-design-patterns-Default-policies-through-hoisted-state-objects-Example</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>82</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>743</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-api-design-patterns-default-policies-through-hoisted-state-objects-example</description>
+  <highlighted_element>compose-api-design-patterns-default-policies-through-hoisted-state-objects-example</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>82</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>791</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-API-design-patterns-Default-policies-through-hoisted-state-objects-Do</description>
+  <highlighted_element>Compose-API-design-patterns-Default-policies-through-hoisted-state-objects-Do</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>77</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>792</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-api-design-patterns-default-policies-through-hoisted-state-objects-do</description>
+  <highlighted_element>compose-api-design-patterns-default-policies-through-hoisted-state-objects-do</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>77</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>804</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Compose-API-design-patterns-Default-policies-through-hoisted-state-objects-Don_t</description>
+  <highlighted_element>Compose-API-design-patterns-Default-policies-through-hoisted-state-objects-Don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>8</offset>
+  <length>80</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>805</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor compose-api-design-patterns-default-policies-through-hoisted-state-objects-don_t</description>
+  <highlighted_element>compose-api-design-patterns-default-policies-through-hoisted-state-objects-don_t</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>80</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>820</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor Extensibility-of-hoisted-state-types</description>
+  <highlighted_element>Extensibility-of-hoisted-state-types</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>36</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md</file>
+  <line>821</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetpack-compose-api-guidelines.md" />
+  <problem_class id="MarkdownUnresolvedHeaderReference" severity="WARNING" attribute_key="INFO_ATTRIBUTES">Unresolved header reference</problem_class>
+  <description>Cannot resolve anchor extensibility-of-hoisted-state-types</description>
+  <highlighted_element>extensibility-of-hoisted-state-types</highlighted_element>
+  <language>Markdown</language>
+  <offset>4</offset>
+  <length>36</length>
+</problem>
+</problems>

@@ -1,0 +1,16 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/components/CellFocusEffects.kt</file>
+  <line>41</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui.gallery.components</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/gallery/components/CellFocusEffects.kt" />
+  <problem_class id="AndroidLintStateFlowValueCalledInComposition" severity="ERROR" attribute_key="ERRORS_ATTRIBUTES">StateFlow.value should not be called within composition</problem_class>
+  <hints />
+  <description>&lt;html&gt;StateFlow.value should not be called within composition&lt;/html&gt;</description>
+  <highlighted_element>value</highlighted_element>
+  <language>kotlin</language>
+  <offset>119</offset>
+  <length>5</length>
+</problem>
+</problems>

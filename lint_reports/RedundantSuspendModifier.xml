@@ -1,0 +1,28 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/GenerateHexGridLayoutUseCase.kt</file>
+  <line>95</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.GenerateHexGridLayoutUseCase java.lang.Object execute(dev.serhiiyaremych.lumina.domain.model.HexGrid hexGrid, java.util.Map&lt;java.time.LocalDate,? extends java.util.List&lt;? extends dev.serhiiyaremych.lumina.domain.model.Media&gt;&gt; groupedMedia, float thumbnailSizeFactor, kotlin.coroutines.Continuation&lt;? super dev.serhiiyaremych.lumina.domain.model.HexGridLayout&gt; $completion)" />
+  <problem_class id="RedundantSuspendModifier" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+  <description>Redundant 'suspend' modifier</description>
+  <highlighted_element>suspend</highlighted_element>
+  <language>kotlin</language>
+  <offset>4</offset>
+  <length>7</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/domain/usecase/PhotoLODProcessor.kt</file>
+  <line>265</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.domain.usecase</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.domain.usecase.PhotoLODProcessor java.lang.Object applyExifOrientationWithValue(android.graphics.Bitmap bitmap, int exifOrientation, kotlin.coroutines.Continuation&lt;? super android.graphics.Bitmap&gt; $completion)" />
+  <problem_class id="RedundantSuspendModifier" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+  <description>Redundant 'suspend' modifier</description>
+  <highlighted_element>suspend</highlighted_element>
+  <language>kotlin</language>
+  <offset>12</offset>
+  <length>7</length>
+</problem>
+</problems>

@@ -255,7 +255,7 @@ class StreamingAtlasManager @Inject constructor(
             is LODGenerationResult.Success -> {
                 atlasBucketManager.populateBase(result.atlases)
 
-                Log.d(TAG, "Persistent cache initialized: ${result.atlases.size} atlases, ${result.atlases.sumOf { it.regions.size }} photos in ${duration.inWholeMilliseconds}ms")
+                Log.d(TAG, "Persistent cache initialized: ${result.atlases.size} atlases, ${result.atlases.sumOf { it.photoCount }} photos in ${duration.inWholeMilliseconds}ms")
 
                 // Emit immediate availability for UI
                 atlasResultFlow.tryEmit(
@@ -550,7 +550,7 @@ class StreamingAtlasManager @Inject constructor(
         atlasBucketManager.getBestRegion(photoId)?.let { region ->
             // Find the atlas containing this region
             atlasBucketManager.snapshotAll().forEach { atlas ->
-                if (atlas.regions.containsKey(photoId)) {
+                if (atlas.containsPhoto(photoId)) {
                     return@withLock atlas to region
                 }
             }
@@ -695,7 +695,7 @@ class StreamingAtlasManager @Inject constructor(
         // Build map of existing photos at their highest LOD levels from bucket system
         val existingPhotoToHighestLOD = mutableMapOf<Uri, LODLevel>()
         atlasBucketManager.snapshotAll().forEach { atlas ->
-            atlas.regions.keys.forEach { photoUri ->
+            atlas.reactiveRegions.keys.forEach { photoUri ->
                 val current = existingPhotoToHighestLOD[photoUri]
                 if (current == null || atlas.lodLevel.level > current.level) {
                     existingPhotoToHighestLOD[photoUri] = atlas.lodLevel

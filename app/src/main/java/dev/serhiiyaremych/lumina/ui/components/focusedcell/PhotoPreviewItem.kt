@@ -150,7 +150,7 @@ internal fun PhotoPreviewItem(
                 val bounds = Rect(Offset.Zero, size)
                 val photoId = media.uri
                 val atlasAndRegion = level0Atlases?.firstNotNullOfOrNull { atlas ->
-                    atlas.regions[photoId]?.let { region -> atlas to region }
+                    atlas.getRegion(photoId)?.let { region -> atlas to region }
                 }
 
                 onDrawBehind {

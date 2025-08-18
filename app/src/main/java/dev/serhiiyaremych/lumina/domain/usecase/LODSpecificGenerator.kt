@@ -41,7 +41,8 @@ class LODSpecificGenerator @Inject constructor(
         photos: List<Uri>,
         lodLevel: LODLevel,
         currentZoom: Float,
-        priority: TypeSafeLODPriority
+        priority: TypeSafeLODPriority,
+        onPhotoReady: (Uri, dev.serhiiyaremych.lumina.domain.model.AtlasRegion) -> Unit = { _, _ -> }
     ): LODGenerationResult = trace("${BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS}_$lodLevel") {
         if (photos.isEmpty()) {
             Log.w(TAG, "No photos provided for LOD $lodLevel generation")
@@ -65,7 +66,8 @@ class LODSpecificGenerator @Inject constructor(
                 lodLevel = lodLevel,
                 currentZoom = currentZoom,
                 scaleStrategy = ScaleStrategy.FIT_CENTER,
-                priorityMapping = priorityMapping
+                priorityMapping = priorityMapping,
+                onPhotoReady = onPhotoReady
             )
 
             currentCoroutineContext().ensureActive()

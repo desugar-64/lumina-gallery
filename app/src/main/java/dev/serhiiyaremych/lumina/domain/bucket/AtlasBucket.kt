@@ -32,7 +32,7 @@ open class AtlasBucket {
             atlases.forEach { atlas ->
                 val deque = bucketsByLod.getOrPut(atlas.lodLevel) { ArrayDeque() }
                 deque.addLast(atlas)
-                atlas.regions.keys.forEach { uri ->
+                atlas.reactiveRegions.keys.forEach { uri ->
                     index[uri] = atlas
                 }
             }
@@ -55,7 +55,7 @@ open class AtlasBucket {
             val deque = bucketsByLod[lodLevel] ?: return@withLock false
             if (deque.isEmpty()) return@withLock false
             val atlas = deque.removeFirst()
-            atlas.regions.keys.forEach { index.remove(it) }
+            atlas.reactiveRegions.keys.forEach { index.remove(it) }
             if (!atlas.bitmap.isRecycled) atlas.bitmap.recycle()
             true
         }
@@ -64,7 +64,7 @@ open class AtlasBucket {
     suspend fun getAtlasForPhoto(uri: Uri): TextureAtlas? = lock.withLock { index[uri] }
 
     suspend fun getRegionForPhoto(uri: Uri): AtlasRegion? = lock.withLock {
-        index[uri]?.regions?.get(uri)
+        index[uri]?.getRegion(uri)
     }
 
     /** Get the highest LOD level available for a specific photo */

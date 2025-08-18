@@ -277,7 +277,7 @@ private fun MultiLODAtlasView(
 @Composable
 private fun StreamingAtlasStrategyIndicator(streamingAtlases: Map<LODLevel, List<dev.serhiiyaremych.lumina.domain.model.TextureAtlas>>) {
     val totalAtlases = streamingAtlases.values.sumOf { it.size }
-    val totalPhotos = streamingAtlases.values.sumOf { atlases -> atlases.sumOf { it.regions.size } }
+    val totalPhotos = streamingAtlases.values.sumOf { atlases -> atlases.sumOf { it.photoCount } }
     val lodLevels = streamingAtlases.keys.size
 
     // Determine strategy based on streaming atlas distribution
@@ -414,7 +414,7 @@ private fun AtlasStrategyIndicator(atlasState: MultiAtlasUpdateResult.Success) {
         )
 
         Text(
-            text = "${atlasState.atlases.sumOf { it.regions.size }} photos",
+            text = "${atlasState.atlases.sumOf { it.photoCount }} photos",
             color = Color.White,
             fontSize = DebugTextSizes.DETAIL_TEXT,
             fontWeight = FontWeight.Bold
@@ -518,7 +518,7 @@ private fun CompactAtlasCard(atlas: dev.serhiiyaremych.lumina.domain.model.Textu
 
         // Photo count
         Text(
-            text = "${atlas.regions.size}",
+            text = "${atlas.photoCount}",
             color = Color.White,
             fontSize = DebugTextSizes.MICRO_TEXT,
             fontWeight = FontWeight.Bold,
@@ -570,7 +570,7 @@ private fun ExpandedAtlasCard(atlas: dev.serhiiyaremych.lumina.domain.model.Text
 
             // Photo count in top-right corner
             Text(
-                text = "${atlas.regions.size}",
+                text = "${atlas.photoCount}",
                 color = Color.White,
                 fontSize = DebugTextSizes.TERTIARY_TEXT,
                 fontWeight = FontWeight.Bold,

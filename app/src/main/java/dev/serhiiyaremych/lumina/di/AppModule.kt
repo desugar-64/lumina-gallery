@@ -20,7 +20,9 @@ import dev.serhiiyaremych.lumina.domain.usecase.PhotoLODProcessor
 import dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 @Module(includes = [StreamingAtlasModule::class])
 @InstallIn(SingletonComponent::class)
@@ -29,6 +31,10 @@ object AppModule {
     @Singleton
     @Provides
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+
+    @Singleton
+    @Provides
+    fun provideApplicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     @Singleton
     @Provides

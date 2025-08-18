@@ -106,7 +106,7 @@ class AtlasManager @Inject constructor(
                         Log.d(TAG, "Atlas regeneration not needed - returning existing atlases")
                         val currentAtlases = atlasBucketManager.snapshotAll()
                         return@withContext if (currentAtlases.isNotEmpty()) {
-                            val totalRegions = currentAtlases.sumOf { it.regions.size }
+                            val totalRegions = currentAtlases.sumOf { it.photoCount }
                             Log.d(TAG, "Returning ${currentAtlases.size} existing atlases with $totalRegions total regions")
                             MultiAtlasUpdateResult.Success(currentAtlases, requestSequence, currentLODLevel)
                         } else {
@@ -163,7 +163,7 @@ class AtlasManager @Inject constructor(
     suspend fun getPhotoAtlasAndRegion(photoId: Uri): Pair<TextureAtlas, AtlasRegion>? {
         val region = atlasBucketManager.getBestRegion(photoId) ?: return null
         val allAtlases = atlasBucketManager.snapshotAll()
-        val atlas = allAtlases.find { it.regions.containsKey(photoId) }
+        val atlas = allAtlases.find { it.containsPhoto(photoId) }
         return atlas?.let { it to region }
     }
 
@@ -469,10 +469,10 @@ class AtlasManager @Inject constructor(
      * Generate atlas key for coordination with SmartMemoryManager
      */
     private fun generateAtlasKey(atlas: TextureAtlas): SmartMemoryManager.AtlasKey? {
-        if (atlas.regions.isEmpty()) return null
+        if (atlas.totalPhotoSlots == 0) return null
 
-        // Generate photo hash from all photos in this atlas
-        val photoUris = atlas.regions.keys.sorted() // Sort for consistent hashing
+        // Generate photo hash from all photos in this atlas (using reactive regions)
+        val photoUris = atlas.reactiveRegions.keys.sorted() // Sort for consistent hashing
         val photosHash = photoUris.hashCode()
 
         return SmartMemoryManager.AtlasKey(
@@ -548,7 +548,7 @@ class AtlasManager @Inject constructor(
         currentSelectedMedia = selectedMedia
 
         val mergedAtlases = atlasBucketManager.snapshotAll()
-        val totalRegions = mergedAtlases.sumOf { it.regions.size }
+        val totalRegions = mergedAtlases.sumOf { it.photoCount }
         Log.d(TAG, "Selective atlas merge complete: ${mergedAtlases.size} total atlases, $totalRegions regions")
 
         MultiAtlasUpdateResult.Success(mergedAtlases, requestSequence, currentLODLevel)
@@ -592,7 +592,7 @@ class AtlasManager @Inject constructor(
             lastReportedZoom = currentZoom
             currentSelectedMedia = selectedMedia
 
-            val totalRegions = enhancedResult.allAtlases.sumOf { it.regions.size }
+            val totalRegions = enhancedResult.allAtlases.sumOf { it.photoCount }
             val message = if (enhancedResult.failed.isEmpty()) {
                 "Multi-atlas generated successfully: ${enhancedResult.allAtlases.size} atlases, $totalRegions regions"
             } else {

@@ -52,7 +52,8 @@ class EnhancedAtlasGenerator @Inject constructor(
         lodLevel: LODLevel,
         currentZoom: Float,
         scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER,
-        priorityMapping: Map<Uri, dev.serhiiyaremych.lumina.domain.model.PhotoPriority> = emptyMap()
+        priorityMapping: Map<Uri, dev.serhiiyaremych.lumina.domain.model.PhotoPriority> = emptyMap(),
+        onPhotoReady: (Uri, dev.serhiiyaremych.lumina.domain.model.AtlasRegion) -> Unit = { _, _ -> }
     ): EnhancedAtlasResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
         Log.d(TAG, "EnhancedAtlasGenerator.generateAtlasEnhanced called:")
         Log.d(TAG, "  - Photo URIs: ${photoUris.size} total")
@@ -74,14 +75,14 @@ class EnhancedAtlasGenerator @Inject constructor(
             smartMemoryManager.emergencyCleanup()
         }
 
-        // Use multi-atlas system directly for optimal photo distribution
+        // Use multi-atlas system with immediate empty atlas creation for progressive loading
         currentCoroutineContext().ensureActive()
-        Log.d(TAG, "Generating enhanced multi-atlas for ${photoUris.size} photos at $lodLevel (zoom: $currentZoom)")
+        Log.d(TAG, "Generating enhanced multi-atlas with immediate loading for ${photoUris.size} photos at $lodLevel (zoom: $currentZoom)")
 
-        val multiAtlasResult = dynamicAtlasPool.generateMultiAtlas(photoUris, lodLevel, currentZoom, scaleStrategy, priorityMapping)
+        val multiAtlasResult = dynamicAtlasPool.generateMultiAtlasImmediate(photoUris, lodLevel, currentZoom, scaleStrategy, priorityMapping, onPhotoReady)
 
         val atlasCount = multiAtlasResult.atlases.size
-        val successRate = if (photoUris.isNotEmpty()) multiAtlasResult.atlases.sumOf { it.regions.size }.toFloat() / photoUris.size else 0f
+        val successRate = if (photoUris.isNotEmpty()) multiAtlasResult.atlases.sumOf { it.photoCount }.toFloat() / photoUris.size else 0f
 
         Log.d(TAG, "Multi-atlas generation complete: $atlasCount atlases, ${multiAtlasResult.totalPhotos} total photos, ${String.format("%.1f", successRate * 100)}% success rate")
 
@@ -129,7 +130,7 @@ class EnhancedAtlasGenerator @Inject constructor(
          * Total number of photos packed across all atlases
          */
         val packedPhotos: Int
-            get() = allAtlases.sumOf { it.regions.size }
+            get() = allAtlases.sumOf { it.photoCount }
 
         /**
          * Average utilization across all atlases

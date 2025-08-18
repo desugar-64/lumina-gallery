@@ -1,0 +1,15 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/dev/serhiiyaremych/lumina/ui/MediaHexState.kt</file>
+  <line>84</line>
+  <module>Lumina_Gallery.app.main</module>
+  <package>dev.serhiiyaremych.lumina.ui</package>
+  <entry_point TYPE="method" FQNAME="dev.serhiiyaremych.lumina.ui.MediaHexStateKt dev.serhiiyaremych.lumina.ui.MediaHexState rememberMediaHexState(dev.serhiiyaremych.lumina.domain.model.HexGridLayout hexGridLayout, dev.serhiiyaremych.lumina.domain.model.Media selectedMedia, kotlin.jvm.functions.Function1&lt;? super java.util.List&lt;dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia&gt;,kotlin.Unit&gt; onVisibleCellsChanged, kotlin.jvm.functions.Function0&lt;java.lang.Float&gt; provideZoom, kotlin.jvm.functions.Function0&lt;androidx.compose.ui.geometry.Offset&gt; provideOffset)" />
+  <problem_class id="NestedLambdaShadowedImplicitParameter" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Nested lambda has shadowed implicit parameter</problem_class>
+  <description>Implicit parameter 'it' of enclosing lambda is shadowed</description>
+  <highlighted_element>it</highlighted_element>
+  <language>kotlin</language>
+  <offset>92</offset>
+  <length>2</length>
+</problem>
+</problems>

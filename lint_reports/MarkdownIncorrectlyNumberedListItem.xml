@@ -1,0 +1,698 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>384</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 7.</description>
+  <highlighted_element>7.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>385</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 2, but got 8.</description>
+  <highlighted_element>8.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>386</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 3, but got 9.</description>
+  <highlighted_element>9.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>387</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 4, but got 10.</description>
+  <highlighted_element>10.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>4</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>390</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 11.</description>
+  <highlighted_element>11.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>4</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>391</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 2, but got 12.</description>
+  <highlighted_element>12.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>4</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>392</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 3, but got 13.</description>
+  <highlighted_element>13.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>4</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>393</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 4, but got 14.</description>
+  <highlighted_element>14.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>4</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>394</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 5, but got 15.</description>
+  <highlighted_element>15.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>4</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>397</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 16.</description>
+  <highlighted_element>16.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>4</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>404</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 18.</description>
+  <highlighted_element>18.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>4</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>412</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 19.</description>
+  <highlighted_element>19.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>4</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>421</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 20.</description>
+  <highlighted_element>20.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>4</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>444</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 21.</description>
+  <highlighted_element>21.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>4</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>450</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 22.</description>
+  <highlighted_element>22.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>4</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>456</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 23.</description>
+  <highlighted_element>23.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>4</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/CLAUDE.md</file>
+  <line>463</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/CLAUDE.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 24.</description>
+  <highlighted_element>24.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>4</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>381</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 2.</description>
+  <highlighted_element>2.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>383</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 2, but got 3.</description>
+  <highlighted_element>3.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>385</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 3, but got 4.</description>
+  <highlighted_element>4.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>387</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 4, but got 5.</description>
+  <highlighted_element>5.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>438</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 2.</description>
+  <highlighted_element>2.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>444</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 3.</description>
+  <highlighted_element>3.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>459</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 4.</description>
+  <highlighted_element>4.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>515</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 2.</description>
+  <highlighted_element>2.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>522</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 3.</description>
+  <highlighted_element>3.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>760</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 2.</description>
+  <highlighted_element>2.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>858</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 2.</description>
+  <highlighted_element>2.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>860</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 2, but got 3.</description>
+  <highlighted_element>3.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>867</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 4.</description>
+  <highlighted_element>4.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>876</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 5.</description>
+  <highlighted_element>5.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>901</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 2.</description>
+  <highlighted_element>2.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>913</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 3.</description>
+  <highlighted_element>3.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>974</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 2.</description>
+  <highlighted_element>2.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>976</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 2, but got 3.</description>
+  <highlighted_element>3.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>994</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 4.</description>
+  <highlighted_element>4.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>996</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 2, but got 5.</description>
+  <highlighted_element>5.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>1005</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 6.</description>
+  <highlighted_element>6.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>1019</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 7.</description>
+  <highlighted_element>7.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>1415</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 2.</description>
+  <highlighted_element>2.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>1417</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 2, but got 3.</description>
+  <highlighted_element>3.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>5597</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 3.</description>
+  <highlighted_element>3.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>5601</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 4.</description>
+  <highlighted_element>4.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>5624</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 5.</description>
+  <highlighted_element>5.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>5640</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 3.</description>
+  <highlighted_element>3.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>5649</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 4.</description>
+  <highlighted_element>4.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>5709</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 3.</description>
+  <highlighted_element>3.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>5713</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 4.</description>
+  <highlighted_element>4.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>5729</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 5.</description>
+  <highlighted_element>5.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>5746</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 6.</description>
+  <highlighted_element>6.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>5762</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 3.</description>
+  <highlighted_element>3.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>5784</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 3.</description>
+  <highlighted_element>3.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md</file>
+  <line>5794</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/jetbrains-coroutines-guide.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 3.</description>
+  <highlighted_element>3.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/media/permissions-requesting.md</file>
+  <line>61</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/media/permissions-requesting.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 5.</description>
+  <highlighted_element>5.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/media/permissions-requesting.md</file>
+  <line>72</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/media/permissions-requesting.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 6.</description>
+  <highlighted_element>6.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/media/permissions-requesting.md</file>
+  <line>77</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/media/permissions-requesting.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 2, but got 7.</description>
+  <highlighted_element>7.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/media/permissions-requesting.md</file>
+  <line>80</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/media/permissions-requesting.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 3, but got 8.</description>
+  <highlighted_element>8.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/docs/media/permissions-requesting.md</file>
+  <line>184</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/docs/media/permissions-requesting.md" />
+  <problem_class id="MarkdownIncorrectlyNumberedListItem" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Incorrectly numbered list item</problem_class>
+  <description>Item is not correctly numbered. Expected item number 1, but got 2.</description>
+  <highlighted_element>2.</highlighted_element>
+  <language>Markdown</language>
+  <offset>0</offset>
+  <length>3</length>
+</problem>
+</problems>

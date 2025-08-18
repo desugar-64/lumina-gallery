@@ -116,11 +116,11 @@ data class GalleryUiState(
         get() = when {
             streamingAtlases.isNotEmpty() -> {
                 val summary = streamingAtlases.entries.joinToString(", ") { (lod, atlases) ->
-                    "${lod.name}(${atlases.sumOf { it.regions.size }})"
+                    "${lod.name}(${atlases.sumOf { it.photoCount }})"
                 }
                 "Streaming: $summary"
             }
-            persistentCache != null -> "Cache: L0(${persistentCache.sumOf { it.regions.size }})"
+            persistentCache != null -> "Cache: L0(${persistentCache.sumOf { it.photoCount }})"
             else -> "No atlases"
         }
 }

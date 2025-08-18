@@ -3,20 +3,15 @@ package dev.serhiiyaremych.lumina.domain.model
 /**
  * Type-safe atlas generation priorities that determine photo processing quality and resource allocation.
  *
- * This replaces the previous unsafe integer-based priority system with clear semantics
- * about what each priority level means and how it affects atlas generation.
+ * This system provides clear semantics about what each priority level means and how it affects
+ * atlas generation, with compile-time safety and no magic numbers.
  *
- * Integration Status:
- * ✅ Type-safe classes created (AtlasPriority, PhotoQuality, TypeSafeLODPriority)
- * ✅ Adapter methods added to StreamingAtlasManager for gradual migration
- * ✅ Type-safe overloads added to LODSpecificGenerator with deprecation warnings
- * ✅ Backward compatibility maintained with existing LODPriority system
- * ✅ Compile-time safety ensured - no more magic numbers
- *
- * Usage:
- * - New code should use TypeSafeLODPriority with AtlasPriority sealed classes
- * - Legacy code continues to work with LODPriority (deprecated)
- * - Gradual migration can happen method by method without breaking changes
+ * Features:
+ * ✅ Type-safe priority classes with clear semantics
+ * ✅ PhotoQuality levels that map to processing resolution
+ * ✅ TypeSafeLODPriority for atlas generation coordination
+ * ✅ Reactive region system integration
+ * ✅ Compile-time safety - no more magic numbers
  */
 sealed class AtlasPriority {
     /**
@@ -86,7 +81,7 @@ enum class PhotoQuality {
     MAXIMUM;
 
     /**
-     * Convert to legacy PhotoPriority for compatibility
+     * Convert to PhotoPriority for atlas generation
      */
     fun toPhotoPriority(): PhotoPriority = when (this) {
         STANDARD -> PhotoPriority.NORMAL

@@ -1,0 +1,38 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/README.md</file>
+  <line>21</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/README.md" />
+  <problem_class id="HtmlRequiredAltAttribute" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Missing required 'alt' attribute</problem_class>
+  <description>Missing required 'alt' attribute</description>
+  <highlighted_element>img</highlighted_element>
+  <language>XML</language>
+  <offset>3</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/README.md</file>
+  <line>22</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/README.md" />
+  <problem_class id="HtmlRequiredAltAttribute" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Missing required 'alt' attribute</problem_class>
+  <description>Missing required 'alt' attribute</description>
+  <highlighted_element>img</highlighted_element>
+  <language>XML</language>
+  <offset>3</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/README.md</file>
+  <line>23</line>
+  <module>Lumina_Gallery</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/README.md" />
+  <problem_class id="HtmlRequiredAltAttribute" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Missing required 'alt' attribute</problem_class>
+  <description>Missing required 'alt' attribute</description>
+  <highlighted_element>img</highlighted_element>
+  <language>XML</language>
+  <offset>3</offset>
+  <length>3</length>
+</problem>
+</problems>

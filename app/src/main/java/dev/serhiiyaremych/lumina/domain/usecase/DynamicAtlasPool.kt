@@ -23,15 +23,20 @@ import dev.serhiiyaremych.lumina.domain.usecase.SmartMemoryManager.MemoryPressur
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Dynamic Atlas Pool manages multiple atlas sizes based on device capabilities and content requirements.
@@ -48,7 +53,10 @@ class DynamicAtlasPool @Inject constructor(
     private val deviceCapabilities: DeviceCapabilities,
     private val smartMemoryManager: SmartMemoryManager,
     private val photoLODProcessor: PhotoLODProcessor,
-    private val bitmapPool: dev.serhiiyaremych.lumina.data.BitmapPool
+    private val bitmapPool: dev.serhiiyaremych.lumina.data.BitmapPool,
+    private val externalScope: CoroutineScope,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main.immediate
 ) {
 
     // Configuration for atlas optimization based on zoom levels
@@ -76,8 +84,7 @@ class DynamicAtlasPool @Inject constructor(
         private const val MIN_PHOTOS_PER_ATLAS_DEFAULT = 4 // Default minimum photos to justify an atlas
     }
 
-    // Memory pressure monitoring
-    private val memoryPressureScope = CoroutineScope(SupervisorJob())
+    // Memory pressure monitoring - use injected scope instead of creating new one
 
     init {
         // Monitor memory pressure and clean bitmap pool accordingly
@@ -87,13 +94,17 @@ class DynamicAtlasPool @Inject constructor(
                     MemoryPressure.LOW,
                     MemoryPressure.MEDIUM,
                     MemoryPressure.HIGH -> {
-                        bitmapPool.clearOnMemoryPressure(pressureLevel)
-                        Log.d(TAG, "Cleaned bitmap pool due to memory pressure: $pressureLevel")
+                        try {
+                            bitmapPool.clearOnMemoryPressure(pressureLevel)
+                            Log.d(TAG, "Cleaned bitmap pool due to memory pressure: $pressureLevel")
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to clean bitmap pool during memory pressure", e)
+                        }
                     }
                     else -> { /* No action needed for NORMAL and CRITICAL pressure */ }
                 }
             }
-            .launchIn(memoryPressureScope)
+            .launchIn(externalScope)
     }
 
     /**
@@ -124,9 +135,211 @@ class DynamicAtlasPool @Inject constructor(
         val processedPhotos: Int,
         val strategy: AtlasStrategy
     ) {
-        val packedPhotos: Int get() = atlases.sumOf { it.regions.size }
+        val packedPhotos: Int get() = atlases.sumOf { it.photoCount }
         val successRate: Float get() = if (totalPhotos > 0) packedPhotos.toFloat() / totalPhotos else 0f
         val averageUtilization: Float get() = if (atlases.isNotEmpty()) atlases.map { it.utilization }.average().toFloat() else 0f
+    }
+
+    /**
+     * Generate multi-atlas system with immediate empty atlases and background population
+     */
+    suspend fun generateMultiAtlasImmediate(
+        photoUris: List<Uri>,
+        lodLevel: LODLevel,
+        currentZoom: Float,
+        scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER,
+        priorityMapping: Map<Uri, PhotoPriority> = emptyMap(),
+        onPhotoReady: (Uri, AtlasRegion) -> Unit = { _, _ -> }
+    ): MultiAtlasResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
+        if (photoUris.isEmpty()) {
+            return@trace MultiAtlasResult(
+                atlases = emptyList(),
+                failed = emptyList(),
+                totalPhotos = 0,
+                processedPhotos = 0,
+                strategy = getDefaultStrategy()
+            )
+        }
+
+        // Step 1: Process all photos for the specified LOD level
+        val processedPhotos = processPhotosForLOD(photoUris, lodLevel, scaleStrategy, priorityMapping)
+        val processingFailed = photoUris.filterNot { uri -> processedPhotos.any { it.id == uri } }
+
+        Log.d(TAG, "Photo processing complete: ${processedPhotos.size}/${photoUris.size} succeeded, ${processingFailed.size} failed at $lodLevel")
+
+        if (processedPhotos.isEmpty()) {
+            return@trace MultiAtlasResult(
+                atlases = emptyList(),
+                failed = photoUris,
+                totalPhotos = photoUris.size,
+                processedPhotos = 0,
+                strategy = getDefaultStrategy()
+            )
+        }
+
+        // Step 2: Determine optimal atlas generation strategy
+        val strategy = determineAtlasStrategy(processedPhotos, lodLevel, currentZoom)
+
+        // Step 3: Distribute photos across atlases
+        val photoGroups = distributePhotos(processedPhotos, strategy, lodLevel)
+        Log.d(TAG, "Photo distribution: ${processedPhotos.size} photos → ${photoGroups.size} groups")
+
+        // Step 4: Create EMPTY atlases immediately
+        val emptyAtlases = createEmptyAtlasesImmediate(photoGroups, lodLevel)
+        Log.d(TAG, "Created ${emptyAtlases.size} empty atlases immediately")
+
+        // Step 5: Start background population (don't wait)
+        externalScope.launch(defaultDispatcher) {
+            try {
+                populateAtlasesInBackground(emptyAtlases, photoGroups, lodLevel, currentZoom, onPhotoReady)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to populate atlases in background", e)
+            }
+        }
+
+        return@trace MultiAtlasResult(
+            atlases = emptyAtlases,
+            failed = processingFailed, // Only processing failures for now, generation failures will be reported via callback
+            totalPhotos = photoUris.size,
+            processedPhotos = processedPhotos.size,
+            strategy = strategy
+        )
+    }
+
+    /**
+     * Create empty atlases immediately with reactive regions initialized
+     */
+    private fun createEmptyAtlasesImmediate(
+        photoGroups: List<PhotoGroup>,
+        lodLevel: LODLevel
+    ): List<TextureAtlas> = photoGroups.map { photoGroup ->
+        // Create empty atlas bitmap
+        val atlasBitmap = Bitmap.createBitmap(
+            photoGroup.atlasSize.width,
+            photoGroup.atlasSize.height,
+            Bitmap.Config.ARGB_8888
+        )
+
+        // Initialize reactive regions for all photos (null initially)
+        val reactiveRegions = mutableMapOf<Uri, androidx.compose.runtime.MutableState<AtlasRegion?>>()
+        photoGroup.photos.forEach { processedPhoto ->
+            reactiveRegions[processedPhoto.id] = androidx.compose.runtime.mutableStateOf(null)
+        }
+
+        // Create atlas with initialized reactive regions (all start as null)
+        TextureAtlas(
+            bitmap = atlasBitmap,
+            reactiveRegions = reactiveRegions,
+            lodLevel = lodLevel,
+            size = photoGroup.atlasSize
+        )
+    }
+
+    /**
+     * Populate atlases in background with progressive photo updates
+     */
+    private suspend fun populateAtlasesInBackground(
+        emptyAtlases: List<TextureAtlas>,
+        photoGroups: List<PhotoGroup>,
+        lodLevel: LODLevel,
+        currentZoom: Float,
+        onPhotoReady: (Uri, AtlasRegion) -> Unit
+    ) {
+        Log.d(TAG, "Starting background population of ${emptyAtlases.size} atlases")
+
+        emptyAtlases.zip(photoGroups).forEach { (atlas, photoGroup) ->
+            populateSingleAtlasBackground(atlas, photoGroup, lodLevel, currentZoom, onPhotoReady)
+        }
+    }
+
+    /**
+     * Populate a single atlas bitmap in background with progressive updates
+     */
+    private suspend fun populateSingleAtlasBackground(
+        atlas: TextureAtlas,
+        photoGroup: PhotoGroup,
+        lodLevel: LODLevel,
+        currentZoom: Float,
+        onPhotoReady: (Uri, AtlasRegion) -> Unit
+    ) = trace("populateSingleAtlasBackground_$lodLevel") {
+        try {
+            val imagesToPack = photoGroup.photos.map { ImageToPack(it) }
+            Log.d(TAG, "Background populating atlas: ${photoGroup.photos.size} photos → ${photoGroup.atlasSize.width}x${photoGroup.atlasSize.height} atlas at $lodLevel")
+
+            // Pack photos into atlas to get positions
+            val packResult = trace(BenchmarkLabels.ATLAS_GENERATOR_PACK_TEXTURES) {
+                val texturePacker = ShelfTexturePacker(photoGroup.atlasSize, ATLAS_PADDING)
+                texturePacker.pack(imagesToPack)
+            }
+
+            Log.d(TAG, "Packing result: ${packResult.packedImages.size}/${imagesToPack.size} photos packed")
+
+            if (packResult.packedImages.isEmpty()) {
+                Log.e(TAG, "Background atlas population failed: no photos could be packed")
+                return@trace
+            }
+
+            // Create canvas for drawing and photosMap for accessing processed bitmaps
+            val canvas = Canvas(atlas.bitmap)
+            val photosMap = photoGroup.photos.associateBy { it.id }
+
+            // Draw each photo individually with progressive updates
+            packResult.packedImages.forEach { packedImage ->
+                try {
+                    // Test delay for visibility - ensure cancellation is checked
+                    delay(100)
+                    currentCoroutineContext().ensureActive()
+
+                    val processedPhoto = photosMap[packedImage.id]
+                    if (processedPhoto != null && !processedPhoto.bitmap.isRecycled) {
+                        // Draw photo onto atlas bitmap
+                        trace(BenchmarkLabels.ATLAS_GENERATOR_SOFTWARE_CANVAS) {
+                            canvas.drawBitmap(
+                                processedPhoto.bitmap,
+                                null,
+                                android.graphics.RectF(
+                                    packedImage.rect.left,
+                                    packedImage.rect.top,
+                                    packedImage.rect.right,
+                                    packedImage.rect.bottom
+                                ),
+                                null
+                            )
+                        }
+
+                        // Create atlas region
+                        val region = AtlasRegion(
+                            photoId = packedImage.id,
+                            atlasRect = androidx.compose.ui.geometry.Rect(
+                                left = packedImage.rect.left,
+                                top = packedImage.rect.top,
+                                right = packedImage.rect.right,
+                                bottom = packedImage.rect.bottom
+                            ),
+                            originalSize = processedPhoto.originalSize,
+                            scaledSize = processedPhoto.scaledSize,
+                            aspectRatio = processedPhoto.aspectRatio,
+                            lodLevel = lodLevel.level
+                        )
+
+                        // Update reactive region on Main thread
+                        withContext(mainDispatcher) {
+                            atlas.reactiveRegions[packedImage.id]?.value = region
+                            android.util.Log.d("DynamicAtlasPool", "🟢 REACTIVE UPDATE: photo ${packedImage.id.lastPathSegment} now available")
+                        }
+
+                        // Trigger callback
+                        onPhotoReady(packedImage.id, region)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to draw photo ${packedImage.id} in background", e)
+                }
+            }
+
+            Log.d(TAG, "Background atlas population complete: ${packResult.packedImages.size} photos drawn")
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception during background atlas population", e)
+        }
     }
 
     /**
@@ -137,7 +350,8 @@ class DynamicAtlasPool @Inject constructor(
         lodLevel: LODLevel,
         currentZoom: Float,
         scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER,
-        priorityMapping: Map<Uri, PhotoPriority> = emptyMap()
+        priorityMapping: Map<Uri, PhotoPriority> = emptyMap(),
+        onPhotoReady: (Uri, AtlasRegion) -> Unit = { _, _ -> }
     ): MultiAtlasResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
         if (photoUris.isEmpty()) {
             return@trace MultiAtlasResult(
@@ -186,7 +400,7 @@ class DynamicAtlasPool @Inject constructor(
         val generationFailed = atlasResults.flatMap { it.failed }
         val allFailed = processingFailed + generationFailed
 
-        val totalPackedPhotos = allAtlases.sumOf { it.regions.size }
+        val totalPackedPhotos = allAtlases.sumOf { it.photoCount }
 
         // Detailed gap analysis logging
         Log.d(TAG, "=== ATLAS GENERATION PIPELINE ANALYSIS ===")
@@ -208,7 +422,7 @@ class DynamicAtlasPool @Inject constructor(
         Log.d(TAG, "  - Atlas generation attempts: ${atlasResults.size}")
         Log.d(TAG, "  - Successful atlases: ${allAtlases.size}")
         atlasResults.forEachIndexed { index, result ->
-            Log.d(TAG, "    Result $index: ${result.totalPhotos} input, ${result.primaryAtlas?.regions?.size ?: 0} packed, ${result.failed.size} failed")
+            Log.d(TAG, "    Result $index: ${result.totalPhotos} input, ${result.primaryAtlas?.photoCount ?: 0} packed, ${result.failed.size} failed")
         }
 
         Log.d(TAG, "Step 4 - Final Results:")
@@ -285,11 +499,6 @@ class DynamicAtlasPool @Inject constructor(
                         // Use explicit LOD level - streaming system has explicit control
                         val priority = priorityMapping[uri] ?: PhotoPriority.NORMAL
                         val effectiveLODLevel = lodLevel // Always respect the explicitly requested LOD level
-
-                        // Log when HIGH priority would have overridden LOD (for debugging legacy behavior)
-                        if (priority == PhotoPriority.HIGH && lodLevel != LODLevel.entries.last()) {
-                            Log.d(TAG, "HIGH priority photo using explicit LOD $lodLevel instead of max LOD (streaming system)")
-                        }
 
                         runCatching {
                             photoLODProcessor.processPhotoForLOD(uri, effectiveLODLevel, scaleStrategy, priority)
@@ -749,17 +958,42 @@ class DynamicAtlasPool @Inject constructor(
         // Create atlas bitmap
         val atlasBitmap = createAtlasBitmap(photoGroup.photos, packResult, photoGroup.atlasSize, currentZoom)
 
-        // Create atlas regions
-        val atlasRegions = createAtlasRegions(photoGroup.photos, packResult, lodLevel)
+        // Initialize reactive regions for all photos (will be populated during background processing)
+        val reactiveRegions = mutableMapOf<Uri, androidx.compose.runtime.MutableState<AtlasRegion?>>()
+        photoGroup.photos.forEach { processedPhoto ->
+            reactiveRegions[processedPhoto.id] = androidx.compose.runtime.mutableStateOf(null)
+        }
+
+        // Immediately populate reactive regions for successfully packed photos
+        val photosMap = photoGroup.photos.associateBy { it.id }
+        packResult.packedImages.forEach { packedImage ->
+            val processedPhoto = photosMap[packedImage.id]
+            if (processedPhoto != null) {
+                val region = AtlasRegion(
+                    photoId = packedImage.id,
+                    atlasRect = androidx.compose.ui.geometry.Rect(
+                        left = packedImage.rect.left,
+                        top = packedImage.rect.top,
+                        right = packedImage.rect.right,
+                        bottom = packedImage.rect.bottom
+                    ),
+                    originalSize = processedPhoto.originalSize,
+                    scaledSize = processedPhoto.scaledSize,
+                    aspectRatio = processedPhoto.aspectRatio,
+                    lodLevel = lodLevel.level
+                )
+                reactiveRegions[packedImage.id]?.value = region
+            }
+        }
 
         // Use effective LOD level if specified, otherwise use the original LOD level
         val effectiveLODLevel = photoGroup.effectiveLODLevel ?: lodLevel
 
-        // Create atlas and generate memory key
-        Log.d(TAG, "Creating TextureAtlas with lodLevel=$effectiveLODLevel for ${atlasRegions.size} regions")
+        // Create atlas using only reactive regions
+        Log.d(TAG, "Creating TextureAtlas with lodLevel=$effectiveLODLevel for ${packResult.packedImages.size} photos")
         val atlas = TextureAtlas(
             bitmap = atlasBitmap,
-            regions = atlasRegions.associateBy { it.photoId },
+            reactiveRegions = reactiveRegions,
             lodLevel = effectiveLODLevel,
             size = photoGroup.atlasSize
         )
@@ -833,33 +1067,6 @@ class DynamicAtlasPool @Inject constructor(
         }
 
         return atlasBitmap
-    }
-
-    /**
-     * Create atlas regions from packed photos
-     */
-    private fun createAtlasRegions(
-        processedPhotos: List<ProcessedPhoto>,
-        packResult: PackResult,
-        lodLevel: LODLevel
-    ): List<AtlasRegion> {
-        val photosMap = processedPhotos.associateBy { it.id }
-
-        return packResult.packedImages.mapNotNull { packedImage ->
-            val processedPhoto = photosMap[packedImage.id]
-            if (processedPhoto != null) {
-                AtlasRegion(
-                    photoId = packedImage.id,
-                    atlasRect = packedImage.rect,
-                    originalSize = processedPhoto.originalSize,
-                    scaledSize = processedPhoto.scaledSize,
-                    aspectRatio = processedPhoto.aspectRatio,
-                    lodLevel = lodLevel.level
-                )
-            } else {
-                null
-            }
-        }
     }
 
     /**

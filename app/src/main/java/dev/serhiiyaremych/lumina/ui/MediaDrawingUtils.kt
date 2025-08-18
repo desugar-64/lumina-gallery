@@ -212,11 +212,12 @@ fun DrawScope.drawMediaFromStreamingAtlas(
                 val sortedLODs = streamingAtlases.keys.sortedByDescending { it.level }
                 for (lodLevel in sortedLODs) {
                     val atlases = streamingAtlases[lodLevel] ?: continue
-                    android.util.Log.d("MediaDrawing", "Searching ${lodLevel.name}: ${atlases.size} atlases, ${atlases.sumOf { it.regions.size }} total regions")
+                    android.util.Log.d("MediaDrawing", "Searching ${lodLevel.name}: ${atlases.size} atlases, ${atlases.sumOf { it.totalPhotoSlots }} total slots, ${atlases.sumOf { it.photoCount }} available")
 
                     atlasAndRegion = atlases.firstNotNullOfOrNull { atlas ->
-                        atlas.regions[photoId]?.let { region ->
-                            android.util.Log.d("MediaDrawing", "Found photo ${media.displayName} in ${lodLevel.name} atlas")
+                        // Check reactive regions (single source of truth)
+                        atlas.reactiveRegions[photoId]?.value?.let { region ->
+                            android.util.Log.d("MediaDrawing", "🟢 DRAWING photo ${media.displayName} from reactive region in ${lodLevel.name}")
                             atlas to region
                         }
                     }
