@@ -322,11 +322,12 @@ class SmartMemoryManager @Inject constructor(
         val currentBudget = calculateContextAwareBudget()
         val availableMemory = currentBudget - currentMemoryUsage.get()
 
-        val recommendedLOD = if (predictedUsage > availableMemory) {
-            suggestLowerLOD(lodLevel, availableMemory) ?: lodLevel
-        } else {
-            lodLevel
-        }
+        val recommendedLOD = MemoryAllocationComposer.selectRecommendedLOD(
+            predictedUsage = predictedUsage,
+            availableMemory = availableMemory,
+            currentLOD = lodLevel,
+            suggestLowerLOD = ::suggestLowerLOD
+        )
 
         return PreAllocationResult(
             predictedUsage = predictedUsage,
@@ -347,15 +348,12 @@ class SmartMemoryManager @Inject constructor(
         val atlasCountStable = recentSnapshots.map { it.atlasCount }.distinct().size <= 2
         val memoryIncreasing = recentSnapshots.zipWithNext().all { (a, b) -> b.memoryUsage > a.memoryUsage }
 
-        return if (atlasCountStable && memoryIncreasing) {
-            MemoryLeakReport(
-                detected = true,
-                severity = calculateLeakSeverity(recentSnapshots),
-                recommendation = "Consider bitmap recycling or atlas cleanup"
-            )
-        } else {
-            null
-        }
+        return MemoryAllocationComposer.detectMemoryLeak(
+            atlasCountStable = atlasCountStable,
+            memoryIncreasing = memoryIncreasing,
+            recentSnapshots = recentSnapshots,
+            calculateLeakSeverity = ::calculateLeakSeverity
+        )
     }
 
     /**
@@ -820,4 +818,44 @@ class SmartMemoryManager @Inject constructor(
 
         Log.d(TAG, "SmartMemoryManager cleanup completed")
     }
+}
+
+/**
+ * Pure functions for memory allocation composition - extracted from SmartMemoryManager
+ */
+object MemoryAllocationComposer {
+    
+    /**
+     * Pure function to select recommended LOD level based on memory constraints
+     */
+    fun selectRecommendedLOD(
+        predictedUsage: Long,
+        availableMemory: Long,
+        currentLOD: LODLevel,
+        suggestLowerLOD: (LODLevel, Long) -> LODLevel?
+    ): LODLevel =
+        if (predictedUsage > availableMemory) {
+            suggestLowerLOD(currentLOD, availableMemory) ?: currentLOD
+        } else {
+            currentLOD
+        }
+    
+    /**
+     * Pure function to detect memory leaks from snapshot analysis
+     */
+    fun detectMemoryLeak(
+        atlasCountStable: Boolean,
+        memoryIncreasing: Boolean,
+        recentSnapshots: List<SmartMemoryManager.MemorySnapshot>,
+        calculateLeakSeverity: (List<SmartMemoryManager.MemorySnapshot>) -> Float
+    ): SmartMemoryManager.MemoryLeakReport? =
+        if (atlasCountStable && memoryIncreasing) {
+            SmartMemoryManager.MemoryLeakReport(
+                detected = true,
+                severity = calculateLeakSeverity(recentSnapshots),
+                recommendation = "Consider bitmap recycling or atlas cleanup"
+            )
+        } else {
+            null
+        }
 }

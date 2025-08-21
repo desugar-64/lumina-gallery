@@ -7,6 +7,7 @@ import dev.serhiiyaremych.lumina.common.BenchmarkLabels
 import dev.serhiiyaremych.lumina.data.ScaleStrategy
 import dev.serhiiyaremych.lumina.domain.model.AtlasOptimizationConfig
 import dev.serhiiyaremych.lumina.domain.model.LODLevel
+import dev.serhiiyaremych.lumina.domain.model.PhotoPriority
 import dev.serhiiyaremych.lumina.domain.model.TextureAtlas
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -55,6 +56,56 @@ class EnhancedAtlasGenerator @Inject constructor(
         priorityMapping: Map<Uri, dev.serhiiyaremych.lumina.domain.model.PhotoPriority> = emptyMap(),
         onPhotoReady: (Uri, dev.serhiiyaremych.lumina.domain.model.AtlasRegion) -> Unit = { _, _ -> }
     ): EnhancedAtlasResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
+        
+        // Logging (side effect)
+        logGenerationStart(photoUris, lodLevel, priorityMapping)
+
+        // Input validation (pure function)
+        if (!EnhancedAtlasComposer.validateInput(photoUris)) {
+            return@trace EnhancedAtlasResult.empty()
+        }
+
+        // Memory management decisions (pure function + side effects)
+        val memoryStatus = smartMemoryManager.getMemoryStatus()
+        val context = EnhancedAtlasComposer.AtlasGenerationContext(
+            photoUris = photoUris,
+            lodLevel = lodLevel,
+            currentZoom = currentZoom,
+            scaleStrategy = scaleStrategy,
+            priorityMapping = priorityMapping,
+            memoryStatus = memoryStatus
+        )
+        
+        val config = EnhancedAtlasComposer.determineGenerationConfig(context)
+        if (config.shouldTriggerEmergencyCleanup) {
+            Log.w(TAG, "Critical memory pressure detected, triggering emergency cleanup")
+            smartMemoryManager.emergencyCleanup()
+        }
+
+        // Core atlas generation (delegated to DynamicAtlasPool)
+        currentCoroutineContext().ensureActive()
+        Log.d(TAG, "Generating enhanced multi-atlas with immediate loading for ${photoUris.size} photos at $lodLevel (zoom: $currentZoom)")
+
+        val multiAtlasResult = dynamicAtlasPool.generateMultiAtlasImmediate(photoUris, lodLevel, currentZoom, scaleStrategy, priorityMapping, onPhotoReady)
+
+        // Result transformation (pure function)
+        val enhancedResult = EnhancedAtlasComposer.transformMultiAtlasResult(multiAtlasResult, photoUris.size)
+        
+        // Logging completion (side effect)
+        val stats = EnhancedAtlasComposer.calculateGenerationStats(multiAtlasResult, photoUris.size)
+        logGenerationComplete(stats)
+
+        return@trace enhancedResult
+    }
+
+    /**
+     * Extracted logging function for generation start
+     */
+    private fun logGenerationStart(
+        photoUris: List<Uri>, 
+        lodLevel: LODLevel, 
+        priorityMapping: Map<Uri, dev.serhiiyaremych.lumina.domain.model.PhotoPriority>
+    ) {
         Log.d(TAG, "EnhancedAtlasGenerator.generateAtlasEnhanced called:")
         Log.d(TAG, "  - Photo URIs: ${photoUris.size} total")
         Log.d(TAG, "  - LOD Level: $lodLevel")
@@ -63,39 +114,13 @@ class EnhancedAtlasGenerator @Inject constructor(
         val normalPriorityCount = priorityMapping.values.count { it == dev.serhiiyaremych.lumina.domain.model.PhotoPriority.NORMAL }
         Log.d(TAG, "  - High priority: $highPriorityCount, Normal priority: $normalPriorityCount")
         Log.d(TAG, "  - Photo URIs (first 5): ${photoUris.take(5)}")
+    }
 
-        if (photoUris.isEmpty()) {
-            return@trace EnhancedAtlasResult.empty()
-        }
-
-        // Check memory pressure before starting
-        val memoryStatus = smartMemoryManager.getMemoryStatus()
-        if (memoryStatus.pressureLevel == SmartMemoryManager.MemoryPressure.CRITICAL) {
-            Log.w(TAG, "Critical memory pressure detected, triggering emergency cleanup")
-            smartMemoryManager.emergencyCleanup()
-        }
-
-        // Use multi-atlas system with immediate empty atlas creation for progressive loading
-        currentCoroutineContext().ensureActive()
-        Log.d(TAG, "Generating enhanced multi-atlas with immediate loading for ${photoUris.size} photos at $lodLevel (zoom: $currentZoom)")
-
-        val multiAtlasResult = dynamicAtlasPool.generateMultiAtlasImmediate(photoUris, lodLevel, currentZoom, scaleStrategy, priorityMapping, onPhotoReady)
-
-        val atlasCount = multiAtlasResult.atlases.size
-        val successRate = if (photoUris.isNotEmpty()) multiAtlasResult.atlases.sumOf { it.photoCount }.toFloat() / photoUris.size else 0f
-
-        Log.d(TAG, "Multi-atlas generation complete: $atlasCount atlases, ${multiAtlasResult.totalPhotos} total photos, ${String.format("%.1f", successRate * 100)}% success rate")
-
-        return@trace EnhancedAtlasResult(
-            primaryAtlas = multiAtlasResult.atlases.firstOrNull(),
-            additionalAtlases = multiAtlasResult.atlases.drop(1),
-            failed = multiAtlasResult.failed,
-            totalPhotos = multiAtlasResult.totalPhotos,
-            processedPhotos = multiAtlasResult.processedPhotos,
-            strategy = if (atlasCount == 1) AtlasStrategy.SINGLE_ATLAS else AtlasStrategy.MULTI_ATLAS,
-            fallbackUsed = false, // Multi-atlas is now the primary system
-            multiAtlasStrategy = multiAtlasResult.strategy
-        )
+    /**
+     * Extracted logging function for generation completion
+     */
+    private fun logGenerationComplete(stats: EnhancedAtlasComposer.GenerationStats) {
+        Log.d(TAG, "Multi-atlas generation complete: ${stats.atlasCount} atlases, ${stats.totalPhotos} total photos, ${String.format("%.1f", stats.successRate * 100)}% success rate")
     }
 
     /**
@@ -161,4 +186,90 @@ class EnhancedAtlasGenerator @Inject constructor(
      * Get SmartMemoryManager for debug overlay and memory status
      */
     fun getSmartMemoryManager(): SmartMemoryManager = smartMemoryManager
+}
+
+/**
+ * Pure functions for enhanced atlas generation - extracted from EnhancedAtlasGenerator
+ */
+object EnhancedAtlasComposer {
+
+    /**
+     * Context for atlas generation pipeline
+     */
+    data class AtlasGenerationContext(
+        val photoUris: List<Uri>,
+        val lodLevel: LODLevel,
+        val currentZoom: Float,
+        val scaleStrategy: ScaleStrategy,
+        val priorityMapping: Map<Uri, PhotoPriority>,
+        val memoryStatus: SmartMemoryManager.MemoryStatus
+    )
+
+    /**
+     * Atlas generation pipeline configuration
+     */
+    data class AtlasGenerationConfig(
+        val shouldTriggerEmergencyCleanup: Boolean
+    )
+
+    /**
+     * Pure function to determine atlas generation configuration
+     */
+    fun determineGenerationConfig(context: AtlasGenerationContext): AtlasGenerationConfig =
+        AtlasGenerationConfig(
+            shouldTriggerEmergencyCleanup = context.memoryStatus.pressureLevel == SmartMemoryManager.MemoryPressure.CRITICAL
+        )
+
+    /**
+     * Pure function to validate atlas generation input
+     */
+    fun validateInput(photoUris: List<Uri>): Boolean = photoUris.isNotEmpty()
+
+    /**
+     * Pure function to transform multi-atlas result to enhanced atlas result
+     */
+    fun transformMultiAtlasResult(
+        multiAtlasResult: DynamicAtlasPool.MultiAtlasResult,
+        originalPhotoCount: Int
+    ): EnhancedAtlasGenerator.EnhancedAtlasResult {
+        val atlasCount = multiAtlasResult.atlases.size
+        return EnhancedAtlasGenerator.EnhancedAtlasResult(
+            primaryAtlas = multiAtlasResult.atlases.firstOrNull(),
+            additionalAtlases = multiAtlasResult.atlases.drop(1),
+            failed = multiAtlasResult.failed,
+            totalPhotos = multiAtlasResult.totalPhotos,
+            processedPhotos = multiAtlasResult.processedPhotos,
+            strategy = if (atlasCount == 1) EnhancedAtlasGenerator.AtlasStrategy.SINGLE_ATLAS else EnhancedAtlasGenerator.AtlasStrategy.MULTI_ATLAS,
+            fallbackUsed = false, // Multi-atlas is now the primary system
+            multiAtlasStrategy = multiAtlasResult.strategy
+        )
+    }
+
+    /**
+     * Pure function to calculate generation statistics
+     */
+    fun calculateGenerationStats(
+        multiAtlasResult: DynamicAtlasPool.MultiAtlasResult,
+        originalPhotoCount: Int
+    ): GenerationStats {
+        val atlasCount = multiAtlasResult.atlases.size
+        val successRate = if (originalPhotoCount > 0) {
+            multiAtlasResult.atlases.sumOf { it.photoCount }.toFloat() / originalPhotoCount
+        } else 0f
+        
+        return GenerationStats(
+            atlasCount = atlasCount,
+            totalPhotos = multiAtlasResult.totalPhotos,
+            successRate = successRate
+        )
+    }
+
+    /**
+     * Statistics for atlas generation
+     */
+    data class GenerationStats(
+        val atlasCount: Int,
+        val totalPhotos: Int,
+        val successRate: Float
+    )
 }

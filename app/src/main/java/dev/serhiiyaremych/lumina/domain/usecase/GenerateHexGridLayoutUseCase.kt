@@ -115,22 +115,13 @@ class GenerateHexGridLayoutUseCase @Inject constructor(
         }
 
         val sortedGroups = groupedMedia.keys.sorted()
-        val hexCellsWithMedia = mutableListOf<HexCellWithMedia>()
-
-        // Process each date group and assign to hex cells
-        sortedGroups.forEachIndexed { index, date ->
-            val mediaList = groupedMedia[date] ?: return@forEachIndexed
-
-            if (index < hexGrid.cells.size) {
-                val hexCell = hexGrid.cells[index]
-                val hexCellWithMedia = generateHexCellWithMedia(
-                    hexCell = hexCell,
-                    mediaList = mediaList,
-                    thumbnailSizeFactor = thumbnailSizeFactor
-                )
-                hexCellsWithMedia.add(hexCellWithMedia)
-            }
-        }
+        val hexCellsWithMedia = HexGridLayoutComposer.generateHexCellsWithMedia(
+            sortedGroups = sortedGroups,
+            groupedMedia = groupedMedia,
+            hexGrid = hexGrid,
+            thumbnailSizeFactor = thumbnailSizeFactor,
+            generateHexCellWithMedia = ::generateHexCellWithMedia
+        )
 
         return HexGridLayout(
             hexGrid = hexGrid,
@@ -610,3 +601,29 @@ data class HexLayoutConfig(
     val enableRandomPositioning: Boolean = true,
     val maxMediaPerCell: Int = Int.MAX_VALUE
 )
+
+/**
+ * Pure functions for hex grid layout composition - extracted from GenerateHexGridLayoutUseCase
+ */
+object HexGridLayoutComposer {
+    
+    /**
+     * Pure function to generate hex cells with media without mutable state
+     */
+    fun generateHexCellsWithMedia(
+        sortedGroups: List<LocalDate>,
+        groupedMedia: Map<LocalDate, List<Media>>,
+        hexGrid: HexGrid,
+        thumbnailSizeFactor: Float,
+        generateHexCellWithMedia: (HexCell, List<Media>, Float) -> HexCellWithMedia
+    ): List<HexCellWithMedia> =
+        sortedGroups.mapIndexedNotNull { index, date ->
+            val mediaList = groupedMedia[date]
+            if (mediaList != null && index < hexGrid.cells.size) {
+                val hexCell = hexGrid.cells[index]
+                generateHexCellWithMedia(hexCell, mediaList, thumbnailSizeFactor)
+            } else {
+                null
+            }
+        }
+}

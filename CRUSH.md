@@ -1,84 +1,133 @@
 # CRUSH.md
 
-## 🚀 Rapid Development with OpenCode Subagents
+# File Ops System Prompt (Kotlin/Android, Bash-first)
 
-**CRUSH** methodology for ultra-fast, high-quality development using specialized subagents.
+You work on Kotlin/Android repos. Conserve tokens when reading/modifying files.
 
-### ⚡ Quick Agent Reference
-
-| Task | Agent | Command |
-|------|-------|---------|
-| **@Composable review** | `@compose-guardian` | `@compose-guardian "Review this UI component"` |
-| **Thread safety** | `@coroutines-auditor` | `@coroutines-auditor "Check concurrency issues"` |
-| **Performance** | `@graphics-performance` | `@graphics-performance "Optimize for 300ms target"` |
-| **Architecture** | `@architecture-workflow` | `@architecture-workflow "Verify Clean Architecture"` |
-| **Simplify code** | `@functional-purist` | `@functional-purist "Eliminate unnecessary classes"` |
-
-### 🎯 CRUSH Workflow (60-Second Code Quality)
-
-#### **🔥 Ultra-Fast Review (15 seconds)**
+## Always check size first
 ```bash
-# One-liner for immediate feedback on any code change
-@functional-purist "Quick purity check" && @compose-guardian "Quick Compose check"
+wc -l <file>
+
+Policy:
+<100 lines: safe to read fully
+100–699 lines: read targeted slices only
+≥700 lines: NEVER read fully. Use structure/search + partial reads
+
+## Repository & structure overview (no big reads)
+# Fast counts & hotspots
+tokei .                         # LOC per language/dirs
+scc --by-file --no-complexity . # LOC per file (find big Kotlin files)
+
+# Kotlin-only file lists
+```bash
+fd -e kt -e kts                 # list Kotlin sources
+find . -name "*.kt" -o -name "*.kts" | head -50  # fallback if no fd
+
+# ast-grep: structural search (CORRECTED SYNTAX)
+ast-grep -p 'class $NAME { $$$ }' -l kotlin <dir>
+ast-grep -p 'fun $NAME($$$)' -l kotlin <dir>
+ast-grep -p 'suspend fun $NAME($$$)' -l kotlin <dir>
+ast-grep -p '@Composable fun $NAME($$$)' -l kotlin <dir>
+ast-grep -p 'data class $NAME($$$)' -l kotlin <dir>
+ast-grep -p 'sealed class $NAME' -l kotlin <dir>
+
+# Get stats without dumping matches
+ast-grep -p 'fun $NAME($$$)' -l kotlin <dir> --stats
+
+# File tree (Kotlin only) if needed
+tree -I 'build|.git|.gradle|.idea' -P '*.kt' -P '*.kts' -L 3
 ```
 
-#### **⚡ Performance-Critical Path (30 seconds)**
+## Targeted searching (before reading)
+# Ripgrep: Kotlin-only, with line numbers and context
 ```bash
-# For graphics/atlas performance work
-@graphics-performance "Analyze bottlenecks" && @coroutines-auditor "Check thread safety"
+rg -n -t kotlin 'pattern' <dir>
+rg -n -t kotlin -C5 'class\s+\w+ViewModel' <dir>
+rg -n -t kotlin -g '!**/build/**' -g '!**/generated/**' 'suspend fun'
+
+# List files only (no content)
+rg -l -t kotlin 'ViewModel' <dir>
+
+# Jump points inside a file
+rg -n '^package ' <file.kt>
+rg -n '^import ' <file.kt> | head -20
+rg -n '^(class|interface|object|enum) ' <file.kt>
+rg -n '^\s*(fun|val|var) ' <file.kt>
+
+# Android specific patterns
+rg -n '@(Inject|Provides|Module|Component)' <file.kt>  # Dagger/Hilt
+rg -n 'findViewById|viewBinding|dataBinding' <file.kt>  # View binding
 ```
 
-#### **🛡️ Pre-Commit Shield (45 seconds)**
+## Partial reading (slices only)
 ```bash
-# Before any commit - bulletproof quality check
-@architecture-workflow "Build workflow check" && @compose-guardian "Final Compose review"
+# With bat (if available - shows syntax highlighting)
+bat -n -r 1:80 <file.kt>              # head slice
+bat -n -r 400:460 <file.kt>           # specific window
+
+# POSIX fallbacks
+head -n 80 <file.kt>
+tail -n 120 <file.kt>
+sed -n '100,200p' <file.kt>
+awk 'NR>=145 && NR<=165' <file.kt>
+
+# Read around line N with context
+awk -v n=150 'NR >= n-20 && NR <= n+20' <file.kt>
+sed -n "$((N-20)),$((N+20))p" <file.kt>  # if N is set
+
+# Read specific function/class (between patterns)
+sed -n '/^class UserViewModel/,/^class\|^interface\|^object\|^enum\|^$/p' <file.kt>
+sed -n '/fun onCreate/,/^    }/p' <file.kt>
 ```
 
-### 🎪 Agent Personality Quick Guide
-
-| Agent | Personality | Best For |
-|-------|------------|----------|
-| `@compose-guardian` | **Strict API enforcer** | Catching Compose violations |
-| `@coroutines-auditor` | **Paranoid thread safety expert** | Race conditions, memory leaks |
-| `@graphics-performance` | **300ms optimization fanatic** | Atlas performance, bitmap memory |
-| `@architecture-workflow` | **Workflow disciplinarian** | Build process, ktlint, architecture |
-| `@functional-purist` | **OOP elimination extremist** | Pure functions, stateless design |
-
-### 🚄 Speed-Optimized Usage Patterns
-
-#### **New Feature (2-minute quality gate)**
+## Edit with minimal churn
 ```bash
-# Step 1: Design check (30s)
-@functional-purist "Review domain logic for purity"
+# Single-line or range substitutions
+sed -i '42s/.*/val limit = 100/' <file.kt>
+sed -i '100,140s/MutableLiveData/StateFlow/g' <file.kt>
 
-# Step 2: Implementation check (60s) 
-@compose-guardian "Review UI components" && @architecture-workflow "Check architecture"
+# Append (cheapest)
+printf '\n@Deprecated("Use Foo")\nclass Bar\n' >> <file.kt>
 
-# Step 3: Concurrency check (30s)
-@coroutines-auditor "Quick thread safety check"
+# Insert at specific line
+sed -i '100i\    private val logger = LoggerFactory.getLogger()' <file.kt>
+
+# Safe patch workflow
+cp <file.kt> <file.kt.bak>
+# make edits to file.kt
+diff -u <file.kt.bak> <file.kt> > changes.patch
+# review patch, then apply if needed
+
+# Git-based (if in repo)
+git diff --no-index <old.kt> <new.kt>
 ```
 
-#### **Bug Fix (1-minute verification)**
+## Android & Gradle specifics
 ```bash
-# Quick domain expert consultation based on bug area
-@graphics-performance "Check performance impact of fix"  # OR
-@coroutines-auditor "Verify fix doesn't introduce race conditions"  # OR
-@compose-guardian "Ensure fix follows Compose patterns"
+# Gradle deps block only
+sed -n '/dependencies\s*{/,/^}/p' build.gradle.kts
+grep "implementation\|api\|kapt\|ksp" build.gradle.kts
+
+# Android manifest
+grep "android:name=" AndroidManifest.xml
+
+# Resources
+grep -o '@string/[^"]*' res/layout/*.xml | sort -u
+grep "name=" res/values/strings.xml | head -20
 ```
 
-#### **Performance Work (90-second optimization cycle)**
-```bash
-# Step 1: Identify (30s)
-@graphics-performance "Find bottlenecks"
+## Decision flow (MUST follow)
+wc -l <file>
+1. <100 lines → may read fully (but prefer slices if possible)
+2. 100–699 → use rg/ast-grep to locate, then bat/sed exact ranges
+3. ≥700 → use ast-grep/rg to pinpoint; only read windows around matches
+4. Edits → limit to smallest line ranges; prefer sed/patch
 
-# Step 2: Optimize (45s)
-@functional-purist "Ensure pure optimized functions"
-
-# Step 3: Verify (15s)
-@coroutines-auditor "Check optimized threading"
-```
-
----
+## Common pitfalls to avoid
+1. NEVER use cat on files >100 line
+2. NEVER use grep -r without file type filters
+3. IGNORE build/, .gradle/, generated/ directories
+4. CHECK file existence before operations: [[ -f <file> ]] && wc -l <file>
 
 ## Legacy Development Workflow
 

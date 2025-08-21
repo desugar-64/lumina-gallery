@@ -45,7 +45,6 @@ class AtlasManager @Inject constructor(
         private const val DEFAULT_MARGIN_RINGS = 1
     }
 
-    // Multi-atlas state management - now using bucket system
     private var currentCellIds: Set<String> = emptySet()
     private var currentLODLevel: LODLevel = LODLevel.LEVEL_2
     private var lastReportedZoom: Float = 1.0f
@@ -60,7 +59,6 @@ class AtlasManager @Inject constructor(
      */
     private var atlasRequestSequence: Long = 0
 
-    // Mutex for atomic atlas state updates
     private val atlasMutex = Mutex()
 
     /**
@@ -81,7 +79,6 @@ class AtlasManager @Inject constructor(
         selectionMode: dev.serhiiyaremych.lumina.ui.SelectionMode = dev.serhiiyaremych.lumina.ui.SelectionMode.CELL_MODE
     ): MultiAtlasUpdateResult = trace(BenchmarkLabels.ATLAS_MANAGER_UPDATE_VISIBLE_CELLS) {
         withContext(Dispatchers.Default) {
-            // Generate unique sequence number for this atlas request
             val requestSequence = ++atlasRequestSequence
 
             runCatching {
@@ -94,7 +91,6 @@ class AtlasManager @Inject constructor(
                 val expandedCells = expandCellsByRings(visibleCells, marginRings)
                 val cellSetKey = generateCellSetKey(expandedCells, lodLevel)
 
-                // Check what type of regeneration is needed
                 Log.d(TAG, "Check regeneration: cellSetKey=${cellSetKey.take(3)}...(${cellSetKey.size}), lodLevel=$lodLevel")
                 val bucketAtlases = atlasBucketManager.snapshotAll()
                 Log.d(TAG, "Current state: currentCellIds=${currentCellIds.take(3)}...(${currentCellIds.size}), currentLODLevel=$currentLODLevel, atlases=${bucketAtlases.size}")
@@ -131,7 +127,6 @@ class AtlasManager @Inject constructor(
                         return@withContext handleFullAtlasResult(enhancedResult, requestSequence, lodLevel, currentZoom, selectedMedia, cellSetKey)
                     }
                 }
-                // This should never be reached, but provide fallback
                 MultiAtlasUpdateResult.GenerationFailed("Unknown regeneration decision", requestSequence, lodLevel)
             }.fold(
                 onSuccess = { result -> result },
@@ -233,11 +228,9 @@ class AtlasManager @Inject constructor(
 
                 Log.d(TAG, "Updating focused cell: ${focusedCell.hexCell.q},${focusedCell.hexCell.r}")
 
-                // Generate atlas for focused cell at +1 LOD level
                 val currentLOD = selectOptimalLODLevel(listOf(focusedCell), currentZoom)
                 val higherLOD = getHigherLOD(currentLOD)
 
-                // Extract photos from focused cell
                 val photoUris = focusedCell.mediaItems
                     .mapNotNull { it.media as? Media.Image }
                     .map { it.uri }
@@ -274,15 +267,12 @@ class AtlasManager @Inject constructor(
         val currentAtlases = atlasBucketManager.snapshotAll()
         Log.d(TAG, "Clearing ${currentAtlases.size} current atlases via bucket manager")
 
-        // Clear all transient buckets (keeps L0 base)
         atlasBucketManager.clearTransient()
 
         currentCellIds = emptySet()
         currentSelectedMedia = null
         currentFocusedCell = null
     }
-
-    // Private helper methods
 
     /**
      * Selects optimal LOD level based on zoom factor using predefined zoom ranges.
@@ -326,49 +316,46 @@ class AtlasManager @Inject constructor(
         selectedMedia: Media?
     ): RegenerationDecision {
         val currentAtlases = atlasBucketManager.snapshotAll()
-        return when {
-            // First time or no atlases available
-            currentAtlases.isEmpty() -> {
-                Log.d(TAG, "shouldRegenerateAtlas: No atlases available, need to generate")
-                RegenerationDecision.FULL_REGENERATION
-            }
 
-            // Any atlas bitmap has been recycled (app restoration scenario)
-            currentAtlases.any { it.bitmap.isRecycled } -> {
-                Log.d(TAG, "shouldRegenerateAtlas: Some atlas bitmaps are recycled, need to regenerate")
-                RegenerationDecision.FULL_REGENERATION
-            }
+        val decision = AtlasRegenerationDecider.determineRegenerationDecision(
+            AtlasRegenerationDecider.RegenerationContext(
+                currentAtlases = currentAtlases,
+                currentCellIds = currentCellIds,
+                currentLODLevel = currentLODLevel,
+                currentSelectedMedia = currentSelectedMedia,
+                cellSetKey = cellSetKey,
+                lodLevel = lodLevel,
+                selectedMedia = selectedMedia
+            )
+        )
 
-            // Cell set has changed (different visible cells)
-            currentCellIds != cellSetKey -> {
-                Log.d(TAG, "shouldRegenerateAtlas: Cell set changed, need to regenerate")
-                RegenerationDecision.FULL_REGENERATION
+        when (decision) {
+            RegenerationDecision.FULL_REGENERATION -> {
+                when {
+                    currentAtlases.isEmpty() -> Log.d(TAG, "shouldRegenerateAtlas: No atlases available, need to generate")
+                    currentAtlases.any { it.bitmap.isRecycled } -> Log.d(TAG, "shouldRegenerateAtlas: Some atlas bitmaps are recycled, need to regenerate")
+                    currentCellIds != cellSetKey -> Log.d(TAG, "shouldRegenerateAtlas: Cell set changed, need to regenerate")
+                    currentLODLevel != lodLevel -> Log.d(TAG, "shouldRegenerateAtlas: LOD level changed from $currentLODLevel to $lodLevel (zoom: $lastReportedZoom -> $currentZoom)")
+                }
             }
-
-            // LOD level boundary crossing detection - requires full regeneration
-            currentLODLevel != lodLevel -> {
-                Log.d(TAG, "shouldRegenerateAtlas: LOD level changed from $currentLODLevel to $lodLevel (zoom: $lastReportedZoom -> $currentZoom)")
-                RegenerationDecision.FULL_REGENERATION
-            }
-
-            // Selected media has changed - only selective regeneration needed
-            currentSelectedMedia != selectedMedia -> {
+            RegenerationDecision.SELECTIVE_REGENERATION -> {
                 Log.d(TAG, "shouldRegenerateAtlas: Selected media changed from ${currentSelectedMedia?.displayName} to ${selectedMedia?.displayName} - using selective regeneration")
-                RegenerationDecision.SELECTIVE_REGENERATION
             }
-
-            // Same LOD level, same cells, same selection - no regeneration needed
-            else -> RegenerationDecision.NO_REGENERATION
+            RegenerationDecision.NO_REGENERATION -> {
+                // No logging needed for no regeneration
+            }
         }
+
+        return decision
     }
 
     /**
      * Decision for atlas regeneration strategy
      */
-    private enum class RegenerationDecision {
-        NO_REGENERATION, // Use existing atlases
-        SELECTIVE_REGENERATION, // Only regenerate high-priority photo, preserve others
-        FULL_REGENERATION // Regenerate all atlases
+    internal enum class RegenerationDecision {
+        NO_REGENERATION,
+        SELECTIVE_REGENERATION,
+        FULL_REGENERATION
     }
 
     private suspend fun generateAtlasForCells(
@@ -389,8 +376,6 @@ class AtlasManager @Inject constructor(
 
         val photoUris = imageMediaItems.map { it.uri }
 
-        // Create priority mapping: selected media gets HIGH priority ONLY in PHOTO_MODE
-        // In CELL_MODE, all photos use NORMAL priority (use zoom-based LOD level)
         val priorityMapping = photoUris.associateWith { uri ->
             if (selectedMedia != null &&
                 selectedMedia is Media.Image &&
@@ -423,7 +408,6 @@ class AtlasManager @Inject constructor(
             Log.d(TAG, "  - High priority URIs: ${highPriorityUris.take(3)}")
         }
 
-        // Generate atlases using enhanced system with priority-based multi-atlas fallback
         val result: EnhancedAtlasGenerator.EnhancedAtlasResult = enhancedAtlasGenerator.generateAtlasEnhanced(
             photoUris = photoUris,
             lodLevel = lodLevel,
@@ -471,8 +455,7 @@ class AtlasManager @Inject constructor(
     private fun generateAtlasKey(atlas: TextureAtlas): SmartMemoryManager.AtlasKey? {
         if (atlas.totalPhotoSlots == 0) return null
 
-        // Generate photo hash from all photos in this atlas (using reactive regions)
-        val photoUris = atlas.reactiveRegions.keys.sorted() // Sort for consistent hashing
+        val photoUris = atlas.reactiveRegions.keys.sorted()
         val photosHash = photoUris.hashCode()
 
         return SmartMemoryManager.AtlasKey(
@@ -491,13 +474,11 @@ class AtlasManager @Inject constructor(
         currentZoom: Float,
         selectionMode: SelectionMode
     ): EnhancedAtlasGenerator.EnhancedAtlasResult {
-        // If no selected media or not in PHOTO_MODE, return empty result
         if (selectedMedia == null || selectionMode != dev.serhiiyaremych.lumina.ui.SelectionMode.PHOTO_MODE) {
             Log.d(TAG, "Selective atlas: no selected media or not in PHOTO_MODE, returning empty result")
             return EnhancedAtlasGenerator.EnhancedAtlasResult.empty()
         }
 
-        // Only process the selected media as high priority
         if (selectedMedia !is Media.Image) {
             Log.d(TAG, "Selective atlas: selected media is not an image, returning empty result")
             return EnhancedAtlasGenerator.EnhancedAtlasResult.empty()
@@ -511,10 +492,9 @@ class AtlasManager @Inject constructor(
         Log.d(TAG, "  - Priority: HIGH (LEVEL_7)")
         Log.d(TAG, "  - Selection mode: $selectionMode")
 
-        // Generate atlas only for the selected photo at maximum quality
         return enhancedAtlasGenerator.generateAtlasEnhanced(
             photoUris = photoUris,
-            lodLevel = LODLevel.LEVEL_7, // Always use maximum quality for selected photo
+            lodLevel = LODLevel.LEVEL_7,
             currentZoom = currentZoom,
             priorityMapping = priorityMapping
         )
@@ -534,17 +514,14 @@ class AtlasManager @Inject constructor(
             return@withLock MultiAtlasUpdateResult.Success(currentAtlases, requestSequence, currentLODLevel)
         }
 
-        // Protect new atlases
         val newAtlasKeys = selectiveResult.allAtlases.mapNotNull { atlas ->
             generateAtlasKey(atlas)
         }.toSet()
         Log.d(TAG, "Protecting ${newAtlasKeys.size} new selective atlases")
         smartMemoryManager.protectAtlases(newAtlasKeys)
 
-        // Replace highlight bucket with new high-priority atlases
         atlasBucketManager.replaceHighlight(selectiveResult.allAtlases)
 
-        // Update state
         currentSelectedMedia = selectedMedia
 
         val mergedAtlases = atlasBucketManager.snapshotAll()
@@ -566,27 +543,23 @@ class AtlasManager @Inject constructor(
         cellSetKey: Set<String>
     ): MultiAtlasUpdateResult = atlasMutex.withLock {
         if (enhancedResult.hasResults) {
-            // CRITICAL: Protect new atlases IMMEDIATELY before updating state
             val newAtlasKeys = enhancedResult.allAtlases.mapNotNull { atlas ->
                 generateAtlasKey(atlas)
             }.toSet()
             Log.d(TAG, "Pre-protecting ${newAtlasKeys.size} new atlases during full regeneration")
             smartMemoryManager.protectAtlases(newAtlasKeys)
 
-            // Unregister old atlases from memory manager
             val currentAtlases = atlasBucketManager.snapshotAll()
             currentAtlases.forEach { atlas ->
                 smartMemoryManager.unregisterAtlas(generateAtlasKey(atlas))
             }
 
-            // Send atlases to appropriate bucket based on LOD level
             if (lodLevel == LODLevel.LEVEL_0) {
                 atlasBucketManager.populateBase(enhancedResult.allAtlases)
             } else {
                 atlasBucketManager.addToRolling(enhancedResult.allAtlases)
             }
 
-            // Update state
             currentCellIds = cellSetKey
             currentLODLevel = lodLevel
             lastReportedZoom = currentZoom
@@ -631,4 +604,82 @@ sealed class MultiAtlasUpdateResult {
         override val requestSequence: Long,
         override val lodLevel: LODLevel?
     ) : MultiAtlasUpdateResult()
+}
+
+/**
+ * Pure functions for atlas regeneration decision making - extracted from AtlasManager
+ */
+object AtlasRegenerationDecider {
+
+    /**
+     * Context for regeneration decision making
+     */
+    data class RegenerationContext(
+        val currentAtlases: List<TextureAtlas>,
+        val currentCellIds: Set<String>,
+        val currentLODLevel: LODLevel,
+        val currentSelectedMedia: Media?,
+        val cellSetKey: Set<String>,
+        val lodLevel: LODLevel,
+        val selectedMedia: Media?
+    )
+
+    /**
+     * Pure function to determine if atlas regeneration is needed
+     */
+    internal fun determineRegenerationDecision(context: RegenerationContext): AtlasManager.RegenerationDecision {
+        val decisionRules = listOf(
+            checkNoAtlasesAvailable,
+            checkRecycledBitmaps,
+            checkCellSetChanged,
+            checkLODLevelChanged,
+            checkSelectedMediaChanged,
+            noRegenerationNeeded
+        )
+
+        return decisionRules
+            .first { rule -> rule.appliesTo(context) }
+            .decision
+    }
+
+    /**
+     * Decision rule interface for functional composition
+     */
+    private interface RegenerationRule {
+        val decision: AtlasManager.RegenerationDecision
+        fun appliesTo(context: RegenerationContext): Boolean
+    }
+
+    /**
+     * Pure decision rules using function composition
+     */
+    private val checkNoAtlasesAvailable = object : RegenerationRule {
+        override val decision = AtlasManager.RegenerationDecision.FULL_REGENERATION
+        override fun appliesTo(context: RegenerationContext) = context.currentAtlases.isEmpty()
+    }
+
+    private val checkRecycledBitmaps = object : RegenerationRule {
+        override val decision = AtlasManager.RegenerationDecision.FULL_REGENERATION
+        override fun appliesTo(context: RegenerationContext) = context.currentAtlases.any { it.bitmap.isRecycled }
+    }
+
+    private val checkCellSetChanged = object : RegenerationRule {
+        override val decision = AtlasManager.RegenerationDecision.FULL_REGENERATION
+        override fun appliesTo(context: RegenerationContext) = context.currentCellIds != context.cellSetKey
+    }
+
+    private val checkLODLevelChanged = object : RegenerationRule {
+        override val decision = AtlasManager.RegenerationDecision.FULL_REGENERATION
+        override fun appliesTo(context: RegenerationContext) = context.currentLODLevel != context.lodLevel
+    }
+
+    private val checkSelectedMediaChanged = object : RegenerationRule {
+        override val decision = AtlasManager.RegenerationDecision.SELECTIVE_REGENERATION
+        override fun appliesTo(context: RegenerationContext) = context.currentSelectedMedia != context.selectedMedia
+    }
+
+    private val noRegenerationNeeded = object : RegenerationRule {
+        override val decision = AtlasManager.RegenerationDecision.NO_REGENERATION
+        override fun appliesTo(context: RegenerationContext) = true
+    }
 }

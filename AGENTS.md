@@ -1,154 +1,133 @@
 # AGENTS.md
 
-## OpenCode Specialized Subagents
+# File Ops System Prompt (Kotlin/Android, Bash-first)
 
-This project uses **5 specialized OpenCode subagents** with local LLM models for domain-expert code review. Each agent is designed for specific expertise areas using optimally matched models from your local LMStudio setup.
+You work on Kotlin/Android repos. Conserve tokens when reading/modifying files.
 
-### Agent Overview & Model Assignments
-
-| Agent | Model | Expertise | Primary Use Cases |
-|-------|-------|-----------|-------------------|
-| `@compose-guardian` | Qwen3 Code Q4 | Jetpack Compose API patterns | @Composable review, side effects, state management |
-| `@coroutines-auditor` | QWQ 32b Q4 | Concurrency & threading | Race conditions, scope management, Flow patterns |
-| `@graphics-performance` | Qwen3 Code Q4 | Graphics optimization | Atlas performance, bitmap memory, Canvas optimization |
-| `@architecture-workflow` | GPT OSS 20b | Clean Architecture & workflows | Build processes, ktlint, dependency injection |
-| `@functional-purist` | QWQ 32b Q4 | Functional programming | Pure functions, OOP elimination, stateless design |
-
-### Detailed Agent Capabilities
-
-#### 1. **Compose Standards Guardian** (`@compose-guardian`)
-**When to Use:**
-- Reviewing any @Composable function for API compliance
-- Checking LaunchedEffect/DisposableEffect key patterns
-- Validating state hoisting and recomposition optimization
-- Enforcing official Jetpack Compose naming conventions
-- Side effect isolation and lifecycle management
-
-**Examples:**
+## Always check size first
 ```bash
-@compose-guardian "Review MediaHexVisualization for proper Compose patterns"
-@compose-guardian "Check LaunchedEffect keys in this ViewModel integration"
-@compose-guardian "Validate state hoisting in this UI component"
+wc -l <file>
+
+Policy:
+<100 lines: safe to read fully
+100–699 lines: read targeted slices only
+≥700 lines: NEVER read fully. Use structure/search + partial reads
+
+## Repository & structure overview (no big reads)
+# Fast counts & hotspots
+tokei .                         # LOC per language/dirs
+scc --by-file --no-complexity . # LOC per file (find big Kotlin files)
+
+# Kotlin-only file lists
+```bash
+fd -e kt -e kts                 # list Kotlin sources
+find . -name "*.kt" -o -name "*.kts" | head -50  # fallback if no fd
+
+# ast-grep: structural search (CORRECTED SYNTAX)
+ast-grep -p 'class $NAME { $$$ }' -l kotlin <dir>
+ast-grep -p 'fun $NAME($$$)' -l kotlin <dir>
+ast-grep -p 'suspend fun $NAME($$$)' -l kotlin <dir>
+ast-grep -p '@Composable fun $NAME($$$)' -l kotlin <dir>
+ast-grep -p 'data class $NAME($$$)' -l kotlin <dir>
+ast-grep -p 'sealed class $NAME' -l kotlin <dir>
+
+# Get stats without dumping matches
+ast-grep -p 'fun $NAME($$$)' -l kotlin <dir> --stats
+
+# File tree (Kotlin only) if needed
+tree -I 'build|.git|.gradle|.idea' -P '*.kt' -P '*.kts' -L 3
 ```
 
-#### 2. **Coroutines Concurrency Auditor** (`@coroutines-auditor`)
-**When to Use:**
-- Any code using coroutines, Flow, or threading
-- Reviewing ViewModels for scope management
-- Checking data repositories for race conditions
-- Validating exception handling in coroutines
-- Ensuring proper dispatcher injection
-
-**Examples:**
+## Targeted searching (before reading)
+# Ripgrep: Kotlin-only, with line numbers and context
 ```bash
-@coroutines-auditor "Review StreamingAtlasManager for thread safety"
-@coroutines-auditor "Check this Repository for proper coroutine scope"
-@coroutines-auditor "Validate Flow collection patterns in ViewModel"
+rg -n -t kotlin 'pattern' <dir>
+rg -n -t kotlin -C5 'class\s+\w+ViewModel' <dir>
+rg -n -t kotlin -g '!**/build/**' -g '!**/generated/**' 'suspend fun'
+
+# List files only (no content)
+rg -l -t kotlin 'ViewModel' <dir>
+
+# Jump points inside a file
+rg -n '^package ' <file.kt>
+rg -n '^import ' <file.kt> | head -20
+rg -n '^(class|interface|object|enum) ' <file.kt>
+rg -n '^\s*(fun|val|var) ' <file.kt>
+
+# Android specific patterns
+rg -n '@(Inject|Provides|Module|Component)' <file.kt>  # Dagger/Hilt
+rg -n 'findViewById|viewBinding|dataBinding' <file.kt>  # View binding
 ```
 
-#### 3. **Android Graphics Performance Engineer** (`@graphics-performance`)
-**When to Use:**
-- Any atlas system or graphics performance work
-- Bitmap memory management and recycling
-- Canvas operations and hardware acceleration
-- Performance optimization targeting 300ms goals
-- Graphics-related benchmarking and profiling
-
-**Examples:**
+## Partial reading (slices only)
 ```bash
-@graphics-performance "Optimize PhotoLODProcessor for 300ms target"
-@graphics-performance "Review Canvas operations in MediaRenderer"
-@graphics-performance "Analyze bitmap memory usage in TexturePacker"
+# With bat (if available - shows syntax highlighting)
+bat -n -r 1:80 <file.kt>              # head slice
+bat -n -r 400:460 <file.kt>           # specific window
+
+# POSIX fallbacks
+head -n 80 <file.kt>
+tail -n 120 <file.kt>
+sed -n '100,200p' <file.kt>
+awk 'NR>=145 && NR<=165' <file.kt>
+
+# Read around line N with context
+awk -v n=150 'NR >= n-20 && NR <= n+20' <file.kt>
+sed -n "$((N-20)),$((N+20))p" <file.kt>  # if N is set
+
+# Read specific function/class (between patterns)
+sed -n '/^class UserViewModel/,/^class\|^interface\|^object\|^enum\|^$/p' <file.kt>
+sed -n '/fun onCreate/,/^    }/p' <file.kt>
 ```
 
-#### 4. **Architecture & Workflow Quality Guardian** (`@architecture-workflow`)
-**When to Use:**
-- Before committing any changes (workflow enforcement)
-- Reviewing new features for Clean Architecture compliance
-- Checking ktlint violations (especially parameter comments)
-- Validating Hilt dependency injection patterns
-- Ensuring proper build→format→lint workflow
-
-**Examples:**
+## Edit with minimal churn
 ```bash
-@architecture-workflow "Check build workflow compliance before commit"
-@architecture-workflow "Verify Clean Architecture in new feature"
-@architecture-workflow "Review Hilt modules for proper injection"
+# Single-line or range substitutions
+sed -i '42s/.*/val limit = 100/' <file.kt>
+sed -i '100,140s/MutableLiveData/StateFlow/g' <file.kt>
+
+# Append (cheapest)
+printf '\n@Deprecated("Use Foo")\nclass Bar\n' >> <file.kt>
+
+# Insert at specific line
+sed -i '100i\    private val logger = LoggerFactory.getLogger()' <file.kt>
+
+# Safe patch workflow
+cp <file.kt> <file.kt.bak>
+# make edits to file.kt
+diff -u <file.kt.bak> <file.kt> > changes.patch
+# review patch, then apply if needed
+
+# Git-based (if in repo)
+git diff --no-index <old.kt> <new.kt>
 ```
 
-#### 5. **Functional Programming Purist** (`@functional-purist`)
-**When to Use:**
-- Reviewing domain logic for functional purity
-- Eliminating unnecessary classes in favor of functions
-- Checking @Composables for internal state management
-- Converting imperative loops to functional operations
-- Simplifying OOP hierarchies
-
-**Examples:**
+## Android & Gradle specifics
 ```bash
-@functional-purist "Review this class - can it be simplified to functions?"
-@functional-purist "Check domain logic for pure function compliance"
-@functional-purist "Eliminate stateful patterns in this Composable"
+# Gradle deps block only
+sed -n '/dependencies\s*{/,/^}/p' build.gradle.kts
+grep "implementation\|api\|kapt\|ksp" build.gradle.kts
+
+# Android manifest
+grep "android:name=" AndroidManifest.xml
+
+# Resources
+grep -o '@string/[^"]*' res/layout/*.xml | sort -u
+grep "name=" res/values/strings.xml | head -20
 ```
 
-### Common Usage Workflows
+## Decision flow (MUST follow)
+wc -l <file>
+1. <100 lines → may read fully (but prefer slices if possible)
+2. 100–699 → use rg/ast-grep to locate, then bat/sed exact ranges
+3. ≥700 → use ast-grep/rg to pinpoint; only read windows around matches
+4. Edits → limit to smallest line ranges; prefer sed/patch
 
-#### **New Feature Development**
-```bash
-# 1. Design phase - ensure functional approach
-@functional-purist "Review domain logic design for purity"
-
-# 2. Implementation phase - check architecture
-@architecture-workflow "Verify Clean Architecture compliance"
-
-# 3. UI implementation - check Compose patterns  
-@compose-guardian "Review Composables for API compliance"
-
-# 4. Concurrent operations - check thread safety
-@coroutines-auditor "Review async operations for safety"
-```
-
-#### **Performance Optimization**
-```bash
-# 1. Identify bottlenecks
-@graphics-performance "Analyze performance bottlenecks in atlas system"
-
-# 2. Check concurrent access patterns
-@coroutines-auditor "Review threading in performance-critical code"
-
-# 3. Verify functional approach
-@functional-purist "Ensure pure functions in performance code"
-```
-
-#### **Pre-Commit Review**
-```bash
-# 1. Mandatory workflow check
-@architecture-workflow "Run complete build workflow verification"
-
-# 2. Final Compose review
-@compose-guardian "Final review of Compose patterns"
-
-# 3. Functional compliance check
-@functional-purist "Final purity and simplicity review"
-```
-
-### Agent Selection Guidelines
-
-**Choose by Code Type:**
-- **@Composable functions** → `@compose-guardian`
-- **Coroutines/Flow/async** → `@coroutines-auditor` 
-- **Graphics/Canvas/bitmap** → `@graphics-performance`
-- **Classes/architecture** → `@architecture-workflow` or `@functional-purist`
-- **Domain logic** → `@functional-purist`
-
-**Choose by Task:**
-- **Code review** → Specific domain expert
-- **Performance** → `@graphics-performance` + `@coroutines-auditor`
-- **Architecture** → `@architecture-workflow`
-- **Simplification** → `@functional-purist`
-- **Pre-commit** → `@architecture-workflow`
-
----
+## Common pitfalls to avoid
+1. NEVER use cat on files >100 line
+2. NEVER use grep -r without file type filters
+3. IGNORE build/, .gradle/, generated/ directories
+4. CHECK file existence before operations: [[ -f <file> ]] && wc -l <file>
 
 ## Legacy Documentation Notice
 

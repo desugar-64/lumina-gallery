@@ -129,12 +129,7 @@ class DeviceCapabilities @Inject constructor(
         }
 
         // Determine optimal atlas size based on memory tier and hardware limits
-        val optimalSize = when (memoryTier) {
-            MemoryTier.HIGH -> ATLAS_8K
-            MemoryTier.MEDIUM -> ATLAS_4K
-            MemoryTier.LOW -> ATLAS_4K
-            MemoryTier.MINIMAL -> ATLAS_2K
-        }
+        val optimalSize = DeviceCapabilityComposer.selectOptimalAtlasSize(memoryTier)
 
         // Ensure we don't exceed hardware limits
         val finalSize = optimalSize.coerceAtMost(maxCanvasSize)
@@ -175,14 +170,7 @@ class DeviceCapabilities @Inject constructor(
      */
     fun getRecommendedAtlasSizes(): List<IntSize> {
         val maxSize = getCapabilities().maxAtlasSize
-        val sizes = mutableListOf<IntSize>()
-
-        // Add supported sizes in order of preference (largest first)
-        if (maxSize.width >= ATLAS_8K) sizes.add(IntSize(ATLAS_8K, ATLAS_8K))
-        if (maxSize.width >= ATLAS_4K) sizes.add(IntSize(ATLAS_4K, ATLAS_4K))
-        sizes.add(IntSize(ATLAS_2K, ATLAS_2K)) // Always supported
-
-        return sizes
+        return DeviceCapabilityComposer.buildRecommendedAtlasSizes(maxSize)
     }
 
     /**
@@ -199,10 +187,45 @@ class DeviceCapabilities @Inject constructor(
          * Calculate memory pressure as percentage (0.0 = no pressure, 1.0 = critical)
          */
         val memoryPressure: Float
-            get() = if (availableMemoryMB > 0) {
-                (1.0f - (availableMemoryMB.toFloat() / totalMemoryMB.toFloat())).coerceIn(0.0f, 1.0f)
-            } else {
-                1.0f
-            }
+            get() = DeviceCapabilityComposer.calculateMemoryPressure(availableMemoryMB, totalMemoryMB)
     }
+}
+
+/**
+ * Pure functions for device capability computation - extracted from DeviceCapabilities
+ */
+object DeviceCapabilityComposer {
+    private const val ATLAS_2K = 2048
+    private const val ATLAS_4K = 4096
+    private const val ATLAS_8K = 8192
+    
+    /**
+     * Pure function to select optimal atlas size based on memory tier
+     */
+    fun selectOptimalAtlasSize(memoryTier: DeviceCapabilities.MemoryTier): Int = when (memoryTier) {
+        DeviceCapabilities.MemoryTier.HIGH -> ATLAS_8K
+        DeviceCapabilities.MemoryTier.MEDIUM -> ATLAS_4K
+        DeviceCapabilities.MemoryTier.LOW -> ATLAS_4K
+        DeviceCapabilities.MemoryTier.MINIMAL -> ATLAS_2K
+    }
+    
+    /**
+     * Pure function to calculate memory pressure percentage
+     */
+    fun calculateMemoryPressure(availableMemoryMB: Int, totalMemoryMB: Int): Float =
+        if (availableMemoryMB > 0) {
+            (1.0f - (availableMemoryMB.toFloat() / totalMemoryMB.toFloat())).coerceIn(0.0f, 1.0f)
+        } else {
+            1.0f
+        }
+        
+    /**
+     * Pure function to build recommended atlas sizes without mutable state
+     */
+    fun buildRecommendedAtlasSizes(maxSize: IntSize): List<IntSize> =
+        listOfNotNull(
+            if (maxSize.width >= ATLAS_8K) IntSize(ATLAS_8K, ATLAS_8K) else null,
+            if (maxSize.width >= ATLAS_4K) IntSize(ATLAS_4K, ATLAS_4K) else null,
+            IntSize(ATLAS_2K, ATLAS_2K) // Always supported
+        )
 }

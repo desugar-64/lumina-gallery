@@ -500,25 +500,18 @@ class DynamicAtlasPool @Inject constructor(
                         val priority = priorityMapping[uri] ?: PhotoPriority.NORMAL
                         val effectiveLODLevel = lodLevel // Always respect the explicitly requested LOD level
 
-                        runCatching {
-                            photoLODProcessor.processPhotoForLOD(uri, effectiveLODLevel, scaleStrategy, priority)
-                        }.fold(
-                            onSuccess = { processed ->
-                                if (processed != null) {
-                                    if (priority == PhotoPriority.HIGH) {
-                                        Log.d(TAG, "HIGH priority photo processed: $uri at max $effectiveLODLevel (original: $lodLevel)")
-                                    }
-                                    processed
-                                } else {
-                                    null
+                        when (val result = photoLODProcessor.processPhotoForLOD(uri, effectiveLODLevel, scaleStrategy, priority)) {
+                            is PhotoProcessingResult.Success -> {
+                                if (priority == PhotoPriority.HIGH) {
+                                    Log.d(TAG, "HIGH priority photo processed: $uri at max $effectiveLODLevel (original: $lodLevel)")
                                 }
-                            },
-                            onFailure = { e ->
-                                Log.e(TAG, "Failed to process photo: $uri", e)
-                                if (e is CancellationException) throw e
+                                result.processedPhoto
+                            }
+                            is PhotoProcessingResult.Failed -> {
+                                Log.w(TAG, "Failed to process photo $uri: ${result.error}")
                                 null
                             }
-                        )
+                        }
                     }
                 }.awaitAll().filterNotNull()
             }
@@ -527,78 +520,38 @@ class DynamicAtlasPool @Inject constructor(
 
     /**
      * Determine optimal atlas generation strategy with memory budget awareness
+     * Now uses pure functions for better testability and clarity
      */
     private fun determineAtlasStrategy(
         processedPhotos: List<ProcessedPhoto>,
         lodLevel: LODLevel,
         currentZoom: Float
     ): AtlasStrategy {
-        val capabilities = deviceCapabilities.getCapabilities()
-        val recommendedSizes = deviceCapabilities.getRecommendedAtlasSizes()
+        val strategy = AtlasStrategySelector.selectStrategy(
+            AtlasStrategySelector.AtlasStrategyContext(
+                processedPhotos = processedPhotos,
+                lodLevel = lodLevel,
+                currentZoom = currentZoom,
+                optimizationConfig = optimizationConfig,
+                deviceCapabilities = deviceCapabilities.getCapabilities(),
+                recommendedSizes = deviceCapabilities.getRecommendedAtlasSizes(),
+                memoryStatus = smartMemoryManager.getMemoryStatus()
+            )
+        )
 
-        // Apply zoom-based optimization config
-        val optimizedSizes = if (optimizationConfig.shouldUseLowQuality(currentZoom)) {
-            // Use optimized atlas size for low zoom levels
-            val optimizedSize = optimizationConfig.getAtlasSize(currentZoom, capabilities.maxAtlasSize)
-            listOf(optimizedSize)
-        } else {
-            // Use device-recommended sizes for high zoom levels
-            recommendedSizes
-        }
-
-        val totalPhotoArea = processedPhotos.sumOf { it.scaledSize.width * it.scaledSize.height }
-        val estimatedAtlasesNeeded = estimateAtlasesNeeded(totalPhotoArea, lodLevel)
-
+        // Log strategy selection for debugging
         val memoryStatus = smartMemoryManager.getMemoryStatus()
-
-        // Check if we have high priority photos to determine if priority-based distribution is beneficial
+        val capabilities = deviceCapabilities.getCapabilities()
         val hasHighPriorityPhotos = processedPhotos.any { it.priority == PhotoPriority.HIGH }
-
-        val distributionStrategy = when {
-            // Critical memory pressure always uses single size to conserve memory
-            memoryStatus.pressureLevel >= MemoryPressure.CRITICAL ->
-                DistributionStrategy.SINGLE_SIZE
-
-            // High priority photos with good memory conditions use priority-based distribution
-            hasHighPriorityPhotos && memoryStatus.pressureLevel < MemoryPressure.CRITICAL ->
-                DistributionStrategy.PRIORITY_BASED
-
-            // Single atlas is sufficient for small photo sets
-            estimatedAtlasesNeeded <= 1 ->
-                DistributionStrategy.SINGLE_SIZE
-
-            // High memory pressure uses single size to reduce memory usage
-            memoryStatus.pressureLevel >= MemoryPressure.HIGH ->
-                DistributionStrategy.SINGLE_SIZE
-
-            // High performance devices can handle priority-based distribution
-            capabilities.performanceTier == DeviceCapabilities.PerformanceTier.HIGH ->
-                DistributionStrategy.PRIORITY_BASED
-
-            // Default to multi-size distribution for optimal atlas utilization
-            else -> DistributionStrategy.MULTI_SIZE
-        }
-
-        Log.d(TAG, "Strategy selection: zoom=$currentZoom, lowQuality=${optimizationConfig.shouldUseLowQuality(currentZoom)}, hasHighPriorityPhotos=$hasHighPriorityPhotos, estimatedAtlasesNeeded=$estimatedAtlasesNeeded, memoryPressure=${memoryStatus.pressureLevel}, performanceTier=${capabilities.performanceTier} → $distributionStrategy")
-
-        // TEMPORARILY DISABLED: Memory safety cautions for testing
-        val maxParallelAtlases = when {
-            // memoryStatus.pressureLevel >= SmartMemoryManager.MemoryPressure.HIGH -> 1
-            capabilities.performanceTier == DeviceCapabilities.PerformanceTier.HIGH -> 6 // Increased
-            capabilities.performanceTier == DeviceCapabilities.PerformanceTier.MEDIUM -> 4 // Increased
-            else -> 2 // Increased
-        }
+        
+        Log.d(TAG, "Strategy selection: zoom=$currentZoom, lowQuality=${optimizationConfig.shouldUseLowQuality(currentZoom)}, hasHighPriorityPhotos=$hasHighPriorityPhotos, memoryPressure=${memoryStatus.pressureLevel}, performanceTier=${capabilities.performanceTier} → ${strategy.distributionStrategy}")
 
         val availableMemoryMB = (memoryStatus.availableBytes / (1024 * 1024)).toInt()
         val totalBudgetMB = (memoryStatus.totalBudgetBytes / (1024 * 1024)).toInt()
 
         Log.d(TAG, "Memory budget analysis: ${availableMemoryMB}MB available / ${totalBudgetMB}MB total, current pressure: ${memoryStatus.pressureLevel}")
 
-        return AtlasStrategy(
-            atlasSizes = optimizedSizes,
-            distributionStrategy = distributionStrategy,
-            maxParallelAtlases = maxParallelAtlases
-        )
+        return strategy
     }
 
     /**
@@ -669,21 +622,12 @@ class DynamicAtlasPool @Inject constructor(
         remainingPhotos.sortByDescending { it.scaledSize.width * it.scaledSize.height }
 
         // LOD-aware minimum photos threshold - high LOD levels with large photos need smaller minimums
-        val minPhotosPerAtlas = when {
-            lodLevel.level >= 5 -> 1 // LOD 5 (1024px): Allow single photos per atlas
-            lodLevel.level >= 4 -> 2 // LOD 4 (512px): Allow 2 photos minimum
-            lodLevel.level >= 2 -> 3 // LOD 2-3 (128px-256px): Allow 3 photos minimum
-            else -> MIN_PHOTOS_PER_ATLAS_DEFAULT // LOD 0-1: Use default (4 photos)
-        }
+        val minPhotosPerAtlas = PhotoAtlasComposer.calculateMinPhotosPerAtlas(lodLevel)
 
         Log.d(TAG, "Using $minPhotosPerAtlas minimum photos per atlas for $lodLevel")
 
         // For LOD 5, prioritize largest atlas sizes first to accommodate large photos
-        val sortedAtlasSizes = if (lodLevel.level >= 5) {
-            atlasSizes.sortedByDescending { it.width * it.height }
-        } else {
-            atlasSizes
-        }
+        val sortedAtlasSizes = PhotoAtlasComposer.sortAtlasSizesByLOD(atlasSizes, lodLevel)
 
         Log.d(TAG, "Atlas size priority for $lodLevel: ${sortedAtlasSizes.map { "${it.width}x${it.height}" }}")
         Log.d(TAG, "Photo sizes: ${remainingPhotos.map { "${it.scaledSize.width}x${it.scaledSize.height}" }}")
@@ -750,7 +694,7 @@ class DynamicAtlasPool @Inject constructor(
         if (remainingPhotos.isNotEmpty()) {
             Log.w(TAG, "Handling ${remainingPhotos.size} remaining photos for $lodLevel")
 
-            if (lodLevel.level >= 5) {
+            if (PhotoAtlasComposer.requiresMemoryAwareHandling(lodLevel)) {
                 // For LOD 5, prioritize memory efficiency over number of atlases
                 Log.d(TAG, "LOD 5 memory-aware distribution: ${remainingPhotos.size} remaining photos")
 
@@ -1089,36 +1033,6 @@ class DynamicAtlasPool @Inject constructor(
         }
     }
 
-    /**
-     * Estimate number of atlases needed based on LOD level and device capabilities
-     */
-    private fun estimateAtlasesNeeded(totalPhotoArea: Int, lodLevel: LODLevel): Int {
-        // Get optimal atlas size for this LOD level and device
-        val recommendedSizes = deviceCapabilities.getRecommendedAtlasSizes()
-        val optimalAtlasSize = when {
-            // High LOD levels (detailed photos) benefit from larger atlases if device supports it
-            lodLevel.level >= 4 && recommendedSizes.contains(IntSize(ATLAS_4K, ATLAS_4K)) -> ATLAS_4K
-            lodLevel.level >= 2 && recommendedSizes.contains(IntSize(ATLAS_4K, ATLAS_4K)) -> ATLAS_4K
-            else -> ATLAS_2K
-        }
-
-        val atlasArea = optimalAtlasSize * optimalAtlasSize
-        val usableArea = atlasArea * UTILIZATION_TARGET
-
-        // Add small buffer for packing inefficiencies at higher LOD levels
-//        val packingEfficiency = when {
-//            lodLevel.level >= 4 -> 0.9f // High detail photos pack less efficiently
-//            lodLevel.level >= 2 -> 0.95f // Medium photos have good packing
-//            else -> 1.0f // Small thumbnails pack very efficiently
-//        }
-
-        val adjustedUsableArea = (usableArea).toInt()
-        val estimatedCount = (totalPhotoArea.toFloat() / adjustedUsableArea).toInt() + 1
-
-        Log.d(TAG, "Atlas estimation: ${totalPhotoArea}px² total area, ${optimalAtlasSize}x$optimalAtlasSize atlas, ${adjustedUsableArea}px² usable → $estimatedCount atlases (LOD $lodLevel)")
-
-        return estimatedCount
-    }
 
     /**
      * Get default atlas strategy
@@ -1203,4 +1117,189 @@ class DynamicAtlasPool @Inject constructor(
         val atlasSize: IntSize,
         val effectiveLODLevel: LODLevel? = null
     )
+}
+
+/**
+ * Pure functions for atlas strategy selection - extracted from DynamicAtlasPool
+ */
+object AtlasStrategySelector {
+
+    /**
+     * Context for atlas strategy selection - all inputs needed for decision making
+     */
+    data class AtlasStrategyContext(
+        val processedPhotos: List<ProcessedPhoto>,
+        val lodLevel: LODLevel,
+        val currentZoom: Float,
+        val optimizationConfig: AtlasOptimizationConfig,
+        val deviceCapabilities: DeviceCapabilities.Capabilities,
+        val recommendedSizes: List<IntSize>,
+        val memoryStatus: SmartMemoryManager.MemoryStatus
+    )
+
+    /**
+     * Pure function to select optimal atlas generation strategy
+     */
+    fun selectStrategy(context: AtlasStrategyContext): DynamicAtlasPool.AtlasStrategy {
+        val optimizedSizes = selectOptimalAtlasSizes(context)
+        val distributionStrategy = selectDistributionStrategy(context)
+        val maxParallelAtlases = selectMaxParallelAtlases(context)
+
+        return DynamicAtlasPool.AtlasStrategy(
+            atlasSizes = optimizedSizes,
+            distributionStrategy = distributionStrategy,
+            maxParallelAtlases = maxParallelAtlases
+        )
+    }
+
+    /**
+     * Select optimal atlas sizes based on zoom and device capabilities
+     */
+    private fun selectOptimalAtlasSizes(context: AtlasStrategyContext): List<IntSize> =
+        if (context.optimizationConfig.shouldUseLowQuality(context.currentZoom)) {
+            // Use optimized atlas size for low zoom levels
+            val optimizedSize = context.optimizationConfig.getAtlasSize(context.currentZoom, context.deviceCapabilities.maxAtlasSize)
+            listOf(optimizedSize)
+        } else {
+            // Use device-recommended sizes for high zoom levels
+            context.recommendedSizes
+        }
+
+    /**
+     * Select distribution strategy using pure function composition
+     */
+    private fun selectDistributionStrategy(context: AtlasStrategyContext): DynamicAtlasPool.DistributionStrategy {
+        val totalPhotoArea = context.processedPhotos.sumOf { it.scaledSize.width * it.scaledSize.height }
+        val estimatedAtlasesNeeded = estimateAtlasesNeeded(totalPhotoArea, context.lodLevel)
+        val hasHighPriorityPhotos = context.processedPhotos.any { it.priority == PhotoPriority.HIGH }
+
+        val strategySelectors = listOf(
+            selectForCriticalMemory,
+            selectForHighPriorityPhotos,
+            selectForSingleAtlas,
+            selectForHighMemoryPressure,
+            selectForHighPerformance,
+            selectDefault
+        )
+
+        val selectionContext = DistributionStrategyContext(
+            memoryPressure = context.memoryStatus.pressureLevel,
+            hasHighPriorityPhotos = hasHighPriorityPhotos,
+            estimatedAtlasesNeeded = estimatedAtlasesNeeded,
+            performanceTier = context.deviceCapabilities.performanceTier
+        )
+
+        return strategySelectors
+            .first { selector -> selector.appliesTo(selectionContext) }
+            .strategy
+    }
+
+    /**
+     * Select maximum parallel atlases based on device capabilities and memory pressure
+     */
+    private fun selectMaxParallelAtlases(context: AtlasStrategyContext): Int =
+        when {
+            context.deviceCapabilities.performanceTier == DeviceCapabilities.PerformanceTier.HIGH -> 6
+            context.deviceCapabilities.performanceTier == DeviceCapabilities.PerformanceTier.MEDIUM -> 4
+            else -> 2
+        }
+
+    /**
+     * Context for distribution strategy selection
+     */
+    private data class DistributionStrategyContext(
+        val memoryPressure: SmartMemoryManager.MemoryPressure,
+        val hasHighPriorityPhotos: Boolean,
+        val estimatedAtlasesNeeded: Int,
+        val performanceTier: DeviceCapabilities.PerformanceTier
+    )
+
+    /**
+     * Strategy selector interface for functional composition
+     */
+    private interface DistributionStrategySelector {
+        val strategy: DynamicAtlasPool.DistributionStrategy
+        fun appliesTo(context: DistributionStrategyContext): Boolean
+    }
+
+    /**
+     * Pure strategy selectors using function composition
+     */
+    private val selectForCriticalMemory = object : DistributionStrategySelector {
+        override val strategy = DynamicAtlasPool.DistributionStrategy.SINGLE_SIZE
+        override fun appliesTo(context: DistributionStrategyContext) = 
+            context.memoryPressure >= SmartMemoryManager.MemoryPressure.CRITICAL
+    }
+
+    private val selectForHighPriorityPhotos = object : DistributionStrategySelector {
+        override val strategy = DynamicAtlasPool.DistributionStrategy.PRIORITY_BASED
+        override fun appliesTo(context: DistributionStrategyContext) = 
+            context.hasHighPriorityPhotos && context.memoryPressure < SmartMemoryManager.MemoryPressure.CRITICAL
+    }
+
+    private val selectForSingleAtlas = object : DistributionStrategySelector {
+        override val strategy = DynamicAtlasPool.DistributionStrategy.SINGLE_SIZE
+        override fun appliesTo(context: DistributionStrategyContext) = 
+            context.estimatedAtlasesNeeded <= 1
+    }
+
+    private val selectForHighMemoryPressure = object : DistributionStrategySelector {
+        override val strategy = DynamicAtlasPool.DistributionStrategy.SINGLE_SIZE
+        override fun appliesTo(context: DistributionStrategyContext) = 
+            context.memoryPressure >= SmartMemoryManager.MemoryPressure.HIGH
+    }
+
+    private val selectForHighPerformance = object : DistributionStrategySelector {
+        override val strategy = DynamicAtlasPool.DistributionStrategy.PRIORITY_BASED
+        override fun appliesTo(context: DistributionStrategyContext) = 
+            context.performanceTier == DeviceCapabilities.PerformanceTier.HIGH
+    }
+
+    private val selectDefault = object : DistributionStrategySelector {
+        override val strategy = DynamicAtlasPool.DistributionStrategy.MULTI_SIZE
+        override fun appliesTo(context: DistributionStrategyContext) = true // Always applies as fallback
+    }
+
+    /**
+     * Pure function to estimate number of atlases needed
+     */
+    private fun estimateAtlasesNeeded(totalPhotoArea: Int, lodLevel: LODLevel): Int {
+        val defaultAtlasArea = 2048 * 2048
+        val utilizationTarget = 0.9f
+        val effectiveAtlasArea = (defaultAtlasArea * utilizationTarget).toInt()
+        return if (effectiveAtlasArea > 0) (totalPhotoArea / effectiveAtlasArea) + 1 else 1
+    }
+}
+
+/**
+ * Pure functions for photo atlas composition - extracted from DynamicAtlasPool
+ */
+object PhotoAtlasComposer {
+    private const val MIN_PHOTOS_PER_ATLAS_DEFAULT = 4
+    
+    /**
+     * Pure function to calculate minimum photos per atlas based on LOD level
+     */
+    fun calculateMinPhotosPerAtlas(lodLevel: LODLevel): Int = when {
+        lodLevel.level >= 5 -> 1 // LOD 5 (1024px): Allow single photos per atlas
+        lodLevel.level >= 4 -> 2 // LOD 4 (512px): Allow 2 photos minimum
+        lodLevel.level >= 2 -> 3 // LOD 2-3 (128px-256px): Allow 3 photos minimum
+        else -> MIN_PHOTOS_PER_ATLAS_DEFAULT // LOD 0-1: Use default (4 photos)
+    }
+    
+    /**
+     * Pure function to sort atlas sizes based on LOD level requirements
+     */
+    fun sortAtlasSizesByLOD(atlasSizes: List<IntSize>, lodLevel: LODLevel): List<IntSize> =
+        if (lodLevel.level >= 5) {
+            // For LOD 5, prioritize largest atlas sizes first to accommodate large photos
+            atlasSizes.sortedByDescending { it.width * it.height }
+        } else {
+            atlasSizes
+        }
+        
+    /**
+     * Pure function to determine if LOD level requires memory-aware handling
+     */
+    fun requiresMemoryAwareHandling(lodLevel: LODLevel): Boolean = lodLevel.level >= 5
 }

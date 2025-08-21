@@ -47,25 +47,45 @@ class PhotoLODProcessor @Inject constructor(
         lodLevel: LODLevel,
         scaleStrategy: ScaleStrategy = ScaleStrategy.FIT_CENTER,
         priority: dev.serhiiyaremych.lumina.domain.model.PhotoPriority = dev.serhiiyaremych.lumina.domain.model.PhotoPriority.NORMAL
-    ): ProcessedPhoto? {
+    ): PhotoProcessingResult {
         return trace(BenchmarkLabels.PHOTO_LOD_PROCESS_PHOTO) {
-            // Load photo with LOD-aware sample size (already at target resolution)
-            val (lodBitmap, originalSize) = trace(BenchmarkLabels.PHOTO_LOD_LOAD_BITMAP) {
-                loadOriginalPhoto(photoUri, lodLevel)
-            } ?: return@trace null
+            try {
+                // Load photo with LOD-aware sample size (already at target resolution)
+                val loadResult = trace(BenchmarkLabels.PHOTO_LOD_LOAD_BITMAP) {
+                    loadOriginalPhoto(photoUri, lodLevel)
+                }
+                
+                if (loadResult == null) {
+                    return@trace PhotoProcessingResult.Failed(
+                        photoUri = photoUri,
+                        error = "Failed to load photo from URI",
+                        retryable = true
+                    )
+                }
 
-            // Store bitmap dimensions after LOD processing
-            val processedSize = IntSize(lodBitmap.width, lodBitmap.height)
+                val (lodBitmap, originalSize) = loadResult
 
-            ProcessedPhoto(
-                id = photoUri,
-                bitmap = lodBitmap,
-                originalSize = originalSize,
-                scaledSize = processedSize,
-                aspectRatio = processedSize.width.toFloat() / processedSize.height,
-                lodLevel = lodLevel.level,
-                priority = priority
-            )
+                // Store bitmap dimensions after LOD processing
+                val processedSize = IntSize(lodBitmap.width, lodBitmap.height)
+
+                val processedPhoto = ProcessedPhoto(
+                    id = photoUri,
+                    bitmap = lodBitmap,
+                    originalSize = originalSize,
+                    scaledSize = processedSize,
+                    aspectRatio = processedSize.width.toFloat() / processedSize.height,
+                    lodLevel = lodLevel.level,
+                    priority = priority
+                )
+                
+                PhotoProcessingResult.Success(processedPhoto)
+            } catch (e: Exception) {
+                PhotoProcessingResult.Failed(
+                    photoUri = photoUri,
+                    error = e.message ?: "Unknown processing error",
+                    retryable = true
+                )
+            }
         }
     }
 
@@ -378,3 +398,25 @@ data class ProcessedPhoto(
     val lodLevel: Int,
     val priority: dev.serhiiyaremych.lumina.domain.model.PhotoPriority = dev.serhiiyaremych.lumina.domain.model.PhotoPriority.NORMAL
 )
+
+/**
+ * Result type for photo processing operations - replaces nullable return types with explicit error handling
+ */
+sealed class PhotoProcessingResult {
+    /**
+     * Successful photo processing
+     */
+    data class Success(
+        val processedPhoto: ProcessedPhoto
+    ) : PhotoProcessingResult()
+    
+    /**
+     * Failed photo processing with detailed error information
+     */
+    data class Failed(
+        val photoUri: Uri,
+        val error: String,
+        val retryable: Boolean,
+        val cause: Throwable? = null
+    ) : PhotoProcessingResult()
+}
