@@ -54,7 +54,7 @@ class PhotoLODProcessor @Inject constructor(
                 val loadResult = trace(BenchmarkLabels.PHOTO_LOD_LOAD_BITMAP) {
                     loadOriginalPhoto(photoUri, lodLevel)
                 }
-                
+
                 if (loadResult == null) {
                     return@trace PhotoProcessingResult.Failed(
                         photoUri = photoUri,
@@ -77,7 +77,7 @@ class PhotoLODProcessor @Inject constructor(
                     lodLevel = lodLevel.level,
                     priority = priority
                 )
-                
+
                 PhotoProcessingResult.Success(processedPhoto)
             } catch (e: Exception) {
                 PhotoProcessingResult.Failed(
@@ -409,7 +409,7 @@ sealed class PhotoProcessingResult {
     data class Success(
         val processedPhoto: ProcessedPhoto
     ) : PhotoProcessingResult()
-    
+
     /**
      * Failed photo processing with detailed error information
      */

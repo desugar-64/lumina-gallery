@@ -29,6 +29,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+// Animation cooldown constants
+private const val LOADING_COOLDOWN_DURATION_MS = 5000L // 5 seconds minimum animation duration
+
 /**
  * Streaming Gallery ViewModel - UDF Architecture Implementation
  *
@@ -56,6 +59,9 @@ class StreamingGalleryViewModel @Inject constructor(
     // Single UI state following UDF architecture
     private val _uiState = MutableStateFlow(GalleryUiState.initial())
     val uiState: StateFlow<GalleryUiState> = _uiState.asStateFlow()
+
+    // Loading animation cooldown management
+    private var loadingCooldownJob: Job? = null
 
     // Current request tracking for UI updates
     private var currentRequestSequence: Long = 0
@@ -105,6 +111,7 @@ class StreamingGalleryViewModel @Inject constructor(
 
                     when (result) {
                         is AtlasStreamResult.Loading -> {
+                            startLoadingCooldown() // Reset cooldown timer
                             updateUiState {
                                 it.copy(
                                     isAtlasGenerating = true,
@@ -116,6 +123,7 @@ class StreamingGalleryViewModel @Inject constructor(
                         }
 
                         is AtlasStreamResult.Progress -> {
+                            startLoadingCooldown() // Reset cooldown timer for progress updates
                             updateUiState {
                                 it.copy(
                                     isAtlasGenerating = true,
@@ -223,9 +231,46 @@ class StreamingGalleryViewModel @Inject constructor(
         _uiState.value = update(_uiState.value)
     }
 
+    /**
+     * Starts or resets the loading cooldown timer.
+     * This ensures animation continues for at least 5 seconds and resets on new activity.
+     */
+    private fun startLoadingCooldown() {
+        // Cancel existing cooldown timer
+        loadingCooldownJob?.cancel()
+
+        // Set loading flag immediately
+        updateUiState { it.copy(isLoadingWithCooldown = true) }
+
+        // Start new cooldown timer
+        loadingCooldownJob = viewModelScope.launch {
+            try {
+                delay(LOADING_COOLDOWN_DURATION_MS)
+                // Only turn off if no actual atlas generation is happening
+                if (!_uiState.value.isAtlasGenerating) {
+                    updateUiState { it.copy(isLoadingWithCooldown = false) }
+                    Log.d("StreamingGalleryVM", "Loading cooldown completed - animation stopped")
+                }
+            } catch (e: CancellationException) {
+                // Timer was reset due to new activity - this is expected
+                Log.d("StreamingGalleryVM", "Loading cooldown timer reset")
+            }
+        }
+    }
+
+    /**
+     * Immediately stops loading animation when explicitly requested
+     */
+    private fun stopLoadingCooldown() {
+        loadingCooldownJob?.cancel()
+        updateUiState { it.copy(isLoadingWithCooldown = false) }
+        Log.d("StreamingGalleryVM", "Loading cooldown stopped immediately")
+    }
+
     private fun loadMedia() {
         viewModelScope.launch {
             updateUiState { it.copy(isLoading = true) }
+            startLoadingCooldown() // Start cooldown for initial media loading
 
             try {
                 val media = getMediaUseCase()

@@ -198,7 +198,7 @@ object DeviceCapabilityComposer {
     private const val ATLAS_2K = 2048
     private const val ATLAS_4K = 4096
     private const val ATLAS_8K = 8192
-    
+
     /**
      * Pure function to select optimal atlas size based on memory tier
      */
@@ -208,24 +208,22 @@ object DeviceCapabilityComposer {
         DeviceCapabilities.MemoryTier.LOW -> ATLAS_4K
         DeviceCapabilities.MemoryTier.MINIMAL -> ATLAS_2K
     }
-    
+
     /**
      * Pure function to calculate memory pressure percentage
      */
-    fun calculateMemoryPressure(availableMemoryMB: Int, totalMemoryMB: Int): Float =
-        if (availableMemoryMB > 0) {
-            (1.0f - (availableMemoryMB.toFloat() / totalMemoryMB.toFloat())).coerceIn(0.0f, 1.0f)
-        } else {
-            1.0f
-        }
-        
+    fun calculateMemoryPressure(availableMemoryMB: Int, totalMemoryMB: Int): Float = if (availableMemoryMB > 0) {
+        (1.0f - (availableMemoryMB.toFloat() / totalMemoryMB.toFloat())).coerceIn(0.0f, 1.0f)
+    } else {
+        1.0f
+    }
+
     /**
      * Pure function to build recommended atlas sizes without mutable state
      */
-    fun buildRecommendedAtlasSizes(maxSize: IntSize): List<IntSize> =
-        listOfNotNull(
-            if (maxSize.width >= ATLAS_8K) IntSize(ATLAS_8K, ATLAS_8K) else null,
-            if (maxSize.width >= ATLAS_4K) IntSize(ATLAS_4K, ATLAS_4K) else null,
-            IntSize(ATLAS_2K, ATLAS_2K) // Always supported
-        )
+    fun buildRecommendedAtlasSizes(maxSize: IntSize): List<IntSize> = listOfNotNull(
+        if (maxSize.width >= ATLAS_8K) IntSize(ATLAS_8K, ATLAS_8K) else null,
+        if (maxSize.width >= ATLAS_4K) IntSize(ATLAS_4K, ATLAS_4K) else null,
+        IntSize(ATLAS_2K, ATLAS_2K) // Always supported
+    )
 }

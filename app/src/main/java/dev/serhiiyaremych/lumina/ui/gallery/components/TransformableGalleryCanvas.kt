@@ -55,7 +55,8 @@ fun TransformableGalleryCanvas(
                 .testTag(BenchmarkLabels.GALLERY_CANVAS_TEST_TAG),
             zoom = transformableState.zoom,
             offset = transformableState.offset,
-            state = gridState
+            state = gridState,
+            isLoading = uiState.isLoadingWithCooldown
         ) {
             // Draw media visualization with streaming atlas
             uiState.hexGridLayout?.let { layout ->

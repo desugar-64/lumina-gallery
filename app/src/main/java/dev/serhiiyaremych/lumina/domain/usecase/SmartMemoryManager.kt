@@ -824,7 +824,7 @@ class SmartMemoryManager @Inject constructor(
  * Pure functions for memory allocation composition - extracted from SmartMemoryManager
  */
 object MemoryAllocationComposer {
-    
+
     /**
      * Pure function to select recommended LOD level based on memory constraints
      */
@@ -833,13 +833,12 @@ object MemoryAllocationComposer {
         availableMemory: Long,
         currentLOD: LODLevel,
         suggestLowerLOD: (LODLevel, Long) -> LODLevel?
-    ): LODLevel =
-        if (predictedUsage > availableMemory) {
-            suggestLowerLOD(currentLOD, availableMemory) ?: currentLOD
-        } else {
-            currentLOD
-        }
-    
+    ): LODLevel = if (predictedUsage > availableMemory) {
+        suggestLowerLOD(currentLOD, availableMemory) ?: currentLOD
+    } else {
+        currentLOD
+    }
+
     /**
      * Pure function to detect memory leaks from snapshot analysis
      */
@@ -848,14 +847,13 @@ object MemoryAllocationComposer {
         memoryIncreasing: Boolean,
         recentSnapshots: List<SmartMemoryManager.MemorySnapshot>,
         calculateLeakSeverity: (List<SmartMemoryManager.MemorySnapshot>) -> Float
-    ): SmartMemoryManager.MemoryLeakReport? =
-        if (atlasCountStable && memoryIncreasing) {
-            SmartMemoryManager.MemoryLeakReport(
-                detected = true,
-                severity = calculateLeakSeverity(recentSnapshots),
-                recommendation = "Consider bitmap recycling or atlas cleanup"
-            )
-        } else {
-            null
-        }
+    ): SmartMemoryManager.MemoryLeakReport? = if (atlasCountStable && memoryIncreasing) {
+        SmartMemoryManager.MemoryLeakReport(
+            detected = true,
+            severity = calculateLeakSeverity(recentSnapshots),
+            recommendation = "Consider bitmap recycling or atlas cleanup"
+        )
+    } else {
+        null
+    }
 }

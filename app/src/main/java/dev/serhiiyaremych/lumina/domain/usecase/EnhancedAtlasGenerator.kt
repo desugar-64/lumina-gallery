@@ -56,7 +56,6 @@ class EnhancedAtlasGenerator @Inject constructor(
         priorityMapping: Map<Uri, dev.serhiiyaremych.lumina.domain.model.PhotoPriority> = emptyMap(),
         onPhotoReady: (Uri, dev.serhiiyaremych.lumina.domain.model.AtlasRegion) -> Unit = { _, _ -> }
     ): EnhancedAtlasResult = trace(BenchmarkLabels.ATLAS_GENERATOR_GENERATE_ATLAS) {
-        
         // Logging (side effect)
         logGenerationStart(photoUris, lodLevel, priorityMapping)
 
@@ -75,7 +74,7 @@ class EnhancedAtlasGenerator @Inject constructor(
             priorityMapping = priorityMapping,
             memoryStatus = memoryStatus
         )
-        
+
         val config = EnhancedAtlasComposer.determineGenerationConfig(context)
         if (config.shouldTriggerEmergencyCleanup) {
             Log.w(TAG, "Critical memory pressure detected, triggering emergency cleanup")
@@ -90,7 +89,7 @@ class EnhancedAtlasGenerator @Inject constructor(
 
         // Result transformation (pure function)
         val enhancedResult = EnhancedAtlasComposer.transformMultiAtlasResult(multiAtlasResult, photoUris.size)
-        
+
         // Logging completion (side effect)
         val stats = EnhancedAtlasComposer.calculateGenerationStats(multiAtlasResult, photoUris.size)
         logGenerationComplete(stats)
@@ -102,8 +101,8 @@ class EnhancedAtlasGenerator @Inject constructor(
      * Extracted logging function for generation start
      */
     private fun logGenerationStart(
-        photoUris: List<Uri>, 
-        lodLevel: LODLevel, 
+        photoUris: List<Uri>,
+        lodLevel: LODLevel,
         priorityMapping: Map<Uri, dev.serhiiyaremych.lumina.domain.model.PhotoPriority>
     ) {
         Log.d(TAG, "EnhancedAtlasGenerator.generateAtlasEnhanced called:")
@@ -215,10 +214,9 @@ object EnhancedAtlasComposer {
     /**
      * Pure function to determine atlas generation configuration
      */
-    fun determineGenerationConfig(context: AtlasGenerationContext): AtlasGenerationConfig =
-        AtlasGenerationConfig(
-            shouldTriggerEmergencyCleanup = context.memoryStatus.pressureLevel == SmartMemoryManager.MemoryPressure.CRITICAL
-        )
+    fun determineGenerationConfig(context: AtlasGenerationContext): AtlasGenerationConfig = AtlasGenerationConfig(
+        shouldTriggerEmergencyCleanup = context.memoryStatus.pressureLevel == SmartMemoryManager.MemoryPressure.CRITICAL
+    )
 
     /**
      * Pure function to validate atlas generation input
@@ -255,8 +253,10 @@ object EnhancedAtlasComposer {
         val atlasCount = multiAtlasResult.atlases.size
         val successRate = if (originalPhotoCount > 0) {
             multiAtlasResult.atlases.sumOf { it.photoCount }.toFloat() / originalPhotoCount
-        } else 0f
-        
+        } else {
+            0f
+        }
+
         return GenerationStats(
             atlasCount = atlasCount,
             totalPhotos = multiAtlasResult.totalPhotos,

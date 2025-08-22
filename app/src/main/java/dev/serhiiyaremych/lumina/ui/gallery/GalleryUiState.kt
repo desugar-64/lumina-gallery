@@ -35,6 +35,9 @@ data class GalleryUiState(
     val isAtlasGenerating: Boolean = false,
     val atlasGenerationStatus: String? = null,
 
+    // Extended Loading State with Cooldown (for smooth animation)
+    val isLoadingWithCooldown: Boolean = false,
+
     // Selection State
     val selectedMedia: Media? = null,
     val selectionMode: SelectionMode = SelectionMode.CELL_MODE,

@@ -1,11 +1,15 @@
 package dev.serhiiyaremych.lumina.ui
 
+import android.util.Log
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import kotlin.math.cos
 import kotlin.math.max
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 // Grid system constants
 const val BASE_GRID_SPACING_DP = 56f // Base unit for grid spacing
@@ -16,6 +20,36 @@ const val MAX_VISUAL_SPACING_DP = 80f // Maximum spacing before adding subdivisi
 // Grid visual constants
 const val MAJOR_GRID_RADIUS_DP = 2f
 const val MINOR_GRID_RADIUS_DP = 1f
+
+// Shimmer cascade animation constants
+private const val MILLISECONDS_TO_SECONDS = 1000f
+
+// Wave configuration constants
+private const val CASCADE_1_SPEED = 1.0f
+private const val CASCADE_1_FREQUENCY = 0.006f
+private const val CASCADE_1_ANGLE = 45f
+private const val CASCADE_1_WEIGHT = 0.4f
+
+private const val CASCADE_2_SPEED = 1.4f
+private const val CASCADE_2_FREQUENCY = 0.004f
+private const val CASCADE_2_ANGLE = -30f
+private const val CASCADE_2_PHASE_OFFSET = 2.0f
+private const val CASCADE_2_WEIGHT = 0.35f
+
+private const val CASCADE_3_SPEED = 0.8f
+private const val CASCADE_3_FREQUENCY = 0.008f
+private const val CASCADE_3_ANGLE = 75f
+private const val CASCADE_3_PHASE_OFFSET = 4.0f
+private const val CASCADE_3_WEIGHT = 0.25f
+
+// Tint range constants
+private const val TINT_FACTOR_MIN = 0.7f
+private const val TINT_FACTOR_RANGE = 0.3f
+private const val WAVE_NORMALIZE_OFFSET = 1f
+
+// Default wave parameters
+private const val DEFAULT_WAVE_ANGLE = 45f
+private const val DEFAULT_PHASE_OFFSET = 0f
 
 data class GridLevel(
     val spacing: Float,
@@ -52,6 +86,10 @@ class GridRenderer {
     private var cachedKey: GridCacheKey? = null
     private var cachedRenderData: GridRenderData? = null
 
+    private var cachedAngles: Map<Float, Pair<Float, Float>>? = null
+
+    private var reusableColor = Color.Unspecified
+
     fun drawGrid(
         drawScope: DrawScope,
         zoom: Float,
@@ -59,7 +97,10 @@ class GridRenderer {
         density: Density,
         majorGridSpacing: androidx.compose.ui.unit.Dp = 56f.dp,
         majorGridColor: Color,
-        minorGridColor: Color
+        minorGridColor: Color,
+        isLoading: Boolean = false,
+        animationTime: Long = 0L,
+        returnTransitionProgress: Float = 1f
     ) {
         val width = drawScope.size.width
         val height = drawScope.size.height
@@ -82,12 +123,25 @@ class GridRenderer {
             else -> 1f // Full opacity above 0.3 zoom
         }
 
-        // Draw with alpha blending for edge fade and zoom-based transparency
         with(drawScope) {
             // Draw minor points first (so major points appear on top)
             renderData.minorPoints.forEach { gridPoint ->
+                val tintFactor = if (isLoading || returnTransitionProgress > 0f) {
+                    val shimmerTint = calculateShimmerCascadeTint(gridPoint.offset, animationTime, width, height)
+                    shimmerTint * returnTransitionProgress + 1f * (1f - returnTransitionProgress)
+                } else {
+                    1f
+                }
+
+                reusableColor = Color(
+                    red = (minorGridColor.red * tintFactor).coerceIn(0f, 1f),
+                    green = (minorGridColor.green * tintFactor).coerceIn(0f, 1f),
+                    blue = (minorGridColor.blue * tintFactor).coerceIn(0f, 1f),
+                    alpha = minorGridColor.alpha * gridPoint.alpha * zoomAlpha
+                )
+
                 drawCircle(
-                    color = minorGridColor.copy(alpha = minorGridColor.alpha * gridPoint.alpha * zoomAlpha),
+                    color = reusableColor,
                     radius = renderData.minorStrokeWidth / 2f,
                     center = gridPoint.offset
                 )
@@ -95,8 +149,22 @@ class GridRenderer {
 
             // Draw major points
             renderData.majorPoints.forEach { gridPoint ->
+                val tintFactor = if (isLoading || returnTransitionProgress > 0f) {
+                    val shimmerTint = calculateShimmerCascadeTint(gridPoint.offset, animationTime, width, height)
+                    shimmerTint * returnTransitionProgress + 1f * (1f - returnTransitionProgress)
+                } else {
+                    1f
+                }
+
+                reusableColor = Color(
+                    red = (majorGridColor.red * tintFactor).coerceIn(0f, 1f),
+                    green = (majorGridColor.green * tintFactor).coerceIn(0f, 1f),
+                    blue = (majorGridColor.blue * tintFactor).coerceIn(0f, 1f),
+                    alpha = majorGridColor.alpha * gridPoint.alpha * zoomAlpha
+                )
+
                 drawCircle(
-                    color = majorGridColor.copy(alpha = majorGridColor.alpha * gridPoint.alpha * zoomAlpha),
+                    color = reusableColor,
                     radius = renderData.majorStrokeWidth / 2f,
                     center = gridPoint.offset
                 )
@@ -177,6 +245,105 @@ class GridRenderer {
     fun invalidateCache() {
         cachedKey = null
         cachedRenderData = null
+        cachedAngles = null
+    }
+
+    /**
+     * Get cached trigonometric values for an angle to avoid repeated calculations
+     */
+    private fun getCachedTrigValues(angle: Float): Pair<Float, Float> {
+        if (cachedAngles == null) {
+            // Pre-calculate commonly used angles
+            cachedAngles = mapOf(
+                CASCADE_1_ANGLE to Pair(cos(Math.toRadians(CASCADE_1_ANGLE.toDouble())).toFloat(), sin(Math.toRadians(CASCADE_1_ANGLE.toDouble())).toFloat()),
+                CASCADE_2_ANGLE to Pair(cos(Math.toRadians(CASCADE_2_ANGLE.toDouble())).toFloat(), sin(Math.toRadians(CASCADE_2_ANGLE.toDouble())).toFloat()),
+                CASCADE_3_ANGLE to Pair(cos(Math.toRadians(CASCADE_3_ANGLE.toDouble())).toFloat(), sin(Math.toRadians(CASCADE_3_ANGLE.toDouble())).toFloat()),
+                DEFAULT_WAVE_ANGLE to Pair(cos(Math.toRadians(DEFAULT_WAVE_ANGLE.toDouble())).toFloat(), sin(Math.toRadians(DEFAULT_WAVE_ANGLE.toDouble())).toFloat())
+            )
+        }
+
+        return cachedAngles?.get(angle) ?: run {
+            val angleRad = Math.toRadians(angle.toDouble())
+            Pair(cos(angleRad).toFloat(), sin(angleRad).toFloat())
+        }
+    }
+
+    /**
+     * Calculates shimmer cascade tint factor for grid point animation during loading.
+     * Creates gentle diagonal waves of color tinting that sweep across the grid like aurora.
+     */
+    private fun calculateShimmerCascadeTint(
+        pointOffset: Offset,
+        animationTime: Long,
+        canvasWidth: Float,
+        canvasHeight: Float
+    ): Float {
+        val time = animationTime / MILLISECONDS_TO_SECONDS
+
+        // Create multiple cascading waves at different angles and speeds
+        val cascade1 = createDiagonalWave(
+            pointOffset,
+            time,
+            canvasWidth,
+            canvasHeight,
+            waveSpeed = CASCADE_1_SPEED,
+            waveFrequency = CASCADE_1_FREQUENCY,
+            angle = CASCADE_1_ANGLE
+        )
+        val cascade2 = createDiagonalWave(
+            pointOffset,
+            time,
+            canvasWidth,
+            canvasHeight,
+            waveSpeed = CASCADE_2_SPEED,
+            waveFrequency = CASCADE_2_FREQUENCY,
+            angle = CASCADE_2_ANGLE,
+            phaseOffset = CASCADE_2_PHASE_OFFSET
+        )
+        val cascade3 = createDiagonalWave(
+            pointOffset,
+            time,
+            canvasWidth,
+            canvasHeight,
+            waveSpeed = CASCADE_3_SPEED,
+            waveFrequency = CASCADE_3_FREQUENCY,
+            angle = CASCADE_3_ANGLE,
+            phaseOffset = CASCADE_3_PHASE_OFFSET
+        )
+
+        // Combine cascades with different weights for organic shimmer
+        val combinedCascade = (cascade1 * CASCADE_1_WEIGHT) + (cascade2 * CASCADE_2_WEIGHT) + (cascade3 * CASCADE_3_WEIGHT)
+
+        // Tint factor range for subtle darker-lighter color variations
+        val tintFactor = TINT_FACTOR_MIN + (combinedCascade + WAVE_NORMALIZE_OFFSET) * TINT_FACTOR_RANGE
+
+        return tintFactor
+    }
+
+    private fun createDiagonalWave(
+        pointOffset: Offset,
+        time: Float,
+        canvasWidth: Float,
+        canvasHeight: Float,
+        waveSpeed: Float,
+        waveFrequency: Float,
+        angle: Float = DEFAULT_WAVE_ANGLE,
+        phaseOffset: Float = DEFAULT_PHASE_OFFSET
+    ): Float {
+        // Use cached trigonometric values for performance
+        val (cosAngle, sinAngle) = getCachedTrigValues(angle)
+
+        // Calculate distance along the wave direction using cached values
+        val waveDistance = pointOffset.x * cosAngle + pointOffset.y * sinAngle
+
+        // Normalize distance for consistent wave propagation using cached values
+        val maxDistance = canvasWidth * cosAngle + canvasHeight * sinAngle
+        val normalizedDistance = if (maxDistance != 0f) waveDistance / maxDistance else 0f
+
+        // Create wave with time-based movement and spatial frequency
+        val wavePhase = (normalizedDistance / waveFrequency) - (time * waveSpeed) + phaseOffset
+
+        return sin(wavePhase).toFloat()
     }
 }
 

@@ -606,7 +606,7 @@ data class HexLayoutConfig(
  * Pure functions for hex grid layout composition - extracted from GenerateHexGridLayoutUseCase
  */
 object HexGridLayoutComposer {
-    
+
     /**
      * Pure function to generate hex cells with media without mutable state
      */
@@ -616,14 +616,13 @@ object HexGridLayoutComposer {
         hexGrid: HexGrid,
         thumbnailSizeFactor: Float,
         generateHexCellWithMedia: (HexCell, List<Media>, Float) -> HexCellWithMedia
-    ): List<HexCellWithMedia> =
-        sortedGroups.mapIndexedNotNull { index, date ->
-            val mediaList = groupedMedia[date]
-            if (mediaList != null && index < hexGrid.cells.size) {
-                val hexCell = hexGrid.cells[index]
-                generateHexCellWithMedia(hexCell, mediaList, thumbnailSizeFactor)
-            } else {
-                null
-            }
+    ): List<HexCellWithMedia> = sortedGroups.mapIndexedNotNull { index, date ->
+        val mediaList = groupedMedia[date]
+        if (mediaList != null && index < hexGrid.cells.size) {
+            val hexCell = hexGrid.cells[index]
+            generateHexCellWithMedia(hexCell, mediaList, thumbnailSizeFactor)
+        } else {
+            null
         }
+    }
 }
