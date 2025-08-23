@@ -78,7 +78,7 @@ class StreamingGalleryViewModel @Inject constructor(
     private val generationTimeoutMs = 3000L // 3 seconds timeout
 
     // Grouping period property with UI state update
-    var currentPeriod: GroupingPeriod = GroupingPeriod.MONTHLY
+    var currentPeriod: GroupingPeriod = GroupingPeriod.DAILY
         set(value) {
             field = value
             groupMedia()
