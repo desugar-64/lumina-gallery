@@ -18,10 +18,21 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.Media
+import dev.serhiiyaremych.lumina.domain.usecase.GroupingPeriod
+import dev.serhiiyaremych.lumina.domain.usecase.HexCellDateCalculator
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
@@ -40,7 +51,10 @@ fun MediaHexVisualization(
     cellFocusConfig: CellFocusConfig = CellFocusConfig(debugLogging = true),
     onClearClickedMedia: () -> Unit = {},
     externalState: MediaHexState? = null,
-    significantCells: Set<HexCell> = emptySet()
+    significantCells: Set<HexCell> = emptySet(),
+    hexCellDateCalculator: HexCellDateCalculator? = null,
+    groupingPeriod: GroupingPeriod? = null,
+    showDateLabels: Boolean = true
 ) {
     if (hexGridLayout.hexCellsWithMedia.isEmpty()) return
 
@@ -64,6 +78,9 @@ fun MediaHexVisualization(
         provideZoom = provideZoom,
         provideOffset = provideOffset
     )
+
+    // Text measurement for date labels
+    val textMeasurer = rememberTextMeasurer()
 
     // Layer management - handles GraphicsLayer creation and recording
     val layerManager = rememberMediaLayers()
@@ -122,6 +139,10 @@ fun MediaHexVisualization(
         val selectedColor = MaterialTheme.colorScheme.tertiary // Vibrant and energetic selected grid lines
         val placeholderColor = MaterialTheme.colorScheme.surfaceVariant // Light and muted placeholder color
 
+        // Colors for date labels
+        val dateLabelTextColor = MaterialTheme.colorScheme.onSurface
+        val dateLabelBackgroundColor = MaterialTheme.colorScheme.surface
+
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
@@ -178,6 +199,26 @@ fun MediaHexVisualization(
                             style = Stroke(width = 1.dp.toPx() / zoom)
                         )
                     }
+                }
+
+                // Draw date labels for hex cells using extracted renderer
+                if (hexCellDateCalculator != null && groupingPeriod != null) {
+                    val dateLabelConfig = DateLabelRenderConfig(
+                        textMeasurer = textMeasurer,
+                        hexCellDateCalculator = hexCellDateCalculator,
+                        groupingPeriod = groupingPeriod,
+                        zoom = zoom,
+                        clampedZoom = clampedZoom,
+                        offset = offset,
+                        canvasSize = size,
+                        dateLabelTextColor = dateLabelTextColor,
+                        placeholderColor = placeholderColor
+                    )
+                    renderDateLabels(
+                        hexGridLayout = hexGridLayout,
+                        config = dateLabelConfig,
+                        showDateLabels = showDateLabels
+                    )
                 }
             }
 

@@ -24,6 +24,7 @@ import dev.serhiiyaremych.lumina.ui.CellFocusListener
 import dev.serhiiyaremych.lumina.ui.gallery.GalleryUiState
 import dev.serhiiyaremych.lumina.ui.gallery.StreamingGalleryViewModel
 import dev.serhiiyaremych.lumina.ui.MediaHexVisualization
+import dev.serhiiyaremych.lumina.domain.usecase.HexCellDateCalculator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -39,6 +40,7 @@ fun TransformableGalleryCanvas(
     coroutineScope: CoroutineScope,
     mediaHexState: MediaHexState?,
     onVisibleCellsChanged: (List<HexCellWithMedia>) -> Unit,
+    hexCellDateCalculator: HexCellDateCalculator? = null,
     modifier: Modifier = Modifier
 ) {
     TransformableContent(
@@ -124,7 +126,10 @@ fun TransformableGalleryCanvas(
                             Log.d("CellFocus", "Clearing clicked media state for red outline")
                         },
                         externalState = state,
-                        significantCells = uiState.selectedCellWithMedia?.let { setOf(it.hexCell) } ?: emptySet()
+                        significantCells = uiState.selectedCellWithMedia?.let { setOf(it.hexCell) } ?: emptySet(),
+                        hexCellDateCalculator = hexCellDateCalculator,
+                        groupingPeriod = uiState.groupingPeriod,
+                        showDateLabels = true
                     )
                 }
             }

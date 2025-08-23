@@ -27,6 +27,7 @@ import dev.serhiiyaremych.lumina.ui.CellFocusListener
 import dev.serhiiyaremych.lumina.ui.HexGridRenderer
 import dev.serhiiyaremych.lumina.ui.gallery.GalleryUiState
 import dev.serhiiyaremych.lumina.ui.gallery.StreamingGalleryViewModel
+import dev.serhiiyaremych.lumina.domain.usecase.HexCellDateCalculator
 
 @Composable
 fun GalleryContent(
@@ -43,6 +44,7 @@ fun GalleryContent(
         focusPadding = 64.dp // Extra padding for streaming gallery - provides breathing room on large displays
     )
     val hexGridRenderer = remember { HexGridRenderer() }
+    val hexCellDateCalculator = remember { HexCellDateCalculator() }
     val coroutineScope = rememberCoroutineScope()
 
     // State for cell focus events
@@ -190,7 +192,8 @@ fun GalleryContent(
                     selectionMode = uiState.selectionMode,
                     activeCell = uiState.selectedCellWithMedia
                 )
-            }
+            },
+            hexCellDateCalculator = hexCellDateCalculator
         )
 
         // Debug overlay with streaming info
