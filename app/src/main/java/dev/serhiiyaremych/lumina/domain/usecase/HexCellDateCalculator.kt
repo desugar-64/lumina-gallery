@@ -1,5 +1,6 @@
 package dev.serhiiyaremych.lumina.domain.usecase
 
+import androidx.compose.runtime.Stable
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import java.time.DayOfWeek
 import java.time.Instant
@@ -14,6 +15,7 @@ import javax.inject.Inject
  * Extracts the appropriate date representation based on the grouping period
  * and provides formatted strings suitable for canvas text rendering.
  */
+@Stable
 class HexCellDateCalculator @Inject constructor() {
 
     companion object {

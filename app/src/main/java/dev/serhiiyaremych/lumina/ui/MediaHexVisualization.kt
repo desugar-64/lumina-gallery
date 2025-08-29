@@ -18,17 +18,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.text.ExperimentalTextApi
-import androidx.compose.ui.text.TextMeasurer
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.serhiiyaremych.lumina.domain.model.HexCell
 import dev.serhiiyaremych.lumina.domain.model.Media
 import dev.serhiiyaremych.lumina.domain.usecase.GroupingPeriod
@@ -78,9 +69,6 @@ fun MediaHexVisualization(
         provideZoom = provideZoom,
         provideOffset = provideOffset
     )
-
-    // Text measurement for date labels
-    val textMeasurer = rememberTextMeasurer()
 
     // Layer management - handles GraphicsLayer creation and recording
     val layerManager = rememberMediaLayers()
@@ -141,8 +129,6 @@ fun MediaHexVisualization(
 
         // Colors for date labels
         val dateLabelTextColor = MaterialTheme.colorScheme.onSurface
-        val dateLabelBackgroundColor = MaterialTheme.colorScheme.surface
-
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
@@ -203,10 +189,7 @@ fun MediaHexVisualization(
 
                 // Draw date labels for hex cells using extracted renderer
                 if (hexCellDateCalculator != null && groupingPeriod != null) {
-                    val dateLabelConfig = DateLabelRenderConfig(
-                        textMeasurer = textMeasurer,
-                        hexCellDateCalculator = hexCellDateCalculator,
-                        groupingPeriod = groupingPeriod,
+                    val dateLabelConfig = dev.serhiiyaremych.lumina.ui.datelabel.DateLabelRenderConfig(
                         zoom = zoom,
                         clampedZoom = clampedZoom,
                         offset = offset,
@@ -216,6 +199,8 @@ fun MediaHexVisualization(
                     )
                     renderDateLabels(
                         hexGridLayout = hexGridLayout,
+                        hexCellDateCalculator = hexCellDateCalculator,
+                        groupingPeriod = groupingPeriod,
                         config = dateLabelConfig,
                         showDateLabels = showDateLabels
                     )

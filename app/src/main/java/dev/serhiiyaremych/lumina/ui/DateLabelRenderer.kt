@@ -1,36 +1,19 @@
 package dev.serhiiyaremych.lumina.ui
 
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.text.TextMeasurer
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.serhiiyaremych.lumina.domain.model.HexCellWithMedia
 import dev.serhiiyaremych.lumina.domain.model.HexGridLayout
 import dev.serhiiyaremych.lumina.domain.usecase.GroupingPeriod
 import dev.serhiiyaremych.lumina.domain.usecase.HexCellDateCalculator
-
-/**
- * Configuration data class for date label rendering
- */
-data class DateLabelRenderConfig(
-    val textMeasurer: TextMeasurer,
-    val hexCellDateCalculator: HexCellDateCalculator,
-    val groupingPeriod: GroupingPeriod,
-    val zoom: Float,
-    val clampedZoom: Float,
-    val offset: Offset,
-    val canvasSize: Size,
-    val dateLabelTextColor: Color,
-    val placeholderColor: Color
-)
+import dev.serhiiyaremych.lumina.ui.datelabel.DateLabelRenderConfig
+import dev.serhiiyaremych.lumina.ui.datelabel.PathCache
+import dev.serhiiyaremych.lumina.ui.datelabel.PathCacheKey
+import dev.serhiiyaremych.lumina.ui.datelabel.calculateLabelPosition
+import dev.serhiiyaremych.lumina.ui.datelabel.calculateLabelStyle
+import dev.serhiiyaremych.lumina.ui.datelabel.drawLabelBackground
+import dev.serhiiyaremych.lumina.ui.datelabel.drawLabelText
+import dev.serhiiyaremych.lumina.ui.datelabel.textToPath
 
 /**
  * Stateless function to render date labels for hex cells.
@@ -38,10 +21,12 @@ data class DateLabelRenderConfig(
  */
 fun DrawScope.renderDateLabels(
     hexGridLayout: HexGridLayout,
+    hexCellDateCalculator: HexCellDateCalculator,
+    groupingPeriod: GroupingPeriod,
     config: DateLabelRenderConfig,
     showDateLabels: Boolean = true
 ) {
-    if (!showDateLabels || !config.hexCellDateCalculator.shouldShowDateAtZoom(config.zoom)) {
+if (!showDateLabels || !hexCellDateCalculator.shouldShowDateAtZoom(config.zoom)) {
         return
     }
 
@@ -55,81 +40,42 @@ fun DrawScope.renderDateLabels(
     val visibleCells = hexGridLayout.getVisibleHexCells(viewport)
 
     for (hexCellWithMedia in visibleCells) {
-        renderSingleDateLabel(
+renderSingleDateLabel(
             hexCellWithMedia = hexCellWithMedia,
+            hexCellDateCalculator = hexCellDateCalculator,
+            groupingPeriod = groupingPeriod,
             config = config
         )
     }
 }
 
 /**
- * Renders a single date label for a hex cell.
+ * Renders a single date label for a hex cell with morphing animation support.
  */
 private fun DrawScope.renderSingleDateLabel(
     hexCellWithMedia: HexCellWithMedia,
+    hexCellDateCalculator: HexCellDateCalculator,
+    groupingPeriod: GroupingPeriod,
     config: DateLabelRenderConfig
 ) {
-    val dateText = config.hexCellDateCalculator.formatDateForZoomLevel(
+val dateText = hexCellDateCalculator.formatDateForZoomLevel(
         hexCellWithMedia,
-        config.groupingPeriod,
+        groupingPeriod,
         config.zoom
     ) ?: return
 
-    val hexCenter = hexCellWithMedia.bounds.center
+    val labelStyle = calculateLabelStyle(config.clampedZoom)
+    val labelPosition = calculateLabelPosition(hexCellWithMedia, config.zoom)
+    val cacheKey = PathCacheKey(dateText, labelStyle.fontSize)
 
-    // Zoom-independent font size for compact forms, compensate zoom factor
-    val fontSize = when {
-        config.zoom >= 1.0f -> (14 + (config.zoom * 4)).coerceIn(14f, 24f).sp
-        else -> (14f / config.zoom).coerceAtLeast(14f).sp // Compensate zoom to maintain readable size
+    // Get text path (no animation)
+    val cachedData = PathCache.getOrCreate(cacheKey) { key ->
+        textToPath(key.text, key.fontSize)
     }
 
-    val alpha = when {
-        config.zoom >= 1.0f -> 0.8f
-        config.zoom >= 0.5f -> 0.6f
-        else -> 0.4f
-    }
-
-    val textStyle = TextStyle(
-        fontSize = fontSize,
-        fontWeight = FontWeight.Medium,
-        color = config.dateLabelTextColor.copy(alpha = alpha),
-        textAlign = TextAlign.Center
-    )
-
-    // Position label below the top edge of the hex cell
-    val labelPosition = Offset(
-        x = hexCenter.x,
-        y = hexCellWithMedia.bounds.top + (16.dp.toPx() / config.zoom)
-    )
-
-    // Draw text with semi-transparent background for readability
-    val textLayoutResult = config.textMeasurer.measure(dateText, textStyle)
-    val textSize = Size(
-        textLayoutResult.size.width.toFloat(),
-        textLayoutResult.size.height.toFloat()
-    )
-
-    // Background rectangle for text readability
-    drawRect(
-        color = config.placeholderColor.copy(alpha = 0.85f),
-        topLeft = Offset(
-            labelPosition.x - textSize.width / 2 - 4.dp.toPx() / config.zoom,
-            labelPosition.y - 2.dp.toPx() / config.zoom
-        ),
-        size = Size(
-            textSize.width + 8.dp.toPx() / config.zoom,
-            textSize.height + 4.dp.toPx() / config.zoom
-        )
-    )
-
-    // Draw the text
-    drawText(
-        textMeasurer = config.textMeasurer,
-        text = dateText,
-        style = textStyle,
-        topLeft = Offset(
-            labelPosition.x - textSize.width / 2,
-            labelPosition.y
-        )
-    )
+    // Draw background and text as-is
+    drawLabelBackground(labelPosition, cachedData.bounds.width(), cachedData.bounds.height(), config)
+    drawLabelText(labelPosition, cachedData, config, labelStyle.alpha)
 }
+
+
