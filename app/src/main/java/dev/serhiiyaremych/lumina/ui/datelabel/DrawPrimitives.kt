@@ -1,6 +1,7 @@
 package dev.serhiiyaremych.lumina.ui.datelabel
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -30,7 +31,8 @@ internal fun DrawScope.drawLabelText(
     labelPosition: Offset,
     pathData: CachedPathData,
     config: DateLabelRenderConfig,
-    alpha: Float
+    alpha: Float,
+    textColor: Color = config.dateLabelTextColor
 ) {
     withTransform({
         translate(
@@ -40,7 +42,7 @@ internal fun DrawScope.drawLabelText(
     }) {
         drawPath(
             path = pathData.path.asComposePath(),
-            color = config.dateLabelTextColor.copy(alpha = alpha)
+            color = textColor.copy(alpha = alpha)
         )
     }
 }

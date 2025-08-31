@@ -26,7 +26,7 @@ fun DrawScope.renderDateLabels(
     config: DateLabelRenderConfig,
     showDateLabels: Boolean = true
 ) {
-if (!showDateLabels || !hexCellDateCalculator.shouldShowDateAtZoom(config.zoom)) {
+    if (!showDateLabels || !hexCellDateCalculator.shouldShowDateAtZoom(config.zoom)) {
         return
     }
 
@@ -40,7 +40,7 @@ if (!showDateLabels || !hexCellDateCalculator.shouldShowDateAtZoom(config.zoom))
     val visibleCells = hexGridLayout.getVisibleHexCells(viewport)
 
     for (hexCellWithMedia in visibleCells) {
-renderSingleDateLabel(
+        renderSingleDateLabel(
             hexCellWithMedia = hexCellWithMedia,
             hexCellDateCalculator = hexCellDateCalculator,
             groupingPeriod = groupingPeriod,
@@ -58,7 +58,7 @@ private fun DrawScope.renderSingleDateLabel(
     groupingPeriod: GroupingPeriod,
     config: DateLabelRenderConfig
 ) {
-val dateText = hexCellDateCalculator.formatDateForZoomLevel(
+    val dateText = hexCellDateCalculator.formatDateForZoomLevel(
         hexCellWithMedia,
         groupingPeriod,
         config.zoom
@@ -75,7 +75,8 @@ val dateText = hexCellDateCalculator.formatDateForZoomLevel(
 
     // Draw background and text as-is
     drawLabelBackground(labelPosition, cachedData.bounds.width(), cachedData.bounds.height(), config)
-    drawLabelText(labelPosition, cachedData, config, labelStyle.alpha)
+    
+    // Determine the color for the date label text - use selected stroke color if cell is selected, otherwise use default color
+    val textColor = config.selectedColor ?: config.dateLabelTextColor
+    drawLabelText(labelPosition, cachedData, config, labelStyle.alpha, textColor)
 }
-
-

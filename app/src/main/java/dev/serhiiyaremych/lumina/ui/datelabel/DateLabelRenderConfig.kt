@@ -12,6 +12,6 @@ data class DateLabelRenderConfig(
     val offset: Offset,
     val canvasSize: Size,
     val dateLabelTextColor: Color,
-    val placeholderColor: Color
+    val placeholderColor: Color,
+    val selectedColor: Color? = null
 )
-
