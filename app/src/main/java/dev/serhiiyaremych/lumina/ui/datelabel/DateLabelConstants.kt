@@ -16,4 +16,3 @@ internal const val LOW_ZOOM_ALPHA = 0.4f
 internal const val MEDIUM_ZOOM_THRESHOLD = 0.5f
 internal const val HIGH_ZOOM_THRESHOLD = 1.0f
 internal const val BACKGROUND_ALPHA = 0.85f
-

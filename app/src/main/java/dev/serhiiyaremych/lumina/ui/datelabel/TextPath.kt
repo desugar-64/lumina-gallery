@@ -20,4 +20,3 @@ internal fun textToPath(text: String, fontSize: Float): Path {
     tp.getTextPath(text, 0, text.length, 0f, 0f, path)
     return path
 }
-

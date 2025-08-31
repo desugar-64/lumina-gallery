@@ -29,4 +29,3 @@ internal fun DrawScope.calculateLabelPosition(hexCellWithMedia: HexCellWithMedia
         y = hexCellWithMedia.bounds.top + vOffset
     )
 }
-

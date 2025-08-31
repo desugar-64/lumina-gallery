@@ -75,7 +75,7 @@ private fun DrawScope.renderSingleDateLabel(
 
     // Draw background and text as-is
     drawLabelBackground(labelPosition, cachedData.bounds.width(), cachedData.bounds.height(), config)
-    
+
     // Determine the color for the date label text - use selected stroke color if cell is selected, otherwise use default color
     val textColor = config.selectedColor ?: config.dateLabelTextColor
     drawLabelText(labelPosition, cachedData, config, labelStyle.alpha, textColor)
